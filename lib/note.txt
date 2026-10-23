@@ -1,0 +1,54 @@
+lib/
+
+main.dart
+Application entry point
+
+
+config/
+Routes, app theme, and configuration
+
+
+models/
+Application data structures
+room.dart
+tenant.dart
+payment.dart
+expense.dart
+
+
+
+views/
+Screens and UI
+login_view.dart
+dashboard_view.dart
+rooms/
+tenants/
+payments/
+expenses/
+reports/
+
+
+
+controllers/
+UI state and application actions
+auth_controller.dart
+dashboard_controller.dart
+room_controller.dart
+tenant_controller.dart
+payment_controller.dart
+expense_controller.dart
+
+
+
+services/
+Database, API, and external services
+database_service.dart
+auth_service.dart
+room_service.dart
+payment_service.dart
+
+
+
+widgets/
+Reusable UI components
+custom_button.dart, room_card.dart, loading_widget.dart
