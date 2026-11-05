@@ -1,52 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'core/constants/supabase_constants.dart';
+import 'core/theme/app_theme.dart';
+import 'screens/shared/auth_gate.dart';
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   await Supabase.initialize(
-    url: 'https://mojbiwkvxanpkpzvamnh.supabase.co',
-    publishableKey: 'sb_publishable_x-U2wU3iW7Z7YZyND2-E0g_tW-uwkfz',
+    url: SupabaseConstants.supabaseUrl,
+    publishableKey: SupabaseConstants.supabaseAnonKey,
   );
-  runApp(MyApp());
+
+  runApp(const KosMateApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class KosMateApp extends StatelessWidget {
+  const KosMateApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(title: 'Todos', home: HomePage());
-  }
-}
-
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  final _future = Supabase.instance.client.from('todos').select();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: FutureBuilder(
-        future: _future,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final todos = snapshot.data!;
-          return ListView.builder(
-            itemCount: todos.length,
-            itemBuilder: ((context, index) {
-              final todo = todos[index];
-              return ListTile(title: Text(todo['name']));
-            }),
-          );
-        },
-      ),
+    return MaterialApp(
+      title: 'KosMate',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      home: const AuthGate(),
     );
   }
 }
