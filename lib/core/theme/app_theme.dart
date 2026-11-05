@@ -1,74 +1,139 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color primaryColor = Color(0xFF1E3A8A); // Deep Blue
-  static const Color accentColor = Color(0xFF0D9488); // Teal
-  static const Color backgroundColor = Color(0xFFF8FAFC); // Slate 50
-  static const Color cardColor = Colors.white;
-  static const Color textPrimary = Color(0xFF0F172A);
-  static const Color textSecondary = Color(0xFF64748B);
+  // Color Palette
+  static const Color primaryColor = Color(0xFF0B1F3A);
+  static const Color accentColor = Color(0xFF4A6FA5);
+  static const Color semanticColor = Color(0xFFF8E7A1);
+  static const Color backgroundColor = Color(0xFFFFFFFF);
+  static const Color foregroundColor = Color(0xFF000000);
+  static const Color borderColor = Color(0xFF739BD0);
+
+  // Backward compatibility alias
+  static const Color cardColor = backgroundColor;
+  static const Color textPrimary = foregroundColor;
+  static const Color textSecondary = accentColor;
+
+  // Typography (Roboto)
+  static const TextStyle robotoBlack = TextStyle(
+    fontFamily: 'Roboto',
+    fontWeight: FontWeight.w700,
+    fontSize: 32,
+    color: foregroundColor,
+  );
+
+  static const TextStyle robotoBold = TextStyle(
+    fontFamily: 'Roboto',
+    fontWeight: FontWeight.w500,
+    fontSize: 24,
+    color: foregroundColor,
+  );
+
+  static const TextStyle robotoMedium = TextStyle(
+    fontFamily: 'Roboto',
+    fontWeight: FontWeight.w400,
+    fontSize: 18,
+    color: foregroundColor,
+  );
+
+  static const TextStyle robotoRegular = TextStyle(
+    fontFamily: 'Roboto',
+    fontWeight: FontWeight.w300,
+    fontSize: 16,
+    color: foregroundColor,
+  );
 
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: primaryColor,
-        primary: primaryColor,
-        secondary: accentColor,
-        surface: cardColor,
+      fontFamily: 'Roboto',
+      colorScheme: const ColorScheme(
         brightness: Brightness.light,
+        primary: primaryColor,
+        onPrimary: backgroundColor,
+        secondary: accentColor,
+        onSecondary: backgroundColor,
+        tertiary: semanticColor,
+        onTertiary: foregroundColor,
+        error: Colors.redAccent,
+        onError: backgroundColor,
+        surface: backgroundColor,
+        onSurface: foregroundColor,
+        outline: borderColor,
       ),
       scaffoldBackgroundColor: backgroundColor,
+      textTheme: const TextTheme(
+        displayLarge: robotoBlack,
+        displayMedium: robotoBlack,
+        headlineLarge: robotoBlack,
+        headlineMedium: robotoBold,
+        headlineSmall: robotoBold,
+        titleLarge: robotoBold,
+        titleMedium: robotoMedium,
+        titleSmall: robotoMedium,
+        bodyLarge: robotoMedium,
+        bodyMedium: robotoRegular,
+        bodySmall: robotoRegular,
+        labelLarge: robotoMedium,
+        labelMedium: robotoRegular,
+        labelSmall: robotoRegular,
+      ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.white,
-        foregroundColor: textPrimary,
+        backgroundColor: backgroundColor,
+        foregroundColor: foregroundColor,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: TextStyle(
-          color: textPrimary,
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-        ),
+        titleTextStyle: robotoMedium,
       ),
       cardTheme: CardThemeData(
-        color: cardColor,
-        elevation: 1,
+        color: backgroundColor,
+        elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: Color(0xFFE2E8F0)),
+          side: const BorderSide(color: borderColor),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
+          foregroundColor: backgroundColor,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
-          textStyle: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
+          textStyle: robotoMedium.copyWith(color: backgroundColor),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: primaryColor,
+          side: const BorderSide(color: borderColor),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
+          textStyle: robotoRegular.copyWith(fontWeight: FontWeight.w500),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white,
+        fillColor: backgroundColor,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+          borderSide: const BorderSide(color: borderColor),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          borderSide: const BorderSide(color: borderColor),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: primaryColor, width: 2),
         ),
+        labelStyle: robotoRegular.copyWith(color: foregroundColor.withValues(alpha: 0.7)),
+        hintStyle: robotoRegular.copyWith(color: foregroundColor.withValues(alpha: 0.5)),
       ),
     );
   }

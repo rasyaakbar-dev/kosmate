@@ -6,6 +6,8 @@ import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
 import '../tenant/tenant_main_screen.dart';
 import '../owner/owner_main_screen.dart';
+import '../admin/admin_main_screen.dart';
+import 'splash_screen.dart';
 
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
@@ -33,18 +35,7 @@ class _AuthGateState extends State<AuthGate> {
           future: _authService.getCurrentUserProfile(),
           builder: (context, profileSnapshot) {
             if (profileSnapshot.connectionState == ConnectionState.waiting) {
-              return const Scaffold(
-                body: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 16),
-                      Text('Loading your profile...'),
-                    ],
-                  ),
-                ),
-              );
+              return const SplashScreen();
             }
 
             final user = profileSnapshot.data;
@@ -85,10 +76,13 @@ class _AuthGateState extends State<AuthGate> {
             }
 
             // Route to appropriate screen based on role
-            if (user.role == UserRole.owner || user.role == UserRole.admin) {
-              return OwnerMainScreen(user: user);
-            } else {
-              return TenantMainScreen(user: user);
+            switch (user.role) {
+              case UserRole.admin:
+                return AdminMainScreen(user: user);
+              case UserRole.owner:
+                return OwnerMainScreen(user: user);
+              case UserRole.tenant:
+                return TenantMainScreen(user: user);
             }
           },
         );
@@ -96,4 +90,3 @@ class _AuthGateState extends State<AuthGate> {
     );
   }
 }
-
