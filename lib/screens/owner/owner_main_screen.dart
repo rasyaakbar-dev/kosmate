@@ -2,18 +2,19 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/kosmate_app_bar.dart';
+import '../../core/widgets/kosmate_components.dart';
 import '../../models/user_model.dart';
 import '../../models/house_model.dart';
 import '../../models/room_model.dart';
 import '../../models/booking_model.dart';
 import '../../models/payment_model.dart';
 import '../../models/complaint_model.dart';
-import '../../services/auth_service.dart';
 import '../../services/house_service.dart';
 import '../../services/room_service.dart';
 import '../../services/booking_service.dart';
 import '../../services/payment_service.dart';
 import '../../services/complaint_service.dart';
+import '../shared/profile_screen.dart';
 
 class OwnerMainScreen extends StatefulWidget {
   final UserModel user;
@@ -40,11 +41,31 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
       ),
       _OwnerPropertiesTab(user: widget.user),
       _OwnerPaymentsTab(user: widget.user),
-      _OwnerProfileTab(user: widget.user),
+      ProfileScreen(user: widget.user),
     ];
 
+    String appBarTitle;
+    IconData actionIcon;
+    switch (_currentIndex) {
+      case 1:
+        appBarTitle = 'Rooms';
+        actionIcon = Icons.help_outline_rounded;
+        break;
+      case 2:
+        appBarTitle = 'Payments';
+        actionIcon = Icons.help_outline_rounded;
+        break;
+      case 3:
+        appBarTitle = 'Profile';
+        actionIcon = Icons.settings_outlined;
+        break;
+      default:
+        appBarTitle = 'KosMate';
+        actionIcon = Icons.help_outline_rounded;
+    }
+
     return Scaffold(
-      appBar: const KosMateAppBar(title: 'KosMate'),
+      appBar: KosMateAppBar(title: appBarTitle, actionIcon: actionIcon),
       body: IndexedStack(
         index: _currentIndex,
         children: screens,
@@ -278,7 +299,11 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
               const SizedBox(height: 12),
               Expanded(
                 child: _recentComplaints.isEmpty
-                    ? const Center(child: Text('No complaints submitted.'))
+                    ? const KosMateEmptyState(
+                        icon: Icons.feedback_outlined,
+                        title: 'No complaints yet',
+                        subtitle: 'Tenant complaints will appear here.',
+                      )
                     : ListView.builder(
                         controller: scrollCtrl,
                         itemCount: _recentComplaints.length,
@@ -994,52 +1019,4 @@ class _OwnerPaymentsTabState extends State<_OwnerPaymentsTab> {
   }
 }
 
-// -----------------------------------------------------------------------------
-// TAB 3: OWNER PROFILE
-// -----------------------------------------------------------------------------
-class _OwnerProfileTab extends StatelessWidget {
-  final UserModel user;
-  const _OwnerProfileTab({required this.user});
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: Column(
-        children: [
-          CircleAvatar(
-            radius: 40,
-            backgroundColor: AppTheme.primaryColor,
-            child: Text(
-              user.name.isNotEmpty ? user.name[0].toUpperCase() : 'O',
-              style: const TextStyle(fontSize: 32, color: Colors.white),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(user.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          Text(user.email, style: TextStyle(color: Colors.grey[600])),
-          const SizedBox(height: 6),
-          const Chip(label: Text('Role: OWNER')),
-          const SizedBox(height: 20),
-          ListTile(
-            leading: const Icon(Icons.phone),
-            title: const Text('Phone Number'),
-            subtitle: Text(user.phone.isNotEmpty ? user.phone : '-'),
-          ),
-          const Spacer(),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red[700],
-              minimumSize: const Size.fromHeight(48),
-            ),
-            icon: const Icon(Icons.logout),
-            label: const Text('Sign Out'),
-            onPressed: () async {
-              await AuthService().signOut();
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}

@@ -4,16 +4,22 @@ import 'kosmate_logo.dart';
 
 class KosMateAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
-  final bool showHelp;
-  final VoidCallback? onHelpPressed;
+  final bool showLogo;
   final bool showBackButton;
+  final bool showHelp;
+  final IconData actionIcon;
+  final VoidCallback? onHelpPressed;
+  final VoidCallback? onActionPressed;
 
   const KosMateAppBar({
     super.key,
     this.title = 'KosMate',
-    this.showHelp = true,
-    this.onHelpPressed,
+    this.showLogo = true,
     this.showBackButton = false,
+    this.showHelp = true,
+    this.actionIcon = Icons.help_outline_rounded,
+    this.onHelpPressed,
+    this.onActionPressed,
   });
 
   @override
@@ -39,11 +45,13 @@ class KosMateAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
                 const SizedBox(width: 8),
               ],
-              const KosMateLogo(
-                size: 28,
-                color: Colors.white,
-              ),
-              const SizedBox(width: 12),
+              if (showLogo) ...[
+                const KosMateLogo(
+                  size: 28,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 12),
+              ],
               Expanded(
                 child: Text(
                   title,
@@ -58,28 +66,35 @@ class KosMateAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
               if (showHelp)
                 IconButton(
-                  icon: const Icon(
-                    Icons.help_outline_rounded,
+                  icon: Icon(
+                    actionIcon,
                     color: Colors.white,
                     size: 26,
                   ),
-                  onPressed: onHelpPressed ??
+                  onPressed: onActionPressed ??
+                      onHelpPressed ??
                       () {
-                        showDialog(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: const Text('KosMate Help'),
-                            content: const Text(
-                              'KosMate is your smart boarding house management solution. Need help or have questions? Contact support at support@kosmate.app.',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx),
-                                child: const Text('OK'),
+                        if (actionIcon == Icons.settings_outlined) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('App Settings & Preferences')),
+                          );
+                        } else {
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('KosMate Help'),
+                              content: const Text(
+                                'KosMate is your smart boarding house management solution. Need help or have questions? Contact support at support@kosmate.app.',
                               ),
-                            ],
-                          ),
-                        );
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  child: const Text('OK'),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
                       },
                 ),
             ],
@@ -89,4 +104,3 @@ class KosMateAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 }
-
