@@ -313,8 +313,18 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
                             margin: const EdgeInsets.only(bottom: 10),
                             child: ListTile(
                               title: Text(c.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                              subtitle: Text('${c.description}\nPriority: ${c.priority.displayName}'),
-                              trailing: Chip(label: Text(c.status.displayName)),
+                              subtitle: Text(
+                                '${c.description}\nPriority: ${c.priority.displayName}${c.response != null ? "\nResponse: ${c.response}" : ""}',
+                              ),
+                              trailing: Chip(
+                                label: Text(c.status.displayName),
+                                backgroundColor: c.status == ComplaintStatus.resolved
+                                    ? Colors.green.withValues(alpha: 0.15)
+                                    : c.status == ComplaintStatus.inProgress
+                                        ? Colors.blue.withValues(alpha: 0.15)
+                                        : Colors.amber.withValues(alpha: 0.15),
+                              ),
+                              onTap: () => _showComplaintResponseDialog(c),
                             ),
                           );
                         },
@@ -322,6 +332,93 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showComplaintResponseDialog(ComplaintModel complaint) {
+    final responseCtrl = TextEditingController(text: complaint.response ?? '');
+    ComplaintStatus selectedStatus = complaint.status == ComplaintStatus.pending
+        ? ComplaintStatus.inProgress
+        : complaint.status;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text('Respond to: ${complaint.title}'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Tenant Description:\n${complaint.description}',
+                  style: const TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<ComplaintStatus>(
+                  initialValue: selectedStatus,
+                  decoration: const InputDecoration(labelText: 'Status'),
+                  items: const [
+                    DropdownMenuItem(
+                      value: ComplaintStatus.inProgress,
+                      child: Text('In Progress'),
+                    ),
+                    DropdownMenuItem(
+                      value: ComplaintStatus.resolved,
+                      child: Text('Resolved'),
+                    ),
+                    DropdownMenuItem(
+                      value: ComplaintStatus.rejected,
+                      child: Text('Rejected'),
+                    ),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      setDialogState(() => selectedStatus = val);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: responseCtrl,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Response / Action taken',
+                    hintText: 'e.g., Plumber has been contacted and scheduled.',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                try {
+                  await _complaintService.respondToComplaint(
+                    complaintId: complaint.complaintId,
+                    responseText: responseCtrl.text.trim(),
+                    status: selectedStatus,
+                  );
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  _loadDashboardData();
+                  messenger.showSnackBar(
+                    const SnackBar(content: Text('Complaint updated successfully!')),
+                  );
+                } catch (e) {
+                  messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
         ),
       ),
     );

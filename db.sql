@@ -126,7 +126,7 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- ============================================================================
--- 4. ROW LEVEL SECURITY (RLS) POLICIES
+-- 4. ROW LEVEL SECURITY (RLS) POLICIES & FUNCTIONS
 -- ============================================================================
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.house ENABLE ROW LEVEL SECURITY;
@@ -141,43 +141,62 @@ RETURNS public.users AS $$
   SELECT * FROM public.users WHERE auth_id = auth.uid() LIMIT 1;
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
+-- Helper function to verify if authenticated caller has admin privileges
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.users 
+    WHERE auth_id = auth.uid() AND role = 'admin'::public.user_role
+  );
+$$ LANGUAGE sql STABLE SECURITY DEFINER;
+
 -- Users policies
 CREATE POLICY "Users can view all public profiles" ON public.users
   FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Users can update their own profile" ON public.users
+CREATE POLICY "Users can update their own profile or admin can update any" ON public.users
   FOR UPDATE TO authenticated
-  USING (auth_id = auth.uid())
-  WITH CHECK (auth_id = auth.uid());
+  USING (auth_id = auth.uid() OR public.is_admin())
+  WITH CHECK (auth_id = auth.uid() OR public.is_admin());
 
--- House policies (Anyone can read; owners can insert/update their houses)
+-- House policies (Anyone can read; owners & admins can insert/update/delete)
 CREATE POLICY "Houses are viewable by authenticated users" ON public.house
   FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Owners can manage their houses" ON public.house
+CREATE POLICY "Owners and admins can manage houses" ON public.house
   FOR ALL TO authenticated
-  USING (owner_id = (SELECT user_id FROM public.users WHERE auth_id = auth.uid()));
+  USING (
+    owner_id = (SELECT user_id FROM public.users WHERE auth_id = auth.uid()) 
+    OR public.is_admin()
+  );
 
--- Room policies (Anyone can view rooms; house owners manage rooms)
+-- Room policies (Anyone can view rooms; house owners & admins manage rooms)
 CREATE POLICY "Rooms are viewable by authenticated users" ON public.room
   FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Owners can manage rooms in their houses" ON public.room
+CREATE POLICY "Owners and admins can manage rooms in their houses" ON public.room
   FOR ALL TO authenticated
   USING (
     house_id IN (
       SELECT house_id FROM public.house 
       WHERE owner_id = (SELECT user_id FROM public.users WHERE auth_id = auth.uid())
     )
+    OR public.is_admin()
   );
 
--- Booking policies (Tenants see/create their bookings; Owners see bookings for their rooms)
+-- Booking policies (Tenants see/create their bookings; Owners & admins see/manage bookings)
 CREATE POLICY "Tenants can view and create their own bookings" ON public.booking
   FOR ALL TO authenticated
-  USING (user_id = (SELECT user_id FROM public.users WHERE auth_id = auth.uid()))
-  WITH CHECK (user_id = (SELECT user_id FROM public.users WHERE auth_id = auth.uid()));
+  USING (
+    user_id = (SELECT user_id FROM public.users WHERE auth_id = auth.uid())
+    OR public.is_admin()
+  )
+  WITH CHECK (
+    user_id = (SELECT user_id FROM public.users WHERE auth_id = auth.uid())
+    OR public.is_admin()
+  );
 
-CREATE POLICY "Owners can view and manage bookings for their rooms" ON public.booking
+CREATE POLICY "Owners and admins can view and manage bookings for their rooms" ON public.booking
   FOR ALL TO authenticated
   USING (
     room_id IN (
@@ -185,14 +204,18 @@ CREATE POLICY "Owners can view and manage bookings for their rooms" ON public.bo
       JOIN public.house h ON r.house_id = h.house_id
       WHERE h.owner_id = (SELECT user_id FROM public.users WHERE auth_id = auth.uid())
     )
+    OR public.is_admin()
   );
 
 -- Payment policies
 CREATE POLICY "Tenants can view and update proof on their payments" ON public.payment
   FOR ALL TO authenticated
-  USING (user_id = (SELECT user_id FROM public.users WHERE auth_id = auth.uid()));
+  USING (
+    user_id = (SELECT user_id FROM public.users WHERE auth_id = auth.uid())
+    OR public.is_admin()
+  );
 
-CREATE POLICY "Owners can manage payments for their rooms" ON public.payment
+CREATE POLICY "Owners and admins can manage payments for their rooms" ON public.payment
   FOR ALL TO authenticated
   USING (
     room_id IN (
@@ -200,14 +223,18 @@ CREATE POLICY "Owners can manage payments for their rooms" ON public.payment
       JOIN public.house h ON r.house_id = h.house_id
       WHERE h.owner_id = (SELECT user_id FROM public.users WHERE auth_id = auth.uid())
     )
+    OR public.is_admin()
   );
 
 -- Complaint policies
 CREATE POLICY "Tenants can manage their complaints" ON public.complaint
   FOR ALL TO authenticated
-  USING (user_id = (SELECT user_id FROM public.users WHERE auth_id = auth.uid()));
+  USING (
+    user_id = (SELECT user_id FROM public.users WHERE auth_id = auth.uid())
+    OR public.is_admin()
+  );
 
-CREATE POLICY "Owners can view and respond to complaints for their rooms" ON public.complaint
+CREATE POLICY "Owners and admins can view and respond to complaints for their rooms" ON public.complaint
   FOR ALL TO authenticated
   USING (
     room_id IN (
@@ -215,4 +242,130 @@ CREATE POLICY "Owners can view and respond to complaints for their rooms" ON pub
       JOIN public.house h ON r.house_id = h.house_id
       WHERE h.owner_id = (SELECT user_id FROM public.users WHERE auth_id = auth.uid())
     )
+    OR public.is_admin()
   );
+
+-- ============================================================================
+-- 5. AUTOMATED ROOM OCCUPANCY TRIGGER ON BOOKING APPROVAL
+-- ============================================================================
+CREATE OR REPLACE FUNCTION public.handle_booking_status_change()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.status = 'approved'::public.booking_status AND OLD.status != 'approved'::public.booking_status THEN
+    UPDATE public.room 
+    SET status = 'occupied'::public.room_status 
+    WHERE room_id = NEW.room_id;
+  ELSIF (NEW.status = 'cancelled'::public.booking_status OR NEW.status = 'rejected'::public.booking_status)
+        AND OLD.status = 'approved'::public.booking_status THEN
+    UPDATE public.room 
+    SET status = 'available'::public.room_status 
+    WHERE room_id = NEW.room_id;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_booking_status_change
+  AFTER UPDATE OF status ON public.booking
+  FOR EACH ROW EXECUTE FUNCTION public.handle_booking_status_change();
+
+-- ============================================================================
+-- 6. STORAGE BUCKETS & STORAGE POLICIES
+-- ============================================================================
+INSERT INTO storage.buckets (id, name, public)
+VALUES 
+  ('room-images', 'room-images', true),
+  ('payment-receipts', 'payment-receipts', true),
+  ('complaint-attachments', 'complaint-attachments', true)
+ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public;
+
+-- Storage RLS: Public read for room images
+CREATE POLICY "Public can view room images" ON storage.objects
+  FOR SELECT TO public
+  USING (bucket_id = 'room-images');
+
+-- Storage RLS: Authenticated users can upload room images
+CREATE POLICY "Authenticated users can upload room images" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'room-images');
+
+-- Storage RLS: Authenticated read & upload for payment receipts
+CREATE POLICY "Authenticated users can view payment receipts" ON storage.objects
+  FOR SELECT TO authenticated
+  USING (bucket_id = 'payment-receipts');
+
+CREATE POLICY "Authenticated users can upload payment receipts" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'payment-receipts');
+
+-- Storage RLS: Authenticated read & upload for complaint attachments
+CREATE POLICY "Authenticated users can view complaint attachments" ON storage.objects
+  FOR SELECT TO authenticated
+  USING (bucket_id = 'complaint-attachments');
+
+CREATE POLICY "Authenticated users can upload complaint attachments" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'complaint-attachments');
+
+
+-- ============================================================================
+-- 5. AUTOMATED ROOM OCCUPANCY TRIGGER ON BOOKING APPROVAL
+-- ============================================================================
+CREATE OR REPLACE FUNCTION public.handle_booking_status_change()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.status = 'approved'::public.booking_status AND OLD.status != 'approved'::public.booking_status THEN
+    UPDATE public.room 
+    SET status = 'occupied'::public.room_status 
+    WHERE room_id = NEW.room_id;
+  ELSIF (NEW.status = 'cancelled'::public.booking_status OR NEW.status = 'rejected'::public.booking_status)
+        AND OLD.status = 'approved'::public.booking_status THEN
+    UPDATE public.room 
+    SET status = 'available'::public.room_status 
+    WHERE room_id = NEW.room_id;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_booking_status_change
+  AFTER UPDATE OF status ON public.booking
+  FOR EACH ROW EXECUTE FUNCTION public.handle_booking_status_change();
+
+-- ============================================================================
+-- 6. STORAGE BUCKETS & STORAGE POLICIES
+-- ============================================================================
+INSERT INTO storage.buckets (id, name, public)
+VALUES 
+  ('room-images', 'room-images', true),
+  ('payment-receipts', 'payment-receipts', true),
+  ('complaint-attachments', 'complaint-attachments', true)
+ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public;
+
+-- Storage RLS: Public read for room images
+CREATE POLICY "Public can view room images" ON storage.objects
+  FOR SELECT TO public
+  USING (bucket_id = 'room-images');
+
+-- Storage RLS: Authenticated users can upload room images
+CREATE POLICY "Authenticated users can upload room images" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'room-images');
+
+-- Storage RLS: Authenticated read & upload for payment receipts
+CREATE POLICY "Authenticated users can view payment receipts" ON storage.objects
+  FOR SELECT TO authenticated
+  USING (bucket_id = 'payment-receipts');
+
+CREATE POLICY "Authenticated users can upload payment receipts" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'payment-receipts');
+
+-- Storage RLS: Authenticated read & upload for complaint attachments
+CREATE POLICY "Authenticated users can view complaint attachments" ON storage.objects
+  FOR SELECT TO authenticated
+  USING (bucket_id = 'complaint-attachments');
+
+CREATE POLICY "Authenticated users can upload complaint attachments" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'complaint-attachments');

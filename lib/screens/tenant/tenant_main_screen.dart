@@ -162,18 +162,37 @@ class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
   }
 
   void _showNewComplaintDialog() {
+    if (_activeBooking == null) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('No Active Room Booking'),
+          content: const Text(
+            'You do not have an approved room booking yet. Complaints can only be submitted once your room booking request has been approved by the owner.',
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     final titleController = TextEditingController();
     final descController = TextEditingController();
     ComplaintCategory selectedCategory = ComplaintCategory.maintenance;
     ComplaintPriority selectedPriority = ComplaintPriority.medium;
 
-    final roomId = _activeBooking?.roomId ?? 1;
+    final roomId = _activeBooking!.roomId;
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Submit Complaint'),
+          title: Text('Submit Complaint (Room ${_activeBooking?.room?.roomNumber ?? roomId})'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
