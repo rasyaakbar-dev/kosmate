@@ -108,11 +108,27 @@ CREATE TABLE public.complaint (
   CONSTRAINT complaint_room_id_fkey FOREIGN KEY (room_id) REFERENCES public.room(room_id) ON DELETE RESTRICT
 );
 
+-- ==========================================================================
+-- 3. INDEXES FOR FOREIGN KEY LOOKUPS
 -- ============================================================================
--- 3. AUTOMATIC PROFILE SYNCHRONIZATION WITH SUPABASE AUTH
+CREATE INDEX IF NOT EXISTS idx_booking_user_id ON public.booking (user_id);
+CREATE INDEX IF NOT EXISTS idx_booking_room_id ON public.booking (room_id);
+CREATE INDEX IF NOT EXISTS idx_complaint_user_id ON public.complaint (user_id);
+CREATE INDEX IF NOT EXISTS idx_complaint_room_id ON public.complaint (room_id);
+CREATE INDEX IF NOT EXISTS idx_house_owner_id ON public.house (owner_id);
+CREATE INDEX IF NOT EXISTS idx_payment_user_id ON public.payment (user_id);
+CREATE INDEX IF NOT EXISTS idx_payment_room_id ON public.payment (room_id);
+CREATE INDEX IF NOT EXISTS idx_room_house_id ON public.room (house_id);
+
+-- ============================================================================
+-- 4. AUTOMATIC PROFILE SYNCHRONIZATION WITH SUPABASE AUTH
 -- ============================================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 BEGIN
   INSERT INTO public.users (auth_id, name, email, phone, role)
   VALUES (
@@ -124,14 +140,14 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- ============================================================================
--- 4. ROW LEVEL SECURITY (RLS) POLICIES & FUNCTIONS
+-- 5. ROW LEVEL SECURITY (RLS) POLICIES & FUNCTIONS
 -- ============================================================================
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.house ENABLE ROW LEVEL SECURITY;
@@ -142,18 +158,28 @@ ALTER TABLE public.complaint ENABLE ROW LEVEL SECURITY;
 
 -- Helper function to fetch current public.user_id and role
 CREATE OR REPLACE FUNCTION public.current_user_profile()
-RETURNS public.users AS $$
+RETURNS public.users
+LANGUAGE sql
+STABLE
+SECURITY INVOKER
+SET search_path = public, pg_temp
+AS $$
   SELECT * FROM public.users WHERE auth_id = auth.uid() LIMIT 1;
-$$ LANGUAGE sql STABLE SECURITY DEFINER;
+$$;
 
 -- Helper function to verify if authenticated caller has admin privileges
 CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS boolean AS $$
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY INVOKER
+SET search_path = public, pg_temp
+AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.users 
     WHERE auth_id = auth.uid() AND role = 'admin'::public.user_role
   );
-$$ LANGUAGE sql STABLE SECURITY DEFINER;
+$$;
 
 -- Users policies
 CREATE POLICY "Users can view all public profiles" ON public.users
@@ -251,10 +277,14 @@ CREATE POLICY "Owners and admins can view and respond to complaints for their ro
   );
 
 -- ============================================================================
--- 5. AUTOMATED ROOM OCCUPANCY TRIGGER ON BOOKING APPROVAL
+-- 6. AUTOMATED ROOM OCCUPANCY TRIGGER ON BOOKING APPROVAL
 -- ============================================================================
 CREATE OR REPLACE FUNCTION public.handle_booking_status_change()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 BEGIN
   IF NEW.status = 'approved'::public.booking_status AND OLD.status != 'approved'::public.booking_status THEN
     UPDATE public.room 
@@ -268,14 +298,14 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 CREATE OR REPLACE TRIGGER on_booking_status_change
   AFTER UPDATE OF status ON public.booking
   FOR EACH ROW EXECUTE FUNCTION public.handle_booking_status_change();
 
 -- ============================================================================
--- 6. STORAGE BUCKETS & STORAGE POLICIES
+-- 7. STORAGE BUCKETS & STORAGE POLICIES
 -- ============================================================================
 INSERT INTO storage.buckets (id, name, public)
 VALUES 
@@ -284,98 +314,29 @@ VALUES
   ('complaint-attachments', 'complaint-attachments', true)
 ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public;
 
--- Storage RLS: Public read for room images
-CREATE POLICY "Public can view room images" ON storage.objects
-  FOR SELECT TO public
-  USING (bucket_id = 'room-images');
+-- Fix B: Broad SELECT policies are removed — public buckets serve files via URL without
+-- needing a SELECT policy, and listing all file names is an unnecessary data exposure.
+-- DROP in case they were previously created on this instance.
+DROP POLICY IF EXISTS "Public can view room images" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can view payment receipts" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can view complaint attachments" ON storage.objects;
 
--- Storage RLS: Authenticated users can upload room images
+-- Storage RLS: Upload policies (kept — only SELECT is removed)
 CREATE POLICY "Authenticated users can upload room images" ON storage.objects
   FOR INSERT TO authenticated
   WITH CHECK (bucket_id = 'room-images');
-
--- Storage RLS: Authenticated read & upload for payment receipts
-CREATE POLICY "Authenticated users can view payment receipts" ON storage.objects
-  FOR SELECT TO authenticated
-  USING (bucket_id = 'payment-receipts');
 
 CREATE POLICY "Authenticated users can upload payment receipts" ON storage.objects
   FOR INSERT TO authenticated
   WITH CHECK (bucket_id = 'payment-receipts');
 
--- Storage RLS: Authenticated read & upload for complaint attachments
-CREATE POLICY "Authenticated users can view complaint attachments" ON storage.objects
-  FOR SELECT TO authenticated
-  USING (bucket_id = 'complaint-attachments');
-
 CREATE POLICY "Authenticated users can upload complaint attachments" ON storage.objects
   FOR INSERT TO authenticated
   WITH CHECK (bucket_id = 'complaint-attachments');
 
--- ============================================================================
--- 5. AUTOMATED ROOM OCCUPANCY TRIGGER ON BOOKING APPROVAL
--- ============================================================================
-CREATE OR REPLACE FUNCTION public.handle_booking_status_change()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF NEW.status = 'approved'::public.booking_status AND OLD.status != 'approved'::public.booking_status THEN
-    UPDATE public.room 
-    SET status = 'occupied'::public.room_status 
-    WHERE room_id = NEW.room_id;
-  ELSIF (NEW.status = 'cancelled'::public.booking_status OR NEW.status = 'rejected'::public.booking_status)
-        AND OLD.status = 'approved'::public.booking_status THEN
-    UPDATE public.room 
-    SET status = 'available'::public.room_status 
-    WHERE room_id = NEW.room_id;
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE OR REPLACE TRIGGER on_booking_status_change
-  AFTER UPDATE OF status ON public.booking
-  FOR EACH ROW EXECUTE FUNCTION public.handle_booking_status_change();
 
 -- ============================================================================
--- 6. STORAGE BUCKETS & STORAGE POLICIES
--- ============================================================================
-INSERT INTO storage.buckets (id, name, public)
-VALUES 
-  ('room-images', 'room-images', true),
-  ('payment-receipts', 'payment-receipts', true),
-  ('complaint-attachments', 'complaint-attachments', true)
-ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public;
-
--- Storage RLS: Public read for room images
-CREATE POLICY "Public can view room images" ON storage.objects
-  FOR SELECT TO public
-  USING (bucket_id = 'room-images');
-
--- Storage RLS: Authenticated users can upload room images
-CREATE POLICY "Authenticated users can upload room images" ON storage.objects
-  FOR INSERT TO authenticated
-  WITH CHECK (bucket_id = 'room-images');
-
--- Storage RLS: Authenticated read & upload for payment receipts
-CREATE POLICY "Authenticated users can view payment receipts" ON storage.objects
-  FOR SELECT TO authenticated
-  USING (bucket_id = 'payment-receipts');
-
-CREATE POLICY "Authenticated users can upload payment receipts" ON storage.objects
-  FOR INSERT TO authenticated
-  WITH CHECK (bucket_id = 'payment-receipts');
-
--- Storage RLS: Authenticated read & upload for complaint attachments
-CREATE POLICY "Authenticated users can view complaint attachments" ON storage.objects
-  FOR SELECT TO authenticated
-  USING (bucket_id = 'complaint-attachments');
-
-CREATE POLICY "Authenticated users can upload complaint attachments" ON storage.objects
-  FOR INSERT TO authenticated
-  WITH CHECK (bucket_id = 'complaint-attachments');
-  
--- ============================================================================
--- 7. MIDTRANS E-WALLET MIGRATION (Idempotent for existing databases)
+-- 8. MIDTRANS E-WALLET MIGRATION (Idempotent for existing databases)
 -- ============================================================================
 ALTER TABLE public.payment 
   ADD COLUMN IF NOT EXISTS order_id text UNIQUE,
@@ -383,3 +344,31 @@ ALTER TABLE public.payment
   ADD COLUMN IF NOT EXISTS payment_type text,
   ADD COLUMN IF NOT EXISTS qr_code_url text,
   ADD COLUMN IF NOT EXISTS deeplink_url text;
+
+-- ============================================================================
+-- 9. SECURITY HARDENIN
+-- ============================================================================
+-- Trigger-only functions (never callable via PostgREST RPC)
+REVOKE ALL ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.handle_booking_status_change() FROM PUBLIC, anon, authenticated;
+
+-- Security invoker helpers (only authenticated users can call)
+REVOKE ALL ON FUNCTION public.is_admin() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
+
+REVOKE ALL ON FUNCTION public.current_user_profile() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.current_user_profile() TO authenticated;
+
+-- rls_auto_enable is a dev helper; revoke from PUBLIC, anon, authenticated if it exists
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'rls_auto_enable'
+  ) THEN
+    REVOKE ALL ON FUNCTION public.rls_auto_enable() FROM PUBLIC, anon, authenticated;
+  END IF;
+END;
+$$;
+
