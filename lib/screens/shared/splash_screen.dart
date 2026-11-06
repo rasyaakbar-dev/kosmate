@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../core/constants/supabase_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/kosmate_logo.dart';
@@ -79,10 +80,7 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            KosMateLogo(
-              size: 110,
-              color: Colors.white,
-            ),
+            KosMateLogo(size: 110, color: Colors.white),
             SizedBox(height: 20),
             Text(
               'KosMate',

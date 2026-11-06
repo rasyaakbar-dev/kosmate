@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/kosmate_app_bar.dart';
 import '../../models/user_model.dart';
@@ -72,7 +73,10 @@ class _LoginScreenState extends State<LoginScreen> {
       try {
         final prefs = await SharedPreferences.getInstance();
         if (_rememberMe) {
-          await prefs.setString(_kRememberMeEmailKey, _emailController.text.trim());
+          await prefs.setString(
+            _kRememberMeEmailKey,
+            _emailController.text.trim(),
+          );
         } else {
           await prefs.remove(_kRememberMeEmailKey);
         }
@@ -81,7 +85,9 @@ class _LoginScreenState extends State<LoginScreen> {
       if (user == null) {
         messenger.showSnackBar(
           const SnackBar(
-            content: Text('Profile not found. Please contact support or retry.'),
+            content: Text(
+              'Profile not found. Please contact support or retry.',
+            ),
             backgroundColor: Colors.orange,
           ),
         );
@@ -157,7 +163,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     right: BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
                   ),
                 ),
-                child: Icon(prefixIcon, color: const Color(0xFF94A3B8), size: 22),
+                child: Icon(
+                  prefixIcon,
+                  color: const Color(0xFF94A3B8),
+                  size: 22,
+                ),
               ),
               Expanded(
                 child: TextFormField(
@@ -167,7 +177,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   validator: validator,
                   decoration: InputDecoration(
                     isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
@@ -229,10 +242,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                       color: const Color(0xFF94A3B8),
                     ),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
                   validator: (val) {
                     if (val == null || val.isEmpty) {
@@ -262,8 +278,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.5),
-                                onChanged: (val) => setState(() => _rememberMe = val ?? false),
+                                side: const BorderSide(
+                                  color: Color(0xFFCBD5E1),
+                                  width: 1.5,
+                                ),
+                                onChanged: (val) =>
+                                    setState(() => _rememberMe = val ?? false),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -283,7 +303,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: _isLoading ? null : _handleLogin,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.accentColor,
-                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 22,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -292,7 +315,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           ? const SizedBox(
                               height: 18,
                               width: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
                             )
                           : const Row(
                               mainAxisSize: MainAxisSize.min,
@@ -306,7 +332,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                                 SizedBox(width: 6),
-                                Icon(Icons.login_rounded, size: 18, color: Colors.white),
+                                Icon(
+                                  Icons.login_rounded,
+                                  size: 18,
+                                  color: Colors.white,
+                                ),
                               ],
                             ),
                     ),
@@ -321,7 +351,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                          MaterialPageRoute(
+                            builder: (_) => const RegisterScreen(),
+                          ),
                         );
                       },
                       child: const Text(
@@ -338,7 +370,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       onTap: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Password reset instructions will be sent to your email.'),
+                            content: Text(
+                              'Password reset instructions will be sent to your email.',
+                            ),
                           ),
                         );
                       },
@@ -422,7 +456,9 @@ class _LoginScreenState extends State<LoginScreen> {
           onTap: () {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Social login is for preview demo UI only. Please sign in with email.'),
+                content: Text(
+                  'Social login is for preview demo UI only. Please sign in with email.',
+                ),
                 duration: Duration(seconds: 2),
               ),
             );

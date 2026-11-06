@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../core/constants/supabase_constants.dart';
 import '../models/payment_model.dart';
 import '../models/user_model.dart';
@@ -12,7 +13,9 @@ class PaymentService {
   Future<List<PaymentModel>> getPaymentsByUser(int userId) async {
     final response = await _client
         .from(SupabaseConstants.paymentTable)
-        .select('*, users!payment_user_id_fkey(*), room!payment_room_id_fkey(*, house!room_house_id_fkey(*))')
+        .select(
+          '*, users!payment_user_id_fkey(*), room!payment_room_id_fkey(*, house!room_house_id_fkey(*))',
+        )
         .eq('user_id', userId)
         .order('due_date', ascending: false);
 
@@ -25,7 +28,9 @@ class PaymentService {
   Future<List<PaymentModel>> getPaymentsForOwner(int ownerId) async {
     final response = await _client
         .from(SupabaseConstants.paymentTable)
-        .select('*, users!payment_user_id_fkey(*), room!payment_room_id_fkey!inner(*, house!room_house_id_fkey!inner(*))')
+        .select(
+          '*, users!payment_user_id_fkey(*), room!payment_room_id_fkey!inner(*, house!room_house_id_fkey!inner(*))',
+        )
         .eq('room.house.owner_id', ownerId)
         .order('due_date', ascending: false);
 
@@ -50,7 +55,9 @@ class PaymentService {
           'due_date': dueDate.toIso8601String().split('T').first,
           'status': PaymentStatus.pending.name,
         })
-        .select('*, users!payment_user_id_fkey(*), room!payment_room_id_fkey(*, house!room_house_id_fkey(*))')
+        .select(
+          '*, users!payment_user_id_fkey(*), room!payment_room_id_fkey(*, house!room_house_id_fkey(*))',
+        )
         .single();
 
     return PaymentModel.fromJson(response);
@@ -69,7 +76,9 @@ class PaymentService {
           // Remains pending until owner verifies or set to paid
         })
         .eq('payment_id', paymentId)
-        .select('*, users!payment_user_id_fkey(*), room!payment_room_id_fkey(*, house!room_house_id_fkey(*))')
+        .select(
+          '*, users!payment_user_id_fkey(*), room!payment_room_id_fkey(*, house!room_house_id_fkey(*))',
+        )
         .single();
 
     return PaymentModel.fromJson(response);
@@ -81,20 +90,23 @@ class PaymentService {
     required PaymentStatus status,
     DateTime? paidDate,
   }) async {
-    final updateData = <String, dynamic>{
-      'status': status.name,
-    };
+    final updateData = <String, dynamic>{'status': status.name};
     if (paidDate != null) {
       updateData['paid_date'] = paidDate.toIso8601String().split('T').first;
     } else if (status == PaymentStatus.paid) {
-      updateData['paid_date'] = DateTime.now().toIso8601String().split('T').first;
+      updateData['paid_date'] = DateTime.now()
+          .toIso8601String()
+          .split('T')
+          .first;
     }
 
     final response = await _client
         .from(SupabaseConstants.paymentTable)
         .update(updateData)
         .eq('payment_id', paymentId)
-        .select('*, users!payment_user_id_fkey(*), room!payment_room_id_fkey(*, house!room_house_id_fkey(*))')
+        .select(
+          '*, users!payment_user_id_fkey(*), room!payment_room_id_fkey(*, house!room_house_id_fkey(*))',
+        )
         .single();
 
     return PaymentModel.fromJson(response);
@@ -110,7 +122,8 @@ class PaymentService {
       return payment;
     }
 
-    final orderId = 'KOSMATE-INV-${payment.paymentId}-${DateTime.now().millisecondsSinceEpoch}';
+    final orderId =
+        'KOSMATE-INV-${payment.paymentId}-${DateTime.now().millisecondsSinceEpoch}';
     final chargeRes = await _midtransService.chargeEWallet(
       orderId: orderId,
       grossAmount: payment.amount,
@@ -129,7 +142,9 @@ class PaymentService {
         .from(SupabaseConstants.paymentTable)
         .update(updateData)
         .eq('payment_id', payment.paymentId)
-        .select('*, users!payment_user_id_fkey(*), room!payment_room_id_fkey(*, house!room_house_id_fkey(*))')
+        .select(
+          '*, users!payment_user_id_fkey(*), room!payment_room_id_fkey(*, house!room_house_id_fkey(*))',
+        )
         .single();
 
     return PaymentModel.fromJson(response);
@@ -137,12 +152,16 @@ class PaymentService {
 
   /// Sync and check transaction status directly from Midtrans Core API
   /// If settled, updates status to paid in Supabase automatically.
-  Future<PaymentModel> syncPaymentStatusWithMidtrans(PaymentModel payment) async {
+  Future<PaymentModel> syncPaymentStatusWithMidtrans(
+    PaymentModel payment,
+  ) async {
     if (payment.orderId == null) {
       return payment;
     }
 
-    final statusRes = await _midtransService.getTransactionStatus(payment.orderId!);
+    final statusRes = await _midtransService.getTransactionStatus(
+      payment.orderId!,
+    );
 
     if (statusRes.isSettled) {
       return await updatePaymentStatus(
@@ -161,7 +180,9 @@ class PaymentService {
             'deeplink_url': null,
           })
           .eq('payment_id', payment.paymentId)
-          .select('*, users!payment_user_id_fkey(*), room!payment_room_id_fkey(*, house!room_house_id_fkey(*))')
+          .select(
+            '*, users!payment_user_id_fkey(*), room!payment_room_id_fkey(*, house!room_house_id_fkey(*))',
+          )
           .single();
 
       return PaymentModel.fromJson(response);
@@ -185,7 +206,9 @@ class PaymentService {
           'deeplink_url': null,
         })
         .eq('payment_id', payment.paymentId)
-        .select('*, users!payment_user_id_fkey(*), room!payment_room_id_fkey(*, house!room_house_id_fkey(*))')
+        .select(
+          '*, users!payment_user_id_fkey(*), room!payment_room_id_fkey(*, house!room_house_id_fkey(*))',
+        )
         .single();
 
     return PaymentModel.fromJson(response);
@@ -203,4 +226,3 @@ class PaymentService {
         });
   }
 }
-

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../core/theme/app_theme.dart';
 import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
@@ -6,10 +7,7 @@ import '../../services/auth_service.dart';
 class EditProfileScreen extends StatefulWidget {
   final UserModel user;
 
-  const EditProfileScreen({
-    super.key,
-    required this.user,
-  });
+  const EditProfileScreen({super.key, required this.user});
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
@@ -29,7 +27,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     _nameController = TextEditingController(text: widget.user.name);
     _phoneController = TextEditingController(text: widget.user.phone);
-    _avatarUrlController = TextEditingController(text: widget.user.avatarUrl ?? '');
+    _avatarUrlController = TextEditingController(
+      text: widget.user.avatarUrl ?? '',
+    );
   }
 
   @override
@@ -120,7 +120,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         CircleAvatar(
                           radius: 46,
                           backgroundColor: const Color(0xFFE2E8F0),
-                          backgroundImage: _avatarUrlController.text.trim().isNotEmpty
+                          backgroundImage:
+                              _avatarUrlController.text.trim().isNotEmpty
                               ? NetworkImage(_avatarUrlController.text.trim())
                               : null,
                           child: _avatarUrlController.text.trim().isEmpty
@@ -274,7 +275,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.lock_outline, color: Color(0xFF64748B), size: 20),
+                    Icon(
+                      Icons.lock_outline,
+                      color: Color(0xFF64748B),
+                      size: 20,
+                    ),
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -303,7 +308,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ),
                         side: const BorderSide(color: Color(0xFFCBD5E1)),
                       ),
-                      onPressed: _isLoading ? null : () => Navigator.pop(context),
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.pop(context),
                       child: const Text(
                         'Cancel',
                         style: TextStyle(
@@ -390,18 +397,30 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             prefixIcon: Icon(icon, color: const Color(0xFF64748B), size: 20),
             filled: true,
             fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
+              borderSide: const BorderSide(
+                color: Color(0xFFCBD5E1),
+                width: 1.2,
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
+              borderSide: const BorderSide(
+                color: Color(0xFFCBD5E1),
+                width: 1.2,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppTheme.accentColor, width: 1.8),
+              borderSide: const BorderSide(
+                color: AppTheme.accentColor,
+                width: 1.8,
+              ),
             ),
           ),
         ),
@@ -472,4 +491,3 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 }
-

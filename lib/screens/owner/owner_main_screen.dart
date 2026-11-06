@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/kosmate_app_bar.dart';
@@ -37,10 +38,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
   @override
   Widget build(BuildContext context) {
     final screens = [
-      _OwnerHomeDashboard(
-        user: widget.user,
-        onNavigateToTab: _navigateToTab,
-      ),
+      _OwnerHomeDashboard(user: widget.user, onNavigateToTab: _navigateToTab),
       _OwnerPropertiesTab(user: widget.user),
       _OwnerPaymentsTab(user: widget.user),
       ProfileScreen(user: widget.user),
@@ -68,10 +66,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
 
     return Scaffold(
       appBar: KosMateAppBar(title: appBarTitle, actionIcon: actionIcon),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: screens),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -91,7 +86,10 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
             ),
             NavigationDestination(
               icon: Icon(Icons.sensor_door_outlined),
-              selectedIcon: Icon(Icons.sensor_door, color: AppTheme.primaryColor),
+              selectedIcon: Icon(
+                Icons.sensor_door,
+                color: AppTheme.primaryColor,
+              ),
               label: 'Rooms',
             ),
             NavigationDestination(
@@ -153,9 +151,15 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
   Future<void> _loadDashboardData() async {
     try {
       final houses = await _houseService.getHousesByOwner(widget.user.userId);
-      final bookings = await _bookingService.getBookingsForOwner(widget.user.userId);
-      final payments = await _paymentService.getPaymentsForOwner(widget.user.userId);
-      final complaints = await _complaintService.getComplaintsForOwner(widget.user.userId);
+      final bookings = await _bookingService.getBookingsForOwner(
+        widget.user.userId,
+      );
+      final payments = await _paymentService.getPaymentsForOwner(
+        widget.user.userId,
+      );
+      final complaints = await _complaintService.getComplaintsForOwner(
+        widget.user.userId,
+      );
 
       int total = 0;
       int occupied = 0;
@@ -165,7 +169,9 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
         final rooms = await _roomService.getRooms(houseId: h.houseId);
         total += rooms.length;
         occupied += rooms.where((r) => r.status == RoomStatus.occupied).length;
-        available += rooms.where((r) => r.status == RoomStatus.available).length;
+        available += rooms
+            .where((r) => r.status == RoomStatus.available)
+            .length;
       }
 
       if (mounted) {
@@ -212,29 +218,41 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
               children: [
                 DropdownButtonFormField<int>(
                   initialValue: selectedHouseId,
-                  decoration: const InputDecoration(labelText: 'Boarding House'),
+                  decoration: const InputDecoration(
+                    labelText: 'Boarding House',
+                  ),
                   items: _houses.map((h) {
-                    return DropdownMenuItem(value: h.houseId, child: Text(h.houseName));
+                    return DropdownMenuItem(
+                      value: h.houseId,
+                      child: Text(h.houseName),
+                    );
                   }).toList(),
                   onChanged: (val) {
-                    if (val != null) setDialogState(() => selectedHouseId = val);
+                    if (val != null)
+                      setDialogState(() => selectedHouseId = val);
                   },
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: numberCtrl,
-                  decoration: const InputDecoration(labelText: 'Room Number (e.g. A-01)'),
+                  decoration: const InputDecoration(
+                    labelText: 'Room Number (e.g. A-01)',
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: typeCtrl,
-                  decoration: const InputDecoration(labelText: 'Room Type (e.g. Deluxe/Single)'),
+                  decoration: const InputDecoration(
+                    labelText: 'Room Type (e.g. Deluxe/Single)',
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: priceCtrl,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Monthly Price (IDR)'),
+                  decoration: const InputDecoration(
+                    labelText: 'Monthly Price (IDR)',
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -296,7 +314,11 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
             children: [
               const Text(
                 'Tenant Complaints',
-                style: TextStyle(fontFamily: 'Roboto', fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 12),
               Expanded(
@@ -314,17 +336,23 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
                           return Card(
                             margin: const EdgeInsets.only(bottom: 10),
                             child: ListTile(
-                              title: Text(c.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              title: Text(
+                                c.title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               subtitle: Text(
                                 '${c.description}\nPriority: ${c.priority.displayName}${c.response != null ? "\nResponse: ${c.response}" : ""}',
                               ),
                               trailing: Chip(
                                 label: Text(c.status.displayName),
-                                backgroundColor: c.status == ComplaintStatus.resolved
+                                backgroundColor:
+                                    c.status == ComplaintStatus.resolved
                                     ? Colors.green.withValues(alpha: 0.15)
                                     : c.status == ComplaintStatus.inProgress
-                                        ? Colors.blue.withValues(alpha: 0.15)
-                                        : Colors.amber.withValues(alpha: 0.15),
+                                    ? Colors.blue.withValues(alpha: 0.15)
+                                    : Colors.amber.withValues(alpha: 0.15),
                               ),
                               onTap: () => _showComplaintResponseDialog(c),
                             ),
@@ -357,7 +385,10 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
               children: [
                 Text(
                   'Tenant Description:\n${complaint.description}',
-                  style: const TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF64748B),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<ComplaintStatus>(
@@ -412,7 +443,9 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
                   if (ctx.mounted) Navigator.pop(ctx);
                   _loadDashboardData();
                   messenger.showSnackBar(
-                    const SnackBar(content: Text('Complaint updated successfully!')),
+                    const SnackBar(
+                      content: Text('Complaint updated successfully!'),
+                    ),
                   );
                 } catch (e) {
                   messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -442,7 +475,11 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
             children: [
               const Text(
                 'Booking Requests / Assign Renter',
-                style: TextStyle(fontFamily: 'Roboto', fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 12),
               Expanded(
@@ -456,21 +493,30 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
                           return Card(
                             margin: const EdgeInsets.only(bottom: 10),
                             child: ListTile(
-                              title: Text('Room ${b.room?.roomNumber ?? b.roomId}'),
-                              subtitle: Text('Tenant: ${b.user?.name ?? "User"}\nMove-in: ${Formatters.formatDate(b.requestDate)}'),
+                              title: Text(
+                                'Room ${b.room?.roomNumber ?? b.roomId}',
+                              ),
+                              subtitle: Text(
+                                'Tenant: ${b.user?.name ?? "User"}\nMove-in: ${Formatters.formatDate(b.requestDate)}',
+                              ),
                               trailing: ElevatedButton(
                                 onPressed: b.status == BookingStatus.pending
                                     ? () async {
-                                        await _bookingService.updateBookingStatus(
-                                          bookingId: b.bookingId,
-                                          status: BookingStatus.approved,
-                                          roomId: b.roomId,
-                                        );
+                                        await _bookingService
+                                            .updateBookingStatus(
+                                              bookingId: b.bookingId,
+                                              status: BookingStatus.approved,
+                                              roomId: b.roomId,
+                                            );
                                         if (ctx.mounted) Navigator.pop(ctx);
                                         _loadDashboardData();
                                       }
                                     : null,
-                                child: Text(b.status == BookingStatus.pending ? 'Approve' : b.status.displayName),
+                                child: Text(
+                                  b.status == BookingStatus.pending
+                                      ? 'Approve'
+                                      : b.status.displayName,
+                                ),
                               ),
                             ),
                           );
@@ -498,7 +544,7 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
       'Thursday',
       'Friday',
       'Saturday',
-      'Sunday'
+      'Sunday',
     ];
     final weekdayName = weekdays[now.weekday - 1];
     final dateStr = '$weekdayName, ${Formatters.formatDate(now)}';
@@ -637,7 +683,10 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
                 title: 'Payment received',
                 subtitle:
                     '${_recentPayments.first.user?.name ?? "Tenant"} • Room ${_recentPayments.first.room?.roomNumber ?? _recentPayments.first.roomId}',
-                trailingText: Formatters.formatDate(_recentPayments.first.paidDate ?? _recentPayments.first.dueDate),
+                trailingText: Formatters.formatDate(
+                  _recentPayments.first.paidDate ??
+                      _recentPayments.first.dueDate,
+                ),
               ),
               const SizedBox(height: 10),
             ],
@@ -649,7 +698,9 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
                 subtitle:
                     '${_recentComplaints.first.description} • Room ${_recentComplaints.first.room?.roomNumber ?? _recentComplaints.first.roomId}',
                 trailingBadge: _recentComplaints.first.status.displayName,
-                trailingText: Formatters.formatDate(_recentComplaints.first.date),
+                trailingText: Formatters.formatDate(
+                  _recentComplaints.first.date,
+                ),
               ),
               const SizedBox(height: 10),
             ],
@@ -661,9 +712,12 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
                 subtitle:
                     '${_recentBookings.first.user?.name ?? "User"} • Room ${_recentBookings.first.room?.roomNumber ?? _recentBookings.first.roomId}',
                 trailingBadge: _recentBookings.first.status.displayName,
-                trailingText: Formatters.formatDate(_recentBookings.first.requestDate),
+                trailingText: Formatters.formatDate(
+                  _recentBookings.first.requestDate,
+                ),
               ),
-            ] else if (_recentPayments.isEmpty && _recentComplaints.isEmpty) ...[
+            ] else if (_recentPayments.isEmpty &&
+                _recentComplaints.isEmpty) ...[
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 20),
                 child: Center(
@@ -811,7 +865,10 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
                 const SizedBox(height: 3),
                 Text(
                   subtitle,
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF64748B),
+                  ),
                 ),
               ],
             ),
@@ -894,10 +951,8 @@ class _OwnerPropertiesTabState extends State<_OwnerPropertiesTab> {
     final changed = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => HouseDetailScreen(
-          house: house,
-          currentUser: widget.user,
-        ),
+        builder: (_) =>
+            HouseDetailScreen(house: house, currentUser: widget.user),
       ),
     );
     if (changed == true && mounted) {
@@ -909,10 +964,8 @@ class _OwnerPropertiesTabState extends State<_OwnerPropertiesTab> {
     final updated = await Navigator.push<HouseModel>(
       context,
       MaterialPageRoute(
-        builder: (_) => HouseFormScreen(
-          house: house,
-          ownerId: widget.user.userId,
-        ),
+        builder: (_) =>
+            HouseFormScreen(house: house, ownerId: widget.user.userId),
       ),
     );
     if (updated != null && mounted) {
@@ -978,7 +1031,11 @@ class _OwnerPropertiesTabState extends State<_OwnerPropertiesTab> {
             children: [
               const Text(
                 'Boarding Houses & Rooms',
-                style: TextStyle(fontFamily: 'Roboto', fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               ElevatedButton.icon(
                 icon: const Icon(Icons.add, size: 18),
@@ -1009,7 +1066,11 @@ class _OwnerPropertiesTabState extends State<_OwnerPropertiesTab> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.home_work_outlined, size: 60, color: Color(0xFFCBD5E1)),
+                          const Icon(
+                            Icons.home_work_outlined,
+                            size: 60,
+                            color: Color(0xFFCBD5E1),
+                          ),
                           const SizedBox(height: 12),
                           const Text(
                             'No boarding houses listed yet.',
@@ -1023,7 +1084,10 @@ class _OwnerPropertiesTabState extends State<_OwnerPropertiesTab> {
                           const SizedBox(height: 6),
                           const Text(
                             'Click "Add House" above to list your first boarding house.',
-                            style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF94A3B8),
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -1061,15 +1125,19 @@ class _OwnerPropertiesTabState extends State<_OwnerPropertiesTab> {
                                       width: 60,
                                       height: 60,
                                       color: const Color(0xFFE2E8F0),
-                                      child: house.thumbnailUrl != null &&
-                                              house.thumbnailUrl!.trim().isNotEmpty
+                                      child:
+                                          house.thumbnailUrl != null &&
+                                              house.thumbnailUrl!
+                                                  .trim()
+                                                  .isNotEmpty
                                           ? Image.network(
                                               house.thumbnailUrl!.trim(),
                                               fit: BoxFit.cover,
-                                              errorBuilder: (_, _, _) => const Icon(
-                                                Icons.home_work_outlined,
-                                                color: Color(0xFF94A3B8),
-                                              ),
+                                              errorBuilder: (_, _, _) =>
+                                                  const Icon(
+                                                    Icons.home_work_outlined,
+                                                    color: Color(0xFF94A3B8),
+                                                  ),
                                             )
                                           : const Icon(
                                               Icons.home_work_outlined,
@@ -1080,7 +1148,8 @@ class _OwnerPropertiesTabState extends State<_OwnerPropertiesTab> {
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           house.houseName,
@@ -1104,7 +1173,10 @@ class _OwnerPropertiesTabState extends State<_OwnerPropertiesTab> {
                                     ),
                                   ),
                                   PopupMenuButton<String>(
-                                    icon: const Icon(Icons.more_vert, color: Color(0xFF64748B)),
+                                    icon: const Icon(
+                                      Icons.more_vert,
+                                      color: Color(0xFF64748B),
+                                    ),
                                     onSelected: (action) {
                                       if (action == 'details') {
                                         _openHouseDetails(house);
@@ -1119,7 +1191,11 @@ class _OwnerPropertiesTabState extends State<_OwnerPropertiesTab> {
                                         value: 'details',
                                         child: Row(
                                           children: [
-                                            Icon(Icons.visibility_outlined, size: 18, color: AppTheme.accentColor),
+                                            Icon(
+                                              Icons.visibility_outlined,
+                                              size: 18,
+                                              color: AppTheme.accentColor,
+                                            ),
                                             SizedBox(width: 8),
                                             Text('View Details & Rooms'),
                                           ],
@@ -1129,7 +1205,11 @@ class _OwnerPropertiesTabState extends State<_OwnerPropertiesTab> {
                                         value: 'edit',
                                         child: Row(
                                           children: [
-                                            Icon(Icons.edit_outlined, size: 18, color: Color(0xFF475569)),
+                                            Icon(
+                                              Icons.edit_outlined,
+                                              size: 18,
+                                              color: Color(0xFF475569),
+                                            ),
                                             SizedBox(width: 8),
                                             Text('Edit House'),
                                           ],
@@ -1139,9 +1219,18 @@ class _OwnerPropertiesTabState extends State<_OwnerPropertiesTab> {
                                         value: 'delete',
                                         child: Row(
                                           children: [
-                                            Icon(Icons.delete_outline, size: 18, color: Color(0xFFB33A3A)),
+                                            Icon(
+                                              Icons.delete_outline,
+                                              size: 18,
+                                              color: Color(0xFFB33A3A),
+                                            ),
                                             SizedBox(width: 8),
-                                            Text('Delete House', style: TextStyle(color: Color(0xFFB33A3A))),
+                                            Text(
+                                              'Delete House',
+                                              style: TextStyle(
+                                                color: Color(0xFFB33A3A),
+                                              ),
+                                            ),
                                           ],
                                         ),
                                       ),
@@ -1149,30 +1238,50 @@ class _OwnerPropertiesTabState extends State<_OwnerPropertiesTab> {
                                   ),
                                 ],
                               ),
-                              const Divider(height: 20, color: Color(0xFFF1F5F9)),
+                              const Divider(
+                                height: 20,
+                                color: Color(0xFFF1F5F9),
+                              ),
                               FutureBuilder<List<RoomModel>>(
-                                future: _roomService.getRooms(houseId: house.houseId),
+                                future: _roomService.getRooms(
+                                  houseId: house.houseId,
+                                ),
                                 builder: (context, roomSnap) {
-                                  if (roomSnap.connectionState == ConnectionState.waiting) {
-                                    return const Center(child: LinearProgressIndicator());
+                                  if (roomSnap.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return const Center(
+                                      child: LinearProgressIndicator(),
+                                    );
                                   }
                                   final rooms = roomSnap.data ?? [];
                                   if (rooms.isEmpty) {
                                     return const Row(
                                       children: [
-                                        Icon(Icons.info_outline, size: 16, color: Color(0xFF94A3B8)),
+                                        Icon(
+                                          Icons.info_outline,
+                                          size: 16,
+                                          color: Color(0xFF94A3B8),
+                                        ),
                                         SizedBox(width: 6),
                                         Text(
                                           'No rooms added to this house yet.',
-                                          style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: Color(0xFF94A3B8),
+                                          ),
                                         ),
                                       ],
                                     );
                                   }
 
-                                  final availableCount = rooms.where((r) => r.status == RoomStatus.available).length;
+                                  final availableCount = rooms
+                                      .where(
+                                        (r) => r.status == RoomStatus.available,
+                                      )
+                                      .length;
                                   return Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         '${rooms.length} Rooms total ($availableCount available)',
@@ -1278,18 +1387,27 @@ class _OwnerPaymentsTabState extends State<_OwnerPaymentsTab> {
                           Chip(label: Text(p.status.displayName)),
                         ],
                       ),
-                      Text('Tenant: ${p.user?.name ?? "User"} • Room: ${p.room?.roomNumber ?? p.roomId}'),
+                      Text(
+                        'Tenant: ${p.user?.name ?? "User"} • Room: ${p.room?.roomNumber ?? p.roomId}',
+                      ),
                       Text('Due: ${Formatters.formatDate(p.dueDate)}'),
                       if (p.orderId != null) ...[
                         const SizedBox(height: 4),
                         Text(
                           'Midtrans Order: ${p.orderId}',
-                          style: const TextStyle(fontSize: 12, color: AppTheme.accentColor, fontWeight: FontWeight.w500),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.accentColor,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ],
                       if (p.receiptUrl != null) ...[
                         const SizedBox(height: 8),
-                        Text('Receipt: ${p.receiptUrl}', style: const TextStyle(color: Colors.blue)),
+                        Text(
+                          'Receipt: ${p.receiptUrl}',
+                          style: const TextStyle(color: Colors.blue),
+                        ),
                       ],
                       if (p.status == PaymentStatus.pending) ...[
                         const SizedBox(height: 10),
@@ -1319,5 +1437,3 @@ class _OwnerPaymentsTabState extends State<_OwnerPaymentsTab> {
     );
   }
 }
-
-

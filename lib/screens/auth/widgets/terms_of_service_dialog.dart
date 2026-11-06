@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../core/theme/app_theme.dart';
 
 class TermsOfServiceDialog extends StatelessWidget {
@@ -30,7 +31,11 @@ class TermsOfServiceDialog extends StatelessWidget {
                 children: [
                   const Row(
                     children: [
-                      Icon(Icons.gavel_rounded, color: AppTheme.accentColor, size: 24),
+                      Icon(
+                        Icons.gavel_rounded,
+                        color: AppTheme.accentColor,
+                        size: 24,
+                      ),
                       SizedBox(width: 10),
                       Text(
                         'Terms of Service',
@@ -96,7 +101,9 @@ class TermsOfServiceDialog extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
 
-                      _buildSectionTitle('5. House Rules & Maintenance Complaints'),
+                      _buildSectionTitle(
+                        '5. House Rules & Maintenance Complaints',
+                      ),
                       _buildSectionBody(
                         '• Renters agree to respect the designated boarding house rules, curfews, and common area regulations.\n'
                         '• Maintenance issues or disputes should be submitted promptly via the KosMate Complaint system.\n'
@@ -135,8 +142,13 @@ class TermsOfServiceDialog extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.accentColor,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       elevation: 0,
                     ),
                     onPressed: () => Navigator.pop(context, true),
@@ -184,4 +196,3 @@ class TermsOfServiceDialog extends StatelessWidget {
     );
   }
 }
-

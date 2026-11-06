@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/kosmate_components.dart';
 import '../../models/user_model.dart';
@@ -10,11 +11,7 @@ class ProfileScreen extends StatefulWidget {
   final UserModel user;
   final String? subtitleInfo;
 
-  const ProfileScreen({
-    super.key,
-    required this.user,
-    this.subtitleInfo,
-  });
+  const ProfileScreen({super.key, required this.user, this.subtitleInfo});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -52,7 +49,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB33A3A)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFB33A3A),
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Logout', style: TextStyle(color: Colors.white)),
           ),
@@ -221,4 +220,3 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
-

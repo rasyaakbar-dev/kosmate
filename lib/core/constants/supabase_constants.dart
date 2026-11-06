@@ -2,7 +2,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseConstants {
   static const String supabaseUrl = 'https://mojbiwkvxanpkpzvamnh.supabase.co';
-  static const String supabaseAnonKey = 'sb_publishable_x-U2wU3iW7Z7YZyND2-E0g_tW-uwkfz';
+  static const String supabaseAnonKey =
+      'sb_publishable_x-U2wU3iW7Z7YZyND2-E0g_tW-uwkfz';
 
   // Table names
   static const String usersTable = 'users';
@@ -27,8 +28,8 @@ class MidtransConstants {
   static const String serverKey = 'SB-Mid-server-YOUR_SERVER_KEY_HERE';
   static const String clientKey = 'SB-Mid-client-YOUR_CLIENT_KEY_HERE';
 
-  static String get baseUrl => isProduction ? productionBaseUrl : sandboxBaseUrl;
+  static String get baseUrl =>
+      isProduction ? productionBaseUrl : sandboxBaseUrl;
 }
 
 final supabase = Supabase.instance.client;
-

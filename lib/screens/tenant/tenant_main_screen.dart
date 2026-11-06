@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/kosmate_app_bar.dart';
@@ -34,10 +35,7 @@ class _TenantMainScreenState extends State<TenantMainScreen> {
   @override
   Widget build(BuildContext context) {
     final screens = [
-      _TenantHomeDashboard(
-        user: widget.user,
-        onNavigateToTab: _navigateToTab,
-      ),
+      _TenantHomeDashboard(user: widget.user, onNavigateToTab: _navigateToTab),
       _TenantRoomsTab(user: widget.user),
       _TenantPaymentsTab(user: widget.user),
       ProfileScreen(user: widget.user),
@@ -64,14 +62,8 @@ class _TenantMainScreenState extends State<TenantMainScreen> {
     }
 
     return Scaffold(
-      appBar: KosMateAppBar(
-        title: appBarTitle,
-        actionIcon: actionIcon,
-      ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: screens,
-      ),
+      appBar: KosMateAppBar(title: appBarTitle, actionIcon: actionIcon),
+      body: IndexedStack(index: _currentIndex, children: screens),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -91,7 +83,10 @@ class _TenantMainScreenState extends State<TenantMainScreen> {
             ),
             NavigationDestination(
               icon: Icon(Icons.sensor_door_outlined),
-              selectedIcon: Icon(Icons.sensor_door, color: AppTheme.primaryColor),
+              selectedIcon: Icon(
+                Icons.sensor_door,
+                color: AppTheme.primaryColor,
+              ),
               label: 'Room',
             ),
             NavigationDestination(
@@ -145,9 +140,15 @@ class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
 
   Future<void> _loadDashboardData() async {
     try {
-      final bookings = await _bookingService.getBookingsByUser(widget.user.userId);
-      final payments = await _paymentService.getPaymentsByUser(widget.user.userId);
-      final complaints = await _complaintService.getComplaintsByUser(widget.user.userId);
+      final bookings = await _bookingService.getBookingsByUser(
+        widget.user.userId,
+      );
+      final payments = await _paymentService.getPaymentsByUser(
+        widget.user.userId,
+      );
+      final complaints = await _complaintService.getComplaintsByUser(
+        widget.user.userId,
+      );
 
       if (mounted) {
         setState(() {
@@ -193,7 +194,9 @@ class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text('Submit Complaint (Room ${_activeBooking?.room?.roomNumber ?? roomId})'),
+          title: Text(
+            'Submit Complaint (Room ${_activeBooking?.room?.roomNumber ?? roomId})',
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -202,10 +205,14 @@ class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
                   initialValue: selectedCategory,
                   decoration: const InputDecoration(labelText: 'Category'),
                   items: ComplaintCategory.values.map((c) {
-                    return DropdownMenuItem(value: c, child: Text(c.displayName));
+                    return DropdownMenuItem(
+                      value: c,
+                      child: Text(c.displayName),
+                    );
                   }).toList(),
                   onChanged: (val) {
-                    if (val != null) setDialogState(() => selectedCategory = val);
+                    if (val != null)
+                      setDialogState(() => selectedCategory = val);
                   },
                 ),
                 const SizedBox(height: 12),
@@ -213,16 +220,23 @@ class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
                   initialValue: selectedPriority,
                   decoration: const InputDecoration(labelText: 'Priority'),
                   items: ComplaintPriority.values.map((p) {
-                    return DropdownMenuItem(value: p, child: Text(p.displayName));
+                    return DropdownMenuItem(
+                      value: p,
+                      child: Text(p.displayName),
+                    );
                   }).toList(),
                   onChanged: (val) {
-                    if (val != null) setDialogState(() => selectedPriority = val);
+                    if (val != null)
+                      setDialogState(() => selectedPriority = val);
                   },
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: titleController,
-                  decoration: const InputDecoration(labelText: 'Title', hintText: 'e.g. Water leak'),
+                  decoration: const InputDecoration(
+                    labelText: 'Title',
+                    hintText: 'e.g. Water leak',
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -254,7 +268,9 @@ class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
                   if (ctx.mounted) Navigator.pop(ctx);
                   _loadDashboardData();
                   messenger.showSnackBar(
-                    const SnackBar(content: Text('Complaint submitted successfully!')),
+                    const SnackBar(
+                      content: Text('Complaint submitted successfully!'),
+                    ),
                   );
                 } catch (e) {
                   messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -274,8 +290,11 @@ class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final hasActiveRoom = _activeBooking != null && _activeBooking?.room != null;
-    final roomNumber = hasActiveRoom ? _activeBooking!.room!.roomNumber : 'None';
+    final hasActiveRoom =
+        _activeBooking != null && _activeBooking?.room != null;
+    final roomNumber = hasActiveRoom
+        ? _activeBooking!.room!.roomNumber
+        : 'None';
     final houseName = hasActiveRoom
         ? (_activeBooking!.room!.house?.houseName ?? 'Boarding House')
         : 'Explore available rooms';
@@ -342,7 +361,11 @@ class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
                                 color: Color(0xFF475569),
                               ),
                             ),
-                            Icon(Icons.sensor_door_outlined, color: AppTheme.accentColor, size: 22),
+                            Icon(
+                              Icons.sensor_door_outlined,
+                              color: AppTheme.accentColor,
+                              size: 22,
+                            ),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -382,7 +405,11 @@ class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
                                 color: Color(0xFF475569),
                               ),
                             ),
-                            Icon(Icons.check_circle_outline_rounded, color: AppTheme.accentColor, size: 22),
+                            Icon(
+                              Icons.check_circle_outline_rounded,
+                              color: AppTheme.accentColor,
+                              size: 22,
+                            ),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -475,7 +502,10 @@ class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
                         color: const Color(0xFFEFF6FF),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.receipt_long_outlined, color: AppTheme.accentColor),
+                      child: const Icon(
+                        Icons.receipt_long_outlined,
+                        color: AppTheme.accentColor,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -494,13 +524,19 @@ class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
                           const SizedBox(height: 3),
                           Text(
                             '${Formatters.formatCurrency(_latestPayment!.amount)} • Due: ${Formatters.formatDate(_latestPayment!.dueDate)}',
-                            style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF64748B),
+                            ),
                           ),
                         ],
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: _latestPayment!.status == PaymentStatus.paid
                             ? const Color(0xFFE6F4EA)
@@ -520,7 +556,11 @@ class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
+                    const Icon(
+                      Icons.chevron_right,
+                      color: Color(0xFF94A3B8),
+                      size: 20,
+                    ),
                   ],
                 ),
               ),
@@ -544,7 +584,10 @@ class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
                         color: const Color(0xFFEFF6FF),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.info_outline_rounded, color: AppTheme.accentColor),
+                      child: const Icon(
+                        Icons.info_outline_rounded,
+                        color: AppTheme.accentColor,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -565,7 +608,10 @@ class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
                             _latestComplaint!.description,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF64748B),
+                            ),
                           ),
                         ],
                       ),
@@ -739,9 +785,7 @@ class _TenantRoomsTabState extends State<_TenantRoomsTab> {
                     ),
                   );
                 } catch (e) {
-                  messenger.showSnackBar(
-                    SnackBar(content: Text('Failed: $e')),
-                  );
+                  messenger.showSnackBar(SnackBar(content: Text('Failed: $e')));
                 }
               },
               child: const Text('Submit Booking'),
@@ -769,7 +813,8 @@ class _TenantRoomsTabState extends State<_TenantRoomsTab> {
                     )
                   : null,
             ),
-            onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
+            onChanged: (val) =>
+                setState(() => _searchQuery = val.toLowerCase()),
           ),
         ),
         Expanded(
@@ -785,7 +830,8 @@ class _TenantRoomsTabState extends State<_TenantRoomsTab> {
                 final filtered = rooms.where((r) {
                   return r.roomNumber.toLowerCase().contains(_searchQuery) ||
                       r.roomType.toLowerCase().contains(_searchQuery) ||
-                      (r.facilities?.toLowerCase().contains(_searchQuery) ?? false);
+                      (r.facilities?.toLowerCase().contains(_searchQuery) ??
+                          false);
                 }).toList();
 
                 if (filtered.isEmpty) {
@@ -819,7 +865,10 @@ class _TenantRoomsTabState extends State<_TenantRoomsTab> {
                                   ),
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.green.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(6),
@@ -840,11 +889,15 @@ class _TenantRoomsTabState extends State<_TenantRoomsTab> {
                               '${room.house?.houseName ?? "Kos"} • ${room.roomType}',
                               style: TextStyle(color: Colors.grey[600]),
                             ),
-                            if (room.facilities != null && room.facilities!.isNotEmpty) ...[
+                            if (room.facilities != null &&
+                                room.facilities!.isNotEmpty) ...[
                               const SizedBox(height: 6),
                               Text(
                                 'Facilities: ${room.facilities}',
-                                style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey[700],
+                                ),
                               ),
                             ],
                             const Divider(height: 20),
@@ -1007,12 +1060,15 @@ class _TenantPaymentsTabState extends State<_TenantPaymentsTab> {
                 _loadPayments();
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Receipt submitted successfully!')),
+                    const SnackBar(
+                      content: Text('Receipt submitted successfully!'),
+                    ),
                   );
                 }
               } catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(SnackBar(content: Text('Error: $e')));
                 }
               }
             },
@@ -1066,7 +1122,10 @@ class _TenantPaymentsTabState extends State<_TenantPaymentsTab> {
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: p.status == PaymentStatus.paid
                                   ? Colors.green.withValues(alpha: 0.12)
@@ -1076,7 +1135,9 @@ class _TenantPaymentsTabState extends State<_TenantPaymentsTab> {
                             child: Text(
                               p.status.displayName,
                               style: TextStyle(
-                                color: p.status == PaymentStatus.paid ? Colors.green : Colors.orange,
+                                color: p.status == PaymentStatus.paid
+                                    ? Colors.green
+                                    : Colors.orange,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -1087,11 +1148,15 @@ class _TenantPaymentsTabState extends State<_TenantPaymentsTab> {
                       Text('Due Date: ${Formatters.formatDate(p.dueDate)}'),
                       if (p.paidDate != null)
                         Text('Paid On: ${Formatters.formatDate(p.paidDate)}'),
-                      if (p.orderId != null && p.status == PaymentStatus.pending) ...[
+                      if (p.orderId != null &&
+                          p.status == PaymentStatus.pending) ...[
                         const SizedBox(height: 4),
                         Text(
                           'Order ID: ${p.orderId}',
-                          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF64748B),
+                          ),
                         ),
                       ],
                       if (p.status == PaymentStatus.pending) ...[
@@ -1103,15 +1168,24 @@ class _TenantPaymentsTabState extends State<_TenantPaymentsTab> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.primaryColor,
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                 ),
-                                icon: const Icon(Icons.qr_code_2_rounded, size: 20),
+                                icon: const Icon(
+                                  Icons.qr_code_2_rounded,
+                                  size: 20,
+                                ),
                                 label: Text(
-                                  p.qrCodeUrl != null ? 'Continue GoPay / QRIS' : 'Pay with GoPay / QRIS',
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                  p.qrCodeUrl != null
+                                      ? 'Continue GoPay / QRIS'
+                                      : 'Pay with GoPay / QRIS',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                                 onPressed: () => _startMidtransPayment(p),
                               ),
@@ -1123,7 +1197,10 @@ class _TenantPaymentsTabState extends State<_TenantPaymentsTab> {
                           alignment: Alignment.centerRight,
                           child: TextButton.icon(
                             icon: const Icon(Icons.upload_file, size: 16),
-                            label: const Text('Or submit manual receipt', style: TextStyle(fontSize: 13)),
+                            label: const Text(
+                              'Or submit manual receipt',
+                              style: TextStyle(fontSize: 13),
+                            ),
                             onPressed: () => _showSubmitReceiptDialog(p),
                           ),
                         ),
@@ -1139,5 +1216,3 @@ class _TenantPaymentsTabState extends State<_TenantPaymentsTab> {
     );
   }
 }
-
-

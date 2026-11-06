@@ -36,4 +36,3 @@ class Formatters {
     return '$date $hour:$minute';
   }
 }
-

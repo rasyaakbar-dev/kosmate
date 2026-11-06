@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/kosmate_components.dart';
@@ -37,7 +38,9 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
     final messenger = ScaffoldMessenger.of(context);
 
     try {
-      final updated = await _paymentService.syncPaymentStatusWithMidtrans(_currentPayment);
+      final updated = await _paymentService.syncPaymentStatusWithMidtrans(
+        _currentPayment,
+      );
       if (!mounted) return;
       setState(() {
         _currentPayment = updated;
@@ -58,14 +61,18 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
       } else {
         messenger.showSnackBar(
           const SnackBar(
-            content: Text('Payment is still pending. Please scan or complete payment in GoPay/QRIS.'),
+            content: Text(
+              'Payment is still pending. Please scan or complete payment in GoPay/QRIS.',
+            ),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isCheckingStatus = false);
-        messenger.showSnackBar(SnackBar(content: Text('Error checking status: $e')));
+        messenger.showSnackBar(
+          SnackBar(content: Text('Error checking status: $e')),
+        );
       }
     }
   }
@@ -75,16 +82,23 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Cancel Payment Session?'),
-        content: const Text('This will cancel this Midtrans transaction. You can restart anytime.'),
+        content: const Text(
+          'This will cancel this Midtrans transaction. You can restart anytime.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('No'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB33A3A)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFB33A3A),
+            ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Yes, Cancel', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Yes, Cancel',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -104,7 +118,8 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
     } catch (e) {
       if (mounted) {
         setState(() => _isCancelling = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -113,7 +128,9 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
     if (_currentPayment.deeplinkUrl != null) {
       Clipboard.setData(ClipboardData(text: _currentPayment.deeplinkUrl!));
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('GoPay payment link copied to clipboard!')),
+        const SnackBar(
+          content: Text('GoPay payment link copied to clipboard!'),
+        ),
       );
     }
   }
@@ -121,7 +138,8 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
   @override
   Widget build(BuildContext context) {
     final qrUrl = _currentPayment.qrCodeUrl;
-    final orderId = _currentPayment.orderId ?? 'KOSMATE-INV-${_currentPayment.paymentId}';
+    final orderId =
+        _currentPayment.orderId ?? 'KOSMATE-INV-${_currentPayment.paymentId}';
 
     return DraggableScrollableSheet(
       initialChildSize: 0.88,
@@ -177,7 +195,9 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
               decoration: BoxDecoration(
                 color: const Color(0xFFEBF3FA),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.4)),
+                border: Border.all(
+                  color: AppTheme.borderColor.withValues(alpha: 0.4),
+                ),
               ),
               child: Column(
                 children: [
@@ -186,7 +206,10 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
                     children: [
                       const Text(
                         'Total Payment',
-                        style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
+                        style: TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 14,
+                        ),
                       ),
                       Text(
                         Formatters.formatCurrency(_currentPayment.amount),
@@ -202,10 +225,19 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Order ID', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
+                      const Text(
+                        'Order ID',
+                        style: TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 13,
+                        ),
+                      ),
                       Text(
                         orderId,
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ),
@@ -222,7 +254,10 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+                    border: Border.all(
+                      color: const Color(0xFFCBD5E1),
+                      width: 1.5,
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.05),
@@ -264,7 +299,11 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.qr_code_scanner, size: 18, color: Colors.grey[700]),
+                          Icon(
+                            Icons.qr_code_scanner,
+                            size: 18,
+                            color: Colors.grey[700],
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             'Scan with Gojek / Any QRIS App',
@@ -300,12 +339,21 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size.fromHeight(48),
                   side: const BorderSide(color: AppTheme.accentColor),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-                icon: const Icon(Icons.open_in_new, size: 20, color: AppTheme.accentColor),
+                icon: const Icon(
+                  Icons.open_in_new,
+                  size: 20,
+                  color: AppTheme.accentColor,
+                ),
                 label: const Text(
                   'Copy GoPay Deeplink / Simulator URL',
-                  style: TextStyle(color: AppTheme.accentColor, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: AppTheme.accentColor,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 onPressed: _copyDeeplink,
               ),
@@ -323,7 +371,11 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
 
             // Cancel action
             TextButton.icon(
-              icon: const Icon(Icons.cancel_outlined, size: 18, color: Colors.grey),
+              icon: const Icon(
+                Icons.cancel_outlined,
+                size: 18,
+                color: Colors.grey,
+              ),
               label: Text(
                 _isCancelling ? 'Cancelling...' : 'Cancel payment session',
                 style: const TextStyle(color: Colors.grey),
@@ -336,4 +388,3 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
     );
   }
 }
-

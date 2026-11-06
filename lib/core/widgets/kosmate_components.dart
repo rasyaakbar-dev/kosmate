@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
 
 // =============================================================================
@@ -10,22 +11,26 @@ class KosMateStatusChip extends StatelessWidget {
   final String label;
   final KosMateChipType type;
 
-  const KosMateStatusChip({
-    super.key,
-    required this.label,
-    required this.type,
-  });
+  const KosMateStatusChip({super.key, required this.label, required this.type});
 
   factory KosMateStatusChip.fromStatus(String status) {
     final lower = status.toLowerCase();
     if (lower == 'paid') {
       return const KosMateStatusChip(label: 'Paid', type: KosMateChipType.paid);
     } else if (lower == 'pending') {
-      return const KosMateStatusChip(label: 'Pending', type: KosMateChipType.pending);
-    } else if (lower == 'open' || lower == 'in_progress' || lower == 'inprogress') {
+      return const KosMateStatusChip(
+        label: 'Pending',
+        type: KosMateChipType.pending,
+      );
+    } else if (lower == 'open' ||
+        lower == 'in_progress' ||
+        lower == 'inprogress') {
       return const KosMateStatusChip(label: 'Open', type: KosMateChipType.open);
     } else if (lower == 'occupied') {
-      return const KosMateStatusChip(label: 'Occupied', type: KosMateChipType.occupied);
+      return const KosMateStatusChip(
+        label: 'Occupied',
+        type: KosMateChipType.occupied,
+      );
     } else {
       return KosMateStatusChip(label: status, type: KosMateChipType.active);
     }
@@ -141,7 +146,10 @@ class KosMateEmptyState extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
               ),
               child: Text(buttonLabel!),
             ),
@@ -169,8 +177,8 @@ class KosMateButton extends StatelessWidget {
     this.icon,
     required this.onPressed,
     this.isLoading = false,
-  })  : isOutlined = false,
-        isDestructive = false;
+  }) : isOutlined = false,
+       isDestructive = false;
 
   const KosMateButton.outlined({
     super.key,
@@ -178,8 +186,8 @@ class KosMateButton extends StatelessWidget {
     this.icon,
     required this.onPressed,
     this.isLoading = false,
-  })  : isOutlined = true,
-        isDestructive = false;
+  }) : isOutlined = true,
+       isDestructive = false;
 
   const KosMateButton.destructive({
     super.key,
@@ -187,8 +195,8 @@ class KosMateButton extends StatelessWidget {
     this.icon,
     required this.onPressed,
     this.isLoading = false,
-  })  : isOutlined = false,
-        isDestructive = true;
+  }) : isOutlined = false,
+       isDestructive = true;
 
   @override
   Widget build(BuildContext context) {
@@ -198,14 +206,19 @@ class KosMateButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           side: const BorderSide(color: AppTheme.accentColor, width: 1.5),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           minimumSize: const Size.fromHeight(48),
         ),
         child: isLoading
             ? const SizedBox(
                 height: 18,
                 width: 18,
-                child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.accentColor),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppTheme.accentColor,
+                ),
               )
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -229,7 +242,9 @@ class KosMateButton extends StatelessWidget {
       );
     }
 
-    final Color bgColor = isDestructive ? const Color(0xFFB33A3A) : AppTheme.accentColor;
+    final Color bgColor = isDestructive
+        ? const Color(0xFFB33A3A)
+        : AppTheme.accentColor;
 
     return ElevatedButton(
       onPressed: isLoading ? null : onPressed,
@@ -245,7 +260,10 @@ class KosMateButton extends StatelessWidget {
           ? const SizedBox(
               height: 18,
               width: 18,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
             )
           : Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -269,4 +287,3 @@ class KosMateButton extends StatelessWidget {
     );
   }
 }
-

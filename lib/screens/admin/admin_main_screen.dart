@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../core/constants/supabase_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
@@ -31,10 +32,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
   @override
   Widget build(BuildContext context) {
     final screens = [
-      _AdminHomeDashboard(
-        user: widget.user,
-        onNavigateToTab: _navigateToTab,
-      ),
+      _AdminHomeDashboard(user: widget.user, onNavigateToTab: _navigateToTab),
       _AdminUsersTab(user: widget.user),
       _AdminHousesTab(user: widget.user),
       ProfileScreen(user: widget.user),
@@ -62,10 +60,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
 
     return Scaffold(
       appBar: KosMateAppBar(title: appBarTitle, actionIcon: actionIcon),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: screens),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -136,10 +131,14 @@ class _AdminHomeDashboardState extends State<_AdminHomeDashboard> {
 
   Future<void> _loadAdminData() async {
     try {
-      final usersRes = await supabase.from(SupabaseConstants.usersTable).select();
+      final usersRes = await supabase
+          .from(SupabaseConstants.usersTable)
+          .select();
       final housesRes = await HouseService().getAllHouses();
 
-      final usersList = (usersRes as List).map((j) => UserModel.fromJson(j as Map<String, dynamic>)).toList();
+      final usersList = (usersRes as List)
+          .map((j) => UserModel.fromJson(j as Map<String, dynamic>))
+          .toList();
 
       if (mounted) {
         setState(() {
@@ -184,7 +183,10 @@ class _AdminHomeDashboardState extends State<_AdminHomeDashboard> {
                   initialValue: selectedRole,
                   decoration: const InputDecoration(labelText: 'Role'),
                   items: UserRole.values.map((r) {
-                    return DropdownMenuItem(value: r, child: Text(r.name.toUpperCase()));
+                    return DropdownMenuItem(
+                      value: r,
+                      child: Text(r.name.toUpperCase()),
+                    );
                   }).toList(),
                   onChanged: (val) {
                     if (val != null) setDialogState(() => selectedRole = val);
@@ -194,7 +196,9 @@ class _AdminHomeDashboardState extends State<_AdminHomeDashboard> {
                 TextField(
                   controller: passCtrl,
                   obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Initial Password'),
+                  decoration: const InputDecoration(
+                    labelText: 'Initial Password',
+                  ),
                 ),
               ],
             ),
@@ -302,7 +306,11 @@ class _AdminHomeDashboardState extends State<_AdminHomeDashboard> {
                                 color: Color(0xFF475569),
                               ),
                             ),
-                            Icon(Icons.group_outlined, color: AppTheme.accentColor, size: 22),
+                            Icon(
+                              Icons.group_outlined,
+                              color: AppTheme.accentColor,
+                              size: 22,
+                            ),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -342,7 +350,11 @@ class _AdminHomeDashboardState extends State<_AdminHomeDashboard> {
                                 color: Color(0xFF475569),
                               ),
                             ),
-                            Icon(Icons.apartment_outlined, color: AppTheme.accentColor, size: 22),
+                            Icon(
+                              Icons.apartment_outlined,
+                              color: AppTheme.accentColor,
+                              size: 22,
+                            ),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -433,8 +445,11 @@ class _AdminHomeDashboardState extends State<_AdminHomeDashboard> {
               _buildActivityCard(
                 icon: Icons.person_outline,
                 title: 'User registered',
-                subtitle: '${_recentUsers.first.name} • ${_recentUsers.first.role.name.toUpperCase()}',
-                trailingText: Formatters.formatDate(_recentUsers.first.createdAt),
+                subtitle:
+                    '${_recentUsers.first.name} • ${_recentUsers.first.role.name.toUpperCase()}',
+                trailingText: Formatters.formatDate(
+                  _recentUsers.first.createdAt,
+                ),
               ),
               const SizedBox(height: 10),
             ],
@@ -443,8 +458,11 @@ class _AdminHomeDashboardState extends State<_AdminHomeDashboard> {
               _buildActivityCard(
                 icon: Icons.apartment_outlined,
                 title: 'Boarding house added',
-                subtitle: '${_recentHouses.first.houseName} • ${_recentHouses.first.houseAddress}',
-                trailingText: Formatters.formatDate(_recentHouses.first.createdAt),
+                subtitle:
+                    '${_recentHouses.first.houseName} • ${_recentHouses.first.houseAddress}',
+                trailingText: Formatters.formatDate(
+                  _recentHouses.first.createdAt,
+                ),
               ),
             ] else if (_recentUsers.isEmpty) ...[
               const Padding(
@@ -541,7 +559,10 @@ class _AdminHomeDashboardState extends State<_AdminHomeDashboard> {
                 const SizedBox(height: 3),
                 Text(
                   subtitle,
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF64748B),
+                  ),
                 ),
               ],
             ),
@@ -586,7 +607,11 @@ class _AdminUsersTabState extends State<_AdminUsersTab> {
           .from(SupabaseConstants.usersTable)
           .select()
           .order('created_at', ascending: false)
-          .then((res) => (res as List).map((j) => UserModel.fromJson(j as Map<String, dynamic>)).toList());
+          .then(
+            (res) => (res as List)
+                .map((j) => UserModel.fromJson(j as Map<String, dynamic>))
+                .toList(),
+          );
     });
   }
 
@@ -624,15 +649,18 @@ class _AdminUsersTabState extends State<_AdminUsersTab> {
                       style: const TextStyle(color: Colors.white),
                     ),
                   ),
-                  title: Text(u.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  title: Text(
+                    u.name,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   subtitle: Text('${u.email}\n${u.phone}'),
                   trailing: Chip(
                     label: Text(u.role.name.toUpperCase()),
                     backgroundColor: u.role == UserRole.admin
                         ? Colors.red[100]
                         : u.role == UserRole.owner
-                            ? Colors.amber[100]
-                            : Colors.blue[100],
+                        ? Colors.amber[100]
+                        : Colors.blue[100],
                   ),
                 ),
               );
@@ -687,10 +715,8 @@ class _AdminHousesTabState extends State<_AdminHousesTab> {
     final changed = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => HouseDetailScreen(
-          house: house,
-          currentUser: widget.user,
-        ),
+        builder: (_) =>
+            HouseDetailScreen(house: house, currentUser: widget.user),
       ),
     );
     if (changed == true && mounted) {
@@ -702,10 +728,7 @@ class _AdminHousesTabState extends State<_AdminHousesTab> {
     final updated = await Navigator.push<HouseModel>(
       context,
       MaterialPageRoute(
-        builder: (_) => HouseFormScreen(
-          house: house,
-          ownerId: house.ownerId,
-        ),
+        builder: (_) => HouseFormScreen(house: house, ownerId: house.ownerId),
       ),
     );
     if (updated != null && mounted) {
@@ -728,7 +751,9 @@ class _AdminHousesTabState extends State<_AdminHousesTab> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB33A3A)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFB33A3A),
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Delete', style: TextStyle(color: Colors.white)),
           ),
@@ -749,7 +774,10 @@ class _AdminHousesTabState extends State<_AdminHousesTab> {
         _loadHouses();
       } catch (e) {
         messenger.showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.redAccent),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     }
@@ -766,11 +794,15 @@ class _AdminHousesTabState extends State<_AdminHousesTab> {
             children: [
               const Text(
                 'Registered Boarding Houses',
-                style: TextStyle(fontFamily: 'Roboto', fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               ElevatedButton.icon(
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add House'),
+                label: const Text(''),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.accentColor,
                   foregroundColor: Colors.white,
@@ -797,7 +829,11 @@ class _AdminHousesTabState extends State<_AdminHousesTab> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.apartment_outlined, size: 60, color: Color(0xFFCBD5E1)),
+                          Icon(
+                            Icons.apartment_outlined,
+                            size: 60,
+                            color: Color(0xFFCBD5E1),
+                          ),
                           SizedBox(height: 12),
                           Text(
                             'No boarding houses registered.',
@@ -839,7 +875,9 @@ class _AdminHousesTabState extends State<_AdminHousesTab> {
                                   width: 52,
                                   height: 52,
                                   color: const Color(0xFFE2E8F0),
-                                  child: h.thumbnailUrl != null && h.thumbnailUrl!.trim().isNotEmpty
+                                  child:
+                                      h.thumbnailUrl != null &&
+                                          h.thumbnailUrl!.trim().isNotEmpty
                                       ? Image.network(
                                           h.thumbnailUrl!.trim(),
                                           fit: BoxFit.cover,
@@ -871,20 +909,29 @@ class _AdminHousesTabState extends State<_AdminHousesTab> {
                                     const SizedBox(height: 2),
                                     Text(
                                       h.houseAddress,
-                                      style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: Color(0xFF64748B),
+                                      ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
                                       'Owner: ${h.owner?.name ?? "Owner #${h.ownerId}"}',
-                                      style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF94A3B8),
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
                               PopupMenuButton<String>(
-                                icon: const Icon(Icons.more_vert, color: Color(0xFF64748B)),
+                                icon: const Icon(
+                                  Icons.more_vert,
+                                  color: Color(0xFF64748B),
+                                ),
                                 onSelected: (action) {
                                   if (action == 'details') {
                                     _openHouseDetails(h);
@@ -899,7 +946,11 @@ class _AdminHousesTabState extends State<_AdminHousesTab> {
                                     value: 'details',
                                     child: Row(
                                       children: [
-                                        Icon(Icons.visibility_outlined, size: 18, color: AppTheme.accentColor),
+                                        Icon(
+                                          Icons.visibility_outlined,
+                                          size: 18,
+                                          color: AppTheme.accentColor,
+                                        ),
                                         SizedBox(width: 8),
                                         Text('View Details & Rooms'),
                                       ],
@@ -909,7 +960,11 @@ class _AdminHousesTabState extends State<_AdminHousesTab> {
                                     value: 'edit',
                                     child: Row(
                                       children: [
-                                        Icon(Icons.edit_outlined, size: 18, color: Color(0xFF475569)),
+                                        Icon(
+                                          Icons.edit_outlined,
+                                          size: 18,
+                                          color: Color(0xFF475569),
+                                        ),
                                         SizedBox(width: 8),
                                         Text('Edit House'),
                                       ],
@@ -919,9 +974,18 @@ class _AdminHousesTabState extends State<_AdminHousesTab> {
                                     value: 'delete',
                                     child: Row(
                                       children: [
-                                        Icon(Icons.delete_outline, size: 18, color: Color(0xFFB33A3A)),
+                                        Icon(
+                                          Icons.delete_outline,
+                                          size: 18,
+                                          color: Color(0xFFB33A3A),
+                                        ),
                                         SizedBox(width: 8),
-                                        Text('Delete House', style: TextStyle(color: Color(0xFFB33A3A))),
+                                        Text(
+                                          'Delete House',
+                                          style: TextStyle(
+                                            color: Color(0xFFB33A3A),
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -942,5 +1006,3 @@ class _AdminHousesTabState extends State<_AdminHousesTab> {
     );
   }
 }
-
-

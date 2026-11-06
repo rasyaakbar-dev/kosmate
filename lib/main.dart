@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'core/constants/supabase_constants.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/shared/splash_screen.dart';

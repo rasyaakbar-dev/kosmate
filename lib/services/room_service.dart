@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../core/constants/supabase_constants.dart';
 import '../models/room_model.dart';
 
@@ -6,10 +7,7 @@ class RoomService {
   final SupabaseClient _client = supabase;
 
   /// Fetch rooms with optional house and status filtering
-  Future<List<RoomModel>> getRooms({
-    int? houseId,
-    RoomStatus? status,
-  }) async {
+  Future<List<RoomModel>> getRooms({int? houseId, RoomStatus? status}) async {
     var query = _client
         .from(SupabaseConstants.roomTable)
         .select('*, house!room_house_id_fkey(*, users!house_owner_id_fkey(*))');
@@ -79,4 +77,3 @@ class RoomService {
         .eq('room_id', roomId);
   }
 }
-

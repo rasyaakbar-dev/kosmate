@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../core/constants/supabase_constants.dart';
 import '../models/house_model.dart';
 
@@ -73,4 +74,3 @@ class HouseService {
         .eq('house_id', houseId);
   }
 }
-

@@ -4,20 +4,14 @@ class KosMateLogo extends StatelessWidget {
   final double size;
   final Color color;
 
-  const KosMateLogo({
-    super.key,
-    this.size = 32.0,
-    this.color = Colors.white,
-  });
+  const KosMateLogo({super.key, this.size = 32.0, this.color = Colors.white});
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: size,
       height: size * (300 / 320),
-      child: CustomPaint(
-        painter: _KosMateLogoPainter(color: color),
-      ),
+      child: CustomPaint(painter: _KosMateLogoPainter(color: color)),
     );
   }
 }
@@ -97,4 +91,3 @@ class _KosMateLogoPainter extends CustomPainter {
     return oldDelegate.color != color;
   }
 }
-

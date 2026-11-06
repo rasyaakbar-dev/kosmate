@@ -119,7 +119,10 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: backgroundColor,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: borderColor),
@@ -132,8 +135,12 @@ class AppTheme {
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: primaryColor, width: 2),
         ),
-        labelStyle: robotoRegular.copyWith(color: foregroundColor.withValues(alpha: 0.7)),
-        hintStyle: robotoRegular.copyWith(color: foregroundColor.withValues(alpha: 0.5)),
+        labelStyle: robotoRegular.copyWith(
+          color: foregroundColor.withValues(alpha: 0.7),
+        ),
+        hintStyle: robotoRegular.copyWith(
+          color: foregroundColor.withValues(alpha: 0.5),
+        ),
       ),
     );
   }

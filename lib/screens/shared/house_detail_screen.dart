@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/house_model.dart';
@@ -62,10 +63,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
     final updated = await Navigator.push<HouseModel>(
       context,
       MaterialPageRoute(
-        builder: (_) => HouseFormScreen(
-          house: _house,
-          ownerId: _house.ownerId,
-        ),
+        builder: (_) => HouseFormScreen(house: _house, ownerId: _house.ownerId),
       ),
     );
     if (updated != null && mounted) {
@@ -173,9 +171,16 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                 const SizedBox(height: 12),
                 DropdownButtonFormField<RoomStatus>(
                   initialValue: selectedStatus,
-                  decoration: const InputDecoration(labelText: 'Initial Status'),
+                  decoration: const InputDecoration(
+                    labelText: 'Initial Status',
+                  ),
                   items: RoomStatus.values
-                      .map((s) => DropdownMenuItem(value: s, child: Text(s.displayName)))
+                      .map(
+                        (s) => DropdownMenuItem(
+                          value: s,
+                          child: Text(s.displayName),
+                        ),
+                      )
                       .toList(),
                   onChanged: (val) {
                     if (val != null) setDialogState(() => selectedStatus = val);
@@ -190,7 +195,9 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentColor),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.accentColor,
+              ),
               onPressed: isSaving
                   ? null
                   : () async {
@@ -200,7 +207,8 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                         return;
                       }
 
-                      final parsedPrice = double.tryParse(priceCtrl.text.trim()) ?? 0;
+                      final parsedPrice =
+                          double.tryParse(priceCtrl.text.trim()) ?? 0;
                       setDialogState(() => isSaving = true);
                       final messenger = ScaffoldMessenger.of(context);
 
@@ -228,10 +236,15 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                         );
                       } catch (e) {
                         setDialogState(() => isSaving = false);
-                        messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
+                        messenger.showSnackBar(
+                          SnackBar(content: Text('Error: $e')),
+                        );
                       }
                     },
-              child: const Text('Save Room', style: TextStyle(color: Colors.white)),
+              child: const Text(
+                'Save Room',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         ),
@@ -241,8 +254,12 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final availableRooms = _rooms.where((r) => r.status == RoomStatus.available).length;
-    final occupiedRooms = _rooms.where((r) => r.status == RoomStatus.occupied).length;
+    final availableRooms = _rooms
+        .where((r) => r.status == RoomStatus.available)
+        .length;
+    final occupiedRooms = _rooms
+        .where((r) => r.status == RoomStatus.occupied)
+        .length;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -265,7 +282,10 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
         actions: [
           if (_canManage) ...[
             IconButton(
-              icon: const Icon(Icons.edit_outlined, color: AppTheme.accentColor),
+              icon: const Icon(
+                Icons.edit_outlined,
+                color: AppTheme.accentColor,
+              ),
               tooltip: 'Edit House',
               onPressed: _handleEditHouse,
             ),
@@ -287,7 +307,10 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
               onRefresh: _loadHouseData,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 20,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -298,12 +321,14 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                         height: 200,
                         width: double.infinity,
                         color: const Color(0xFFE2E8F0),
-                        child: _house.thumbnailUrl != null &&
+                        child:
+                            _house.thumbnailUrl != null &&
                                 _house.thumbnailUrl!.trim().isNotEmpty
                             ? Image.network(
                                 _house.thumbnailUrl!.trim(),
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => _buildFallbackBanner(),
+                                errorBuilder: (_, _, _) =>
+                                    _buildFallbackBanner(),
                               )
                             : _buildFallbackBanner(),
                       ),
@@ -323,7 +348,11 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.location_on, color: AppTheme.accentColor, size: 20),
+                              const Icon(
+                                Icons.location_on,
+                                color: AppTheme.accentColor,
+                                size: 20,
+                              ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -355,7 +384,11 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                             const Divider(height: 20, color: Color(0xFFF1F5F9)),
                             Row(
                               children: [
-                                const Icon(Icons.person_pin, color: Color(0xFF94A3B8), size: 18),
+                                const Icon(
+                                  Icons.person_pin,
+                                  color: Color(0xFF94A3B8),
+                                  size: 18,
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Managed by: ${_house.owner!.name}',
@@ -418,7 +451,10 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.accentColor,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -439,7 +475,11 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                         alignment: Alignment.center,
                         child: Column(
                           children: [
-                            const Icon(Icons.meeting_room_outlined, size: 48, color: Color(0xFFCBD5E1)),
+                            const Icon(
+                              Icons.meeting_room_outlined,
+                              size: 48,
+                              color: Color(0xFFCBD5E1),
+                            ),
                             const SizedBox(height: 10),
                             const Text(
                               'No rooms registered yet',
@@ -455,7 +495,10 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                               _canManage
                                   ? 'Click "Add Room" above to list rooms in this house.'
                                   : 'Rooms will appear here once listed by the owner.',
-                              style: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF94A3B8),
+                              ),
                               textAlign: TextAlign.center,
                             ),
                           ],
@@ -469,14 +512,17 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                         separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
                           final room = _rooms[index];
-                          final isAvailable = room.status == RoomStatus.available;
+                          final isAvailable =
+                              room.status == RoomStatus.available;
 
                           return Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              border: Border.all(
+                                color: const Color(0xFFE2E8F0),
+                              ),
                             ),
                             child: Row(
                               children: [
@@ -499,7 +545,8 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                                 const SizedBox(width: 14),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Room ${room.roomNumber} (${room.roomType})',
@@ -520,7 +567,9 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                                         ),
                                       ),
                                       if (room.facilities != null &&
-                                          room.facilities!.trim().isNotEmpty) ...[
+                                          room.facilities!
+                                              .trim()
+                                              .isNotEmpty) ...[
                                         const SizedBox(height: 2),
                                         Text(
                                           room.facilities!,
@@ -537,7 +586,9 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                                 ),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: isAvailable
                                         ? const Color(0xFFE6F4EA)
@@ -632,4 +683,3 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
     );
   }
 }
-

@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../core/constants/supabase_constants.dart';
 import '../models/complaint_model.dart';
 
@@ -28,7 +29,9 @@ class ComplaintService {
           'status': ComplaintStatus.pending.name,
           'attachment_url': attachmentUrl,
         })
-        .select('*, users!complaint_user_id_fkey(*), room!complaint_room_id_fkey(*, house!room_house_id_fkey(*))')
+        .select(
+          '*, users!complaint_user_id_fkey(*), room!complaint_room_id_fkey(*, house!room_house_id_fkey(*))',
+        )
         .single();
 
     return ComplaintModel.fromJson(response);
@@ -38,7 +41,9 @@ class ComplaintService {
   Future<List<ComplaintModel>> getComplaintsByUser(int userId) async {
     final response = await _client
         .from(SupabaseConstants.complaintTable)
-        .select('*, users!complaint_user_id_fkey(*), room!complaint_room_id_fkey(*, house!room_house_id_fkey(*))')
+        .select(
+          '*, users!complaint_user_id_fkey(*), room!complaint_room_id_fkey(*, house!room_house_id_fkey(*))',
+        )
         .eq('user_id', userId)
         .order('created_at', ascending: false);
 
@@ -51,7 +56,9 @@ class ComplaintService {
   Future<List<ComplaintModel>> getComplaintsForOwner(int ownerId) async {
     final response = await _client
         .from(SupabaseConstants.complaintTable)
-        .select('*, users!complaint_user_id_fkey(*), room!complaint_room_id_fkey!inner(*, house!room_house_id_fkey!inner(*))')
+        .select(
+          '*, users!complaint_user_id_fkey(*), room!complaint_room_id_fkey!inner(*, house!room_house_id_fkey!inner(*))',
+        )
         .eq('room.house.owner_id', ownerId)
         .order('created_at', ascending: false);
 
@@ -68,12 +75,11 @@ class ComplaintService {
   }) async {
     final response = await _client
         .from(SupabaseConstants.complaintTable)
-        .update({
-          'response': responseText.trim(),
-          'status': status.dbValue,
-        })
+        .update({'response': responseText.trim(), 'status': status.dbValue})
         .eq('complaint_id', complaintId)
-        .select('*, users!complaint_user_id_fkey(*), room!complaint_room_id_fkey(*, house!room_house_id_fkey(*))')
+        .select(
+          '*, users!complaint_user_id_fkey(*), room!complaint_room_id_fkey(*, house!room_house_id_fkey(*))',
+        )
         .single();
 
     return ComplaintModel.fromJson(response);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../core/theme/app_theme.dart';
 import '../../models/house_model.dart';
 import '../../services/house_service.dart';
@@ -7,11 +8,7 @@ class HouseFormScreen extends StatefulWidget {
   final HouseModel? house;
   final int ownerId;
 
-  const HouseFormScreen({
-    super.key,
-    this.house,
-    required this.ownerId,
-  });
+  const HouseFormScreen({super.key, this.house, required this.ownerId});
 
   bool get isEditing => house != null;
 
@@ -32,10 +29,18 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.house?.houseName ?? '');
-    _addressController = TextEditingController(text: widget.house?.houseAddress ?? '');
-    _descriptionController = TextEditingController(text: widget.house?.description ?? '');
-    _thumbnailUrlController = TextEditingController(text: widget.house?.thumbnailUrl ?? '');
+    _nameController = TextEditingController(
+      text: widget.house?.houseName ?? '',
+    );
+    _addressController = TextEditingController(
+      text: widget.house?.houseAddress ?? '',
+    );
+    _descriptionController = TextEditingController(
+      text: widget.house?.description ?? '',
+    );
+    _thumbnailUrlController = TextEditingController(
+      text: widget.house?.thumbnailUrl ?? '',
+    );
   }
 
   @override
@@ -112,7 +117,9 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.isEditing ? 'Edit Boarding House' : 'Add Boarding House';
+    final title = widget.isEditing
+        ? 'Edit Boarding House'
+        : 'Add Boarding House';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -162,11 +169,18 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.broken_image_outlined, size: 40, color: Color(0xFF94A3B8)),
+                            Icon(
+                              Icons.broken_image_outlined,
+                              size: 40,
+                              color: Color(0xFF94A3B8),
+                            ),
                             SizedBox(height: 6),
                             Text(
                               'Unable to load image from URL',
-                              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                              style: TextStyle(
+                                color: Color(0xFF94A3B8),
+                                fontSize: 13,
+                              ),
                             ),
                           ],
                         ),
@@ -253,7 +267,9 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
                         ),
                         side: const BorderSide(color: Color(0xFFCBD5E1)),
                       ),
-                      onPressed: _isLoading ? null : () => Navigator.pop(context),
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.pop(context),
                       child: const Text(
                         'Cancel',
                         style: TextStyle(
@@ -287,7 +303,9 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
                               ),
                             )
                           : Text(
-                              widget.isEditing ? 'Save Changes' : 'Create House',
+                              widget.isEditing
+                                  ? 'Save Changes'
+                                  : 'Create House',
                               style: const TextStyle(
                                 fontFamily: 'Roboto',
                                 fontSize: 15,
@@ -345,4 +363,3 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
     );
   }
 }
-

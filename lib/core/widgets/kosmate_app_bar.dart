@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
 import 'kosmate_logo.dart';
 
@@ -46,10 +47,7 @@ class KosMateAppBar extends StatelessWidget implements PreferredSizeWidget {
                 const SizedBox(width: 8),
               ],
               if (showLogo) ...[
-                const KosMateLogo(
-                  size: 28,
-                  color: Colors.white,
-                ),
+                const KosMateLogo(size: 28, color: Colors.white),
                 const SizedBox(width: 12),
               ],
               Expanded(
@@ -66,17 +64,16 @@ class KosMateAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
               if (showHelp)
                 IconButton(
-                  icon: Icon(
-                    actionIcon,
-                    color: Colors.white,
-                    size: 26,
-                  ),
-                  onPressed: onActionPressed ??
+                  icon: Icon(actionIcon, color: Colors.white, size: 26),
+                  onPressed:
+                      onActionPressed ??
                       onHelpPressed ??
                       () {
                         if (actionIcon == Icons.settings_outlined) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('App Settings & Preferences')),
+                            const SnackBar(
+                              content: Text('App Settings & Preferences'),
+                            ),
                           );
                         } else {
                           showDialog(

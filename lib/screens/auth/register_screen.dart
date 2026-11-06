@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/kosmate_app_bar.dart';
 import '../../models/user_model.dart';
@@ -118,7 +119,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     right: BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
                   ),
                 ),
-                child: Icon(prefixIcon, color: const Color(0xFF94A3B8), size: 22),
+                child: Icon(
+                  prefixIcon,
+                  color: const Color(0xFF94A3B8),
+                  size: 22,
+                ),
               ),
               Expanded(
                 child: TextFormField(
@@ -128,7 +133,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   validator: validator,
                   decoration: InputDecoration(
                     isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
@@ -174,10 +182,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: _selectedRole == UserRole.tenant ? const Color(0xFFEBF3FA) : Colors.white,
+                  color: _selectedRole == UserRole.tenant
+                      ? const Color(0xFFEBF3FA)
+                      : Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: _selectedRole == UserRole.tenant ? AppTheme.accentColor : const Color(0xFFCBD5E1),
+                    color: _selectedRole == UserRole.tenant
+                        ? AppTheme.accentColor
+                        : const Color(0xFFCBD5E1),
                     width: _selectedRole == UserRole.tenant ? 2.0 : 1.2,
                   ),
                 ),
@@ -186,12 +198,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: _selectedRole == UserRole.tenant ? AppTheme.accentColor : const Color(0xFFF1F5F9),
+                        color: _selectedRole == UserRole.tenant
+                            ? AppTheme.accentColor
+                            : const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
                         Icons.vpn_key_outlined,
-                        color: _selectedRole == UserRole.tenant ? Colors.white : const Color(0xFF64748B),
+                        color: _selectedRole == UserRole.tenant
+                            ? Colors.white
+                            : const Color(0xFF64748B),
                         size: 24,
                       ),
                     ),
@@ -202,18 +218,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         children: [
                           Text(
                             'Renter / Tenant',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           SizedBox(height: 2),
                           Text(
                             'Find, book rooms, pay rent and submit complaints.',
-                            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF64748B),
+                            ),
                           ),
                         ],
                       ),
                     ),
                     if (_selectedRole == UserRole.tenant)
-                      const Icon(Icons.check_circle, color: AppTheme.accentColor),
+                      const Icon(
+                        Icons.check_circle,
+                        color: AppTheme.accentColor,
+                      ),
                   ],
                 ),
               ),
@@ -228,10 +253,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: _selectedRole == UserRole.owner ? const Color(0xFFEBF3FA) : Colors.white,
+                  color: _selectedRole == UserRole.owner
+                      ? const Color(0xFFEBF3FA)
+                      : Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: _selectedRole == UserRole.owner ? AppTheme.accentColor : const Color(0xFFCBD5E1),
+                    color: _selectedRole == UserRole.owner
+                        ? AppTheme.accentColor
+                        : const Color(0xFFCBD5E1),
                     width: _selectedRole == UserRole.owner ? 2.0 : 1.2,
                   ),
                 ),
@@ -240,12 +269,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: _selectedRole == UserRole.owner ? AppTheme.accentColor : const Color(0xFFF1F5F9),
+                        color: _selectedRole == UserRole.owner
+                            ? AppTheme.accentColor
+                            : const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
                         Icons.home_work_outlined,
-                        color: _selectedRole == UserRole.owner ? Colors.white : const Color(0xFF64748B),
+                        color: _selectedRole == UserRole.owner
+                            ? Colors.white
+                            : const Color(0xFF64748B),
                         size: 24,
                       ),
                     ),
@@ -256,18 +289,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         children: [
                           Text(
                             'Kos Owner',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           SizedBox(height: 2),
                           Text(
                             'Manage boarding houses, rooms, payments and tenants.',
-                            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF64748B),
+                            ),
                           ),
                         ],
                       ),
                     ),
                     if (_selectedRole == UserRole.owner)
-                      const Icon(Icons.check_circle, color: AppTheme.accentColor),
+                      const Icon(
+                        Icons.check_circle,
+                        color: AppTheme.accentColor,
+                      ),
                   ],
                 ),
               ),
@@ -325,7 +367,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   prefixIcon: Icons.alternate_email_rounded,
                   keyboardType: TextInputType.emailAddress,
                   validator: (val) {
-                    if (val == null || val.trim().isEmpty) return 'Please enter email';
+                    if (val == null || val.trim().isEmpty)
+                      return 'Please enter email';
                     if (!val.contains('@')) return 'Enter a valid email';
                     return null;
                   },
@@ -365,11 +408,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       onTap: _showRoleSelectionDialog,
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+                          border: Border.all(
+                            color: const Color(0xFFCBD5E1),
+                            width: 1.5,
+                          ),
                         ),
                         child: Row(
                           children: [
@@ -393,7 +442,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    _selectedRole == UserRole.owner ? 'Kos Owner' : 'Renter / Tenant',
+                                    _selectedRole == UserRole.owner
+                                        ? 'Kos Owner'
+                                        : 'Renter / Tenant',
                                     style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
@@ -404,12 +455,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     _selectedRole == UserRole.owner
                                         ? 'Manage rooms and receive rent'
                                         : 'Find room and pay monthly rent',
-                                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF64748B),
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
-                            const Icon(Icons.arrow_drop_down, color: Color(0xFF64748B)),
+                            const Icon(
+                              Icons.arrow_drop_down,
+                              color: Color(0xFF64748B),
+                            ),
                           ],
                         ),
                       ),
@@ -424,10 +481,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                       color: const Color(0xFF94A3B8),
                     ),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
                   validator: (val) {
                     if (val == null || val.length < 6) {
@@ -444,10 +504,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscureText: _obscureConfirmPassword,
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      _obscureConfirmPassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                       color: const Color(0xFF94A3B8),
                     ),
-                    onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                    onPressed: () => setState(
+                      () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                    ),
                   ),
                   validator: (val) {
                     if (val != _passwordController.text) {
@@ -469,8 +533,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.5),
-                        onChanged: (val) => setState(() => _agreeTerms = val ?? false),
+                        side: const BorderSide(
+                          color: Color(0xFFCBD5E1),
+                          width: 1.5,
+                        ),
+                        onChanged: (val) =>
+                            setState(() => _agreeTerms = val ?? false),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -523,7 +591,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       onPressed: _isLoading ? null : _handleRegister,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.accentColor,
-                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 22,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -532,7 +603,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ? const SizedBox(
                               height: 18,
                               width: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
                             )
                           : const Row(
                               mainAxisSize: MainAxisSize.min,
@@ -546,7 +620,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   ),
                                 ),
                                 SizedBox(width: 6),
-                                Icon(Icons.arrow_forward_rounded, size: 18, color: Colors.white),
+                                Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: 18,
+                                  color: Colors.white,
+                                ),
                               ],
                             ),
                     ),

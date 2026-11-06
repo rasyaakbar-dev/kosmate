@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../core/constants/supabase_constants.dart';
 import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
@@ -47,11 +48,18 @@ class _AuthGateState extends State<AuthGate> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.person_off_outlined, size: 64, color: Colors.orange),
+                        const Icon(
+                          Icons.person_off_outlined,
+                          size: 64,
+                          color: Colors.orange,
+                        ),
                         const SizedBox(height: 16),
                         const Text(
                           'Profile not found or initializing.',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         const Text(

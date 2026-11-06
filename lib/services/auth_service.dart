@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../core/constants/supabase_constants.dart';
 import '../models/user_model.dart';
 
@@ -20,11 +21,7 @@ class AuthService {
     final response = await _client.auth.signUp(
       email: email.trim(),
       password: password,
-      data: {
-        'name': name.trim(),
-        'phone': phone.trim(),
-        'role': role.name,
-      },
+      data: {'name': name.trim(), 'phone': phone.trim(), 'role': role.name},
     );
 
     // Fallback: If trigger didn't insert the profile, ensure it exists

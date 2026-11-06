@@ -1,5 +1,7 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
+
 import '../core/constants/supabase_constants.dart';
 import '../models/user_model.dart';
 
@@ -9,11 +11,7 @@ class MidtransAction {
   final String method;
   final String url;
 
-  MidtransAction({
-    required this.name,
-    required this.method,
-    required this.url,
-  });
+  MidtransAction({required this.name, required this.method, required this.url});
 
   factory MidtransAction.fromJson(Map<String, dynamic> json) {
     return MidtransAction(
@@ -69,7 +67,8 @@ class MidtransChargeResponse {
   }
 
   factory MidtransChargeResponse.fromJson(Map<String, dynamic> json) {
-    final actionsList = (json['actions'] as List?)
+    final actionsList =
+        (json['actions'] as List?)
             ?.map((e) => MidtransAction.fromJson(e as Map<String, dynamic>))
             .toList() ??
         [];
@@ -192,7 +191,8 @@ class MidtransService {
         errorJson = jsonDecode(response.body) as Map<String, dynamic>?;
       } catch (_) {}
 
-      final message = errorJson?['status_message'] ??
+      final message =
+          errorJson?['status_message'] ??
           'Midtrans request failed with status code ${response.statusCode}';
       throw Exception(message);
     }
@@ -204,10 +204,7 @@ class MidtransService {
 
     final response = await _client.get(
       url,
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': _authHeader,
-      },
+      headers: {'Accept': 'application/json', 'Authorization': _authHeader},
     );
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -219,7 +216,8 @@ class MidtransService {
         errorJson = jsonDecode(response.body) as Map<String, dynamic>?;
       } catch (_) {}
 
-      final message = errorJson?['status_message'] ??
+      final message =
+          errorJson?['status_message'] ??
           'Failed to check Midtrans status (${response.statusCode})';
       throw Exception(message);
     }
@@ -245,4 +243,3 @@ class MidtransService {
     }
   }
 }
-

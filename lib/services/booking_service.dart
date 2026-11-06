@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../core/constants/supabase_constants.dart';
 import '../models/booking_model.dart';
 import '../models/room_model.dart';
@@ -22,7 +23,9 @@ class BookingService {
           'status': BookingStatus.pending.name,
           'notes': notes,
         })
-        .select('*, users!booking_user_id_fkey(*), room!booking_room_id_fkey(*, house!room_house_id_fkey(*))')
+        .select(
+          '*, users!booking_user_id_fkey(*), room!booking_room_id_fkey(*, house!room_house_id_fkey(*))',
+        )
         .single();
 
     return BookingModel.fromJson(response);
@@ -32,7 +35,9 @@ class BookingService {
   Future<List<BookingModel>> getBookingsByUser(int userId) async {
     final response = await _client
         .from(SupabaseConstants.bookingTable)
-        .select('*, users!booking_user_id_fkey(*), room!booking_room_id_fkey(*, house!room_house_id_fkey(*))')
+        .select(
+          '*, users!booking_user_id_fkey(*), room!booking_room_id_fkey(*, house!room_house_id_fkey(*))',
+        )
         .eq('user_id', userId)
         .order('created_at', ascending: false);
 
@@ -45,7 +50,9 @@ class BookingService {
   Future<List<BookingModel>> getBookingsForOwner(int ownerId) async {
     final response = await _client
         .from(SupabaseConstants.bookingTable)
-        .select('*, users!booking_user_id_fkey(*), room!booking_room_id_fkey!inner(*, house!room_house_id_fkey!inner(*))')
+        .select(
+          '*, users!booking_user_id_fkey(*), room!booking_room_id_fkey!inner(*, house!room_house_id_fkey!inner(*))',
+        )
         .eq('room.house.owner_id', ownerId)
         .order('created_at', ascending: false);
 
@@ -65,7 +72,9 @@ class BookingService {
         .from(SupabaseConstants.bookingTable)
         .update({'status': status.name})
         .eq('booking_id', bookingId)
-        .select('*, users!booking_user_id_fkey(*), room!booking_room_id_fkey(*, house!room_house_id_fkey(*))')
+        .select(
+          '*, users!booking_user_id_fkey(*), room!booking_room_id_fkey(*, house!room_house_id_fkey(*))',
+        )
         .single();
 
     // If booking was approved and room_id provided, mark room as occupied
@@ -92,4 +101,3 @@ class BookingService {
         });
   }
 }
-
