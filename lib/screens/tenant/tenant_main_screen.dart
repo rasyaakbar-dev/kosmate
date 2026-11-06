@@ -211,8 +211,9 @@ class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
                     );
                   }).toList(),
                   onChanged: (val) {
-                    if (val != null)
+                    if (val != null) {
                       setDialogState(() => selectedCategory = val);
+                    }
                   },
                 ),
                 const SizedBox(height: 12),
@@ -226,8 +227,9 @@ class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
                     );
                   }).toList(),
                   onChanged: (val) {
-                    if (val != null)
+                    if (val != null) {
                       setDialogState(() => selectedPriority = val);
+                    }
                   },
                 ),
                 const SizedBox(height: 12),

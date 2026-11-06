@@ -4,14 +4,14 @@ import '../../core/constants/supabase_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/kosmate_app_bar.dart';
-import '../../core/widgets/kosmate_components.dart';
 import '../../models/user_model.dart';
 import '../../models/house_model.dart';
-import '../../services/auth_service.dart';
 import '../../services/house_service.dart';
 import '../shared/profile_screen.dart';
-import '../shared/house_form_screen.dart';
-import '../shared/house_detail_screen.dart';
+import '../houses/house_form_screen.dart';
+import '../houses/house_list_tab.dart';
+import 'users/user_form_dialog.dart';
+import 'users/user_management_tab.dart';
 
 class AdminMainScreen extends StatefulWidget {
   final UserModel user;
@@ -33,8 +33,8 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
   Widget build(BuildContext context) {
     final screens = [
       _AdminHomeDashboard(user: widget.user, onNavigateToTab: _navigateToTab),
-      _AdminUsersTab(user: widget.user),
-      _AdminHousesTab(user: widget.user),
+      UserManagementTab(currentUser: widget.user),
+      HouseListTab(currentUser: widget.user),
       ProfileScreen(user: widget.user),
     ];
 
@@ -154,84 +154,11 @@ class _AdminHomeDashboardState extends State<_AdminHomeDashboard> {
     }
   }
 
-  void _showAddUserDialog() {
-    final nameCtrl = TextEditingController();
-    final emailCtrl = TextEditingController();
-    final passCtrl = TextEditingController(text: 'password123');
-    UserRole selectedRole = UserRole.owner;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Add User'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Name'),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: emailCtrl,
-                  decoration: const InputDecoration(labelText: 'Email'),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<UserRole>(
-                  initialValue: selectedRole,
-                  decoration: const InputDecoration(labelText: 'Role'),
-                  items: UserRole.values.map((r) {
-                    return DropdownMenuItem(
-                      value: r,
-                      child: Text(r.name.toUpperCase()),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    if (val != null) setDialogState(() => selectedRole = val);
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: passCtrl,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Initial Password',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (emailCtrl.text.trim().isEmpty) return;
-                final messenger = ScaffoldMessenger.of(context);
-                try {
-                  await AuthService().signUp(
-                    email: emailCtrl.text.trim(),
-                    password: passCtrl.text,
-                    name: nameCtrl.text.trim(),
-                    phone: '',
-                    role: selectedRole,
-                  );
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  if (mounted) _loadAdminData();
-                } catch (e) {
-                  messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
-                }
-              },
-              child: const Text('Create User'),
-            ),
-          ],
-        ),
-      ),
-    );
+  Future<void> _openAddUserDialog() async {
+    final created = await UserFormDialog.show(context);
+    if (created == true && mounted) {
+      _loadAdminData();
+    }
   }
 
   Future<void> _openAddHouseScreen() async {
@@ -262,7 +189,7 @@ class _AdminHomeDashboardState extends State<_AdminHomeDashboard> {
           children: [
             // Greeting Header
             Text(
-              'Hello, ${widget.user.name.isNotEmpty ? widget.user.name : "Sinta"}',
+              'Hello, ${widget.user.name.isNotEmpty ? widget.user.name : "User"}',
               style: const TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 26,
@@ -393,7 +320,7 @@ class _AdminHomeDashboardState extends State<_AdminHomeDashboard> {
                 _buildQuickActionTile(
                   icon: Icons.person_add_outlined,
                   label: 'Add user',
-                  onTap: _showAddUserDialog,
+                  onTap: _openAddUserDialog,
                 ),
                 const SizedBox(width: 12),
                 _buildQuickActionTile(
@@ -577,432 +504,6 @@ class _AdminHomeDashboardState extends State<_AdminHomeDashboard> {
           ),
         ],
       ),
-    );
-  }
-}
-
-// -----------------------------------------------------------------------------
-// TAB 1: USERS DIRECTORY
-// -----------------------------------------------------------------------------
-class _AdminUsersTab extends StatefulWidget {
-  final UserModel user;
-  const _AdminUsersTab({required this.user});
-
-  @override
-  State<_AdminUsersTab> createState() => _AdminUsersTabState();
-}
-
-class _AdminUsersTabState extends State<_AdminUsersTab> {
-  late Future<List<UserModel>> _usersFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUsers();
-  }
-
-  void _loadUsers() {
-    setState(() {
-      _usersFuture = supabase
-          .from(SupabaseConstants.usersTable)
-          .select()
-          .order('created_at', ascending: false)
-          .then(
-            (res) => (res as List)
-                .map((j) => UserModel.fromJson(j as Map<String, dynamic>))
-                .toList(),
-          );
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: () async => _loadUsers(),
-      child: FutureBuilder<List<UserModel>>(
-        future: _usersFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final users = snapshot.data ?? [];
-          if (users.isEmpty) {
-            return const KosMateEmptyState(
-              icon: Icons.people_outline,
-              title: 'No users registered',
-              subtitle: 'Registered users will appear here.',
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: users.length,
-            itemBuilder: (context, idx) {
-              final u = users[idx];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 10),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: AppTheme.accentColor,
-                    child: Text(
-                      u.name.isNotEmpty ? u.name[0].toUpperCase() : 'U',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ),
-                  title: Text(
-                    u.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text('${u.email}\n${u.phone}'),
-                  trailing: Chip(
-                    label: Text(u.role.name.toUpperCase()),
-                    backgroundColor: u.role == UserRole.admin
-                        ? Colors.red[100]
-                        : u.role == UserRole.owner
-                        ? Colors.amber[100]
-                        : Colors.blue[100],
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-}
-
-// -----------------------------------------------------------------------------
-// TAB 2: HOUSES DIRECTORY
-// -----------------------------------------------------------------------------
-class _AdminHousesTab extends StatefulWidget {
-  final UserModel user;
-  const _AdminHousesTab({required this.user});
-
-  @override
-  State<_AdminHousesTab> createState() => _AdminHousesTabState();
-}
-
-class _AdminHousesTabState extends State<_AdminHousesTab> {
-  final _houseService = HouseService();
-  late Future<List<HouseModel>> _housesFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadHouses();
-  }
-
-  void _loadHouses() {
-    setState(() {
-      _housesFuture = _houseService.getAllHouses();
-    });
-  }
-
-  Future<void> _openAddHouseScreen() async {
-    final created = await Navigator.push<HouseModel>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => HouseFormScreen(ownerId: widget.user.userId),
-      ),
-    );
-    if (created != null && mounted) {
-      _loadHouses();
-    }
-  }
-
-  Future<void> _openHouseDetails(HouseModel house) async {
-    final changed = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-        builder: (_) =>
-            HouseDetailScreen(house: house, currentUser: widget.user),
-      ),
-    );
-    if (changed == true && mounted) {
-      _loadHouses();
-    }
-  }
-
-  Future<void> _openEditHouse(HouseModel house) async {
-    final updated = await Navigator.push<HouseModel>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => HouseFormScreen(house: house, ownerId: house.ownerId),
-      ),
-    );
-    if (updated != null && mounted) {
-      _loadHouses();
-    }
-  }
-
-  Future<void> _confirmDeleteHouse(HouseModel house) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Boarding House'),
-        content: Text(
-          'Are you sure you want to delete "${house.houseName}"?\n\n'
-          'All associated rooms and records will be permanently removed.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFB33A3A),
-            ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-      final messenger = ScaffoldMessenger.of(context);
-      try {
-        await _houseService.deleteHouse(house.houseId);
-        messenger.showSnackBar(
-          const SnackBar(
-            content: Text('Boarding house deleted successfully.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        _loadHouses();
-      } catch (e) {
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Registered Boarding Houses',
-                style: TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text(''),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accentColor,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: _openAddHouseScreen,
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: RefreshIndicator(
-            onRefresh: () async => _loadHouses(),
-            child: FutureBuilder<List<HouseModel>>(
-              future: _housesFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final houses = snapshot.data ?? [];
-                if (houses.isEmpty) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(24.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.apartment_outlined,
-                            size: 60,
-                            color: Color(0xFFCBD5E1),
-                          ),
-                          SizedBox(height: 12),
-                          Text(
-                            'No boarding houses registered.',
-                            style: TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: houses.length,
-                  itemBuilder: (context, idx) {
-                    final h = houses[idx];
-                    return Card(
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: const BorderSide(color: Color(0xFFE2E8F0)),
-                      ),
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap: () => _openHouseDetails(h),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Row(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Container(
-                                  width: 52,
-                                  height: 52,
-                                  color: const Color(0xFFE2E8F0),
-                                  child:
-                                      h.thumbnailUrl != null &&
-                                          h.thumbnailUrl!.trim().isNotEmpty
-                                      ? Image.network(
-                                          h.thumbnailUrl!.trim(),
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (_, _, _) => const Icon(
-                                            Icons.apartment_outlined,
-                                            color: Color(0xFF94A3B8),
-                                          ),
-                                        )
-                                      : const Icon(
-                                          Icons.apartment_outlined,
-                                          color: Color(0xFF94A3B8),
-                                        ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      h.houseName,
-                                      style: const TextStyle(
-                                        fontFamily: 'Roboto',
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppTheme.foregroundColor,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      h.houseAddress,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        color: Color(0xFF64748B),
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      'Owner: ${h.owner?.name ?? "Owner #${h.ownerId}"}',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Color(0xFF94A3B8),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              PopupMenuButton<String>(
-                                icon: const Icon(
-                                  Icons.more_vert,
-                                  color: Color(0xFF64748B),
-                                ),
-                                onSelected: (action) {
-                                  if (action == 'details') {
-                                    _openHouseDetails(h);
-                                  } else if (action == 'edit') {
-                                    _openEditHouse(h);
-                                  } else if (action == 'delete') {
-                                    _confirmDeleteHouse(h);
-                                  }
-                                },
-                                itemBuilder: (ctx) => [
-                                  const PopupMenuItem(
-                                    value: 'details',
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.visibility_outlined,
-                                          size: 18,
-                                          color: AppTheme.accentColor,
-                                        ),
-                                        SizedBox(width: 8),
-                                        Text('View Details & Rooms'),
-                                      ],
-                                    ),
-                                  ),
-                                  const PopupMenuItem(
-                                    value: 'edit',
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.edit_outlined,
-                                          size: 18,
-                                          color: Color(0xFF475569),
-                                        ),
-                                        SizedBox(width: 8),
-                                        Text('Edit House'),
-                                      ],
-                                    ),
-                                  ),
-                                  const PopupMenuItem(
-                                    value: 'delete',
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.delete_outline,
-                                          size: 18,
-                                          color: Color(0xFFB33A3A),
-                                        ),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          'Delete House',
-                                          style: TextStyle(
-                                            color: Color(0xFFB33A3A),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
