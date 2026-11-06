@@ -4,6 +4,7 @@ import '../../core/widgets/kosmate_components.dart';
 import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
+import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final UserModel user;
@@ -29,164 +30,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _currentUser = widget.user;
   }
 
-  void _showEditProfileModal() {
-    final nameCtrl = TextEditingController(text: _currentUser.name);
-    final phoneCtrl = TextEditingController(text: _currentUser.phone);
-    bool isSaving = false;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => Padding(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Edit Profile',
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.foregroundColor,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(ctx),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // Full name input matching figma/Components.png
-              const Text(
-                'Full name',
-                style: TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.foregroundColor,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
-                ),
-                child: Row(
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
-                      child: Icon(Icons.person_outline, color: Color(0xFF94A3B8), size: 22),
-                    ),
-                    Expanded(
-                      child: TextField(
-                        controller: nameCtrl,
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          hintText: 'Enter your full name',
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(vertical: 14),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Phone number input matching figma/Components.png
-              const Text(
-                'Phone number',
-                style: TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.foregroundColor,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
-                ),
-                child: Row(
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
-                      child: Icon(Icons.phone_outlined, color: Color(0xFF94A3B8), size: 22),
-                    ),
-                    Expanded(
-                      child: TextField(
-                        controller: phoneCtrl,
-                        keyboardType: TextInputType.phone,
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          hintText: 'Enter phone number',
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(vertical: 14),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Save & Cancel actions
-              KosMateButton.primary(
-                label: 'Save changes',
-                icon: Icons.check,
-                isLoading: isSaving,
-                onPressed: () async {
-                  if (nameCtrl.text.trim().isEmpty) return;
-                  setModalState(() => isSaving = true);
-                  final messenger = ScaffoldMessenger.of(context);
-                  try {
-                    final updated = await _authService.updateProfile(
-                      userId: _currentUser.userId,
-                      name: nameCtrl.text.trim(),
-                      phone: phoneCtrl.text.trim(),
-                    );
-                    if (mounted) setState(() => _currentUser = updated);
-                    if (ctx.mounted) Navigator.pop(ctx);
-                    messenger.showSnackBar(
-                      const SnackBar(content: Text('Profile updated successfully!')),
-                    );
-                  } catch (e) {
-                    setModalState(() => isSaving = false);
-                    messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
-                  }
-                },
-              ),
-              const SizedBox(height: 10),
-              KosMateButton.outlined(
-                label: 'Cancel',
-                onPressed: () => Navigator.pop(ctx),
-              ),
-            ],
-          ),
-        ),
-      ),
+  Future<void> _openEditProfileScreen() async {
+    final updated = await Navigator.push<UserModel>(
+      context,
+      MaterialPageRoute(builder: (_) => EditProfileScreen(user: _currentUser)),
     );
+    if (updated != null && mounted) {
+      setState(() => _currentUser = updated);
+    }
   }
 
   void _handleLogout() async {
@@ -327,7 +178,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           KosMateButton.outlined(
             label: 'Edit profile',
             icon: Icons.edit_outlined,
-            onPressed: _showEditProfileModal,
+            onPressed: _openEditProfileScreen,
           ),
           const SizedBox(height: 12),
           KosMateButton.destructive(

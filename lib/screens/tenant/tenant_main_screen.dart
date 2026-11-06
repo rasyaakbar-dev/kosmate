@@ -274,9 +274,17 @@ class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final roomNumber = _activeBooking?.room?.roomNumber ?? 'A-03';
-    final houseName = _activeBooking?.room?.house?.houseName ?? 'Kost Melati';
-    final paymentStatus = _latestPayment?.status.displayName ?? 'Paid';
+    final hasActiveRoom = _activeBooking != null && _activeBooking?.room != null;
+    final roomNumber = hasActiveRoom ? _activeBooking!.room!.roomNumber : 'None';
+    final houseName = hasActiveRoom
+        ? (_activeBooking!.room!.house?.houseName ?? 'Boarding House')
+        : 'Explore available rooms';
+    final paymentStatus = _latestPayment != null
+        ? _latestPayment!.status.displayName
+        : 'No bills';
+    final greetingName = widget.user.name.trim().isNotEmpty
+        ? widget.user.name.trim()
+        : 'User';
 
     return RefreshIndicator(
       onRefresh: _loadDashboardData,
@@ -288,7 +296,7 @@ class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
           children: [
             // Greeting Header
             Text(
-              'Hello, ${widget.user.name.isNotEmpty ? widget.user.name : "Alya"}!',
+              'Hello, $greetingName!',
               style: const TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 26,
@@ -298,7 +306,9 @@ class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Room $roomNumber • $houseName',
+              hasActiveRoom
+                  ? 'Room $roomNumber • $houseName'
+                  : 'No active room • $houseName',
               style: const TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 14,

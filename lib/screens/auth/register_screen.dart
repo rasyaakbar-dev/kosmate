@@ -3,6 +3,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/kosmate_app_bar.dart';
 import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
+import 'widgets/terms_of_service_dialog.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -481,13 +482,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         color: Color(0xFF334155),
                       ),
                     ),
-                    const Text(
-                      'terms and services.',
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 14,
-                        color: AppTheme.accentColor,
-                        decoration: TextDecoration.underline,
+                    InkWell(
+                      onTap: () async {
+                        final agreed = await TermsOfServiceDialog.show(context);
+                        if (agreed == true && mounted) {
+                          setState(() => _agreeTerms = true);
+                        }
+                      },
+                      child: const Text(
+                        'terms and services.',
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.accentColor,
+                          decoration: TextDecoration.underline,
+                        ),
                       ),
                     ),
                   ],

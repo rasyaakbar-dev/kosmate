@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/kosmate_app_bar.dart';
 import '../../models/user_model.dart';
@@ -16,6 +17,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  static const String _kRememberMeEmailKey = 'remember_me_email';
+
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -24,6 +27,25 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _rememberMe = false;
   bool _isLoading = false;
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedEmail();
+  }
+
+  Future<void> _loadSavedEmail() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedEmail = prefs.getString(_kRememberMeEmailKey);
+      if (savedEmail != null && savedEmail.isNotEmpty && mounted) {
+        setState(() {
+          _emailController.text = savedEmail;
+          _rememberMe = true;
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -45,6 +67,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final user = await _authService.getCurrentUserProfile();
       if (!mounted) return;
+
+      // Handle Remember Me persistence
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        if (_rememberMe) {
+          await prefs.setString(_kRememberMeEmailKey, _emailController.text.trim());
+        } else {
+          await prefs.remove(_kRememberMeEmailKey);
+        }
+      } catch (_) {}
 
       if (user == null) {
         messenger.showSnackBar(
@@ -68,6 +100,8 @@ class _LoginScreenState extends State<LoginScreen> {
           destination = TenantMainScreen(user: user);
           break;
       }
+
+      if (!mounted) return;
 
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => destination),
@@ -212,31 +246,38 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: Checkbox(
-                            value: _rememberMe,
-                            activeColor: AppTheme.accentColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
+                    InkWell(
+                      onTap: () => setState(() => _rememberMe = !_rememberMe),
+                      borderRadius: BorderRadius.circular(4),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: Checkbox(
+                                value: _rememberMe,
+                                activeColor: AppTheme.accentColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.5),
+                                onChanged: (val) => setState(() => _rememberMe = val ?? false),
+                              ),
                             ),
-                            side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.5),
-                            onChanged: (val) => setState(() => _rememberMe = val ?? false),
-                          ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Remember Me',
+                              style: TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 14,
+                                color: Color(0xFF334155),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Remember Me',
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 14,
-                            color: Color(0xFF334155),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                     ElevatedButton(
                       onPressed: _isLoading ? null : _handleLogin,

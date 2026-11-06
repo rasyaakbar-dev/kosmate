@@ -15,6 +15,8 @@ import '../../services/booking_service.dart';
 import '../../services/payment_service.dart';
 import '../../services/complaint_service.dart';
 import '../shared/profile_screen.dart';
+import '../shared/house_form_screen.dart';
+import '../shared/house_detail_screen.dart';
 
 class OwnerMainScreen extends StatefulWidget {
   final UserModel user;
@@ -193,9 +195,9 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
     }
 
     final numberCtrl = TextEditingController();
-    final typeCtrl = TextEditingController(text: 'Standard');
-    final priceCtrl = TextEditingController(text: '1000000');
-    final facilitiesCtrl = TextEditingController(text: 'AC, WiFi, Kasur');
+    final typeCtrl = TextEditingController();
+    final priceCtrl = TextEditingController();
+    final facilitiesCtrl = TextEditingController();
     int selectedHouseId = _houses.first.houseId;
     RoomStatus selectedStatus = RoomStatus.available;
 
@@ -488,7 +490,21 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final dateStr = Formatters.formatDate(DateTime.now());
+    final now = DateTime.now();
+    const weekdays = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday'
+    ];
+    final weekdayName = weekdays[now.weekday - 1];
+    final dateStr = '$weekdayName, ${Formatters.formatDate(now)}';
+    final ownerName = widget.user.name.trim().isNotEmpty
+        ? widget.user.name.trim()
+        : 'Owner';
 
     return RefreshIndicator(
       onRefresh: _loadDashboardData,
@@ -500,7 +516,7 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
           children: [
             // Greeting Header
             Text(
-              'Good morning, ${widget.user.name.isNotEmpty ? widget.user.name : "Raka"}',
+              'Good morning, $ownerName',
               style: const TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 26,
@@ -510,7 +526,7 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Sunday, $dateStr',
+              dateStr,
               style: const TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 14,
@@ -862,68 +878,93 @@ class _OwnerPropertiesTabState extends State<_OwnerPropertiesTab> {
     });
   }
 
-  void _showAddHouseDialog() {
-    final nameCtrl = TextEditingController();
-    final addressCtrl = TextEditingController();
-    final descCtrl = TextEditingController();
+  Future<void> _openAddHouseScreen() async {
+    final created = await Navigator.push<HouseModel>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HouseFormScreen(ownerId: widget.user.userId),
+      ),
+    );
+    if (created != null && mounted) {
+      _loadHouses();
+    }
+  }
 
-    showDialog(
+  Future<void> _openHouseDetails(HouseModel house) async {
+    final changed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HouseDetailScreen(
+          house: house,
+          currentUser: widget.user,
+        ),
+      ),
+    );
+    if (changed == true && mounted) {
+      _loadHouses();
+    }
+  }
+
+  Future<void> _openEditHouse(HouseModel house) async {
+    final updated = await Navigator.push<HouseModel>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HouseFormScreen(
+          house: house,
+          ownerId: widget.user.userId,
+        ),
+      ),
+    );
+    if (updated != null && mounted) {
+      _loadHouses();
+    }
+  }
+
+  Future<void> _confirmDeleteHouse(HouseModel house) async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add Boarding House'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                decoration: const InputDecoration(labelText: 'House Name'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: addressCtrl,
-                decoration: const InputDecoration(labelText: 'Address'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: descCtrl,
-                maxLines: 2,
-                decoration: const InputDecoration(labelText: 'Description (optional)'),
-              ),
-            ],
-          ),
+        title: const Text('Delete Boarding House'),
+        content: Text(
+          'Are you sure you want to delete "${house.houseName}"?\n\n'
+          'All associated rooms and records will be permanently deleted.',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () async {
-              if (nameCtrl.text.trim().isEmpty || addressCtrl.text.trim().isEmpty) return;
-              try {
-                await _houseService.createHouse(
-                  HouseModel(
-                    houseId: 0,
-                    ownerId: widget.user.userId,
-                    houseName: nameCtrl.text.trim(),
-                    houseAddress: addressCtrl.text.trim(),
-                    description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
-                  ),
-                );
-                if (ctx.mounted) Navigator.pop(ctx);
-                _loadHouses();
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-                }
-              }
-            },
-            child: const Text('Save House'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFB33A3A),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
+
+    if (confirmed == true && mounted) {
+      final messenger = ScaffoldMessenger.of(context);
+      try {
+        await _houseService.deleteHouse(house.houseId);
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Boarding house deleted successfully.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        _loadHouses();
+      } catch (e) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -942,7 +983,11 @@ class _OwnerPropertiesTabState extends State<_OwnerPropertiesTab> {
               ElevatedButton.icon(
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('Add House'),
-                onPressed: _showAddHouseDialog,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.accentColor,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: _openAddHouseScreen,
               ),
             ],
           ),
@@ -958,7 +1003,33 @@ class _OwnerPropertiesTabState extends State<_OwnerPropertiesTab> {
                 }
                 final houses = snapshot.data ?? [];
                 if (houses.isEmpty) {
-                  return const Center(child: Text('No boarding houses listed yet.'));
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.home_work_outlined, size: 60, color: Color(0xFFCBD5E1)),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'No boarding houses listed yet.',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Click "Add House" above to list your first boarding house.',
+                            style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
                 }
 
                 return ListView.builder(
@@ -967,54 +1038,164 @@ class _OwnerPropertiesTabState extends State<_OwnerPropertiesTab> {
                   itemBuilder: (context, index) {
                     final house = houses[index];
                     return Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
                       margin: const EdgeInsets.only(bottom: 16),
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              house.houseName,
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                            Text(house.houseAddress, style: TextStyle(color: Colors.grey[600])),
-                            const Divider(height: 20),
-                            FutureBuilder<List<RoomModel>>(
-                              future: _roomService.getRooms(houseId: house.houseId),
-                              builder: (context, roomSnap) {
-                                if (roomSnap.connectionState == ConnectionState.waiting) {
-                                  return const Center(child: LinearProgressIndicator());
-                                }
-                                final rooms = roomSnap.data ?? [];
-                                if (rooms.isEmpty) {
-                                  return const Text('No rooms added to this house yet.');
-                                }
-
-                                return Column(
-                                  children: rooms.map((r) {
-                                    return ListTile(
-                                      contentPadding: EdgeInsets.zero,
-                                      title: Text('Room ${r.roomNumber} (${r.roomType})'),
-                                      subtitle: Text(Formatters.formatCurrency(r.price)),
-                                      trailing: DropdownButton<RoomStatus>(
-                                        value: r.status,
-                                        underline: const SizedBox(),
-                                        items: RoomStatus.values.map((s) {
-                                          return DropdownMenuItem(value: s, child: Text(s.displayName));
-                                        }).toList(),
-                                        onChanged: (newStatus) async {
-                                          if (newStatus != null) {
-                                            await _roomService.updateRoomStatus(r.roomId, newStatus);
-                                            setState(() {});
-                                          }
-                                        },
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () => _openHouseDetails(house),
+                        child: Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Container(
+                                      width: 60,
+                                      height: 60,
+                                      color: const Color(0xFFE2E8F0),
+                                      child: house.thumbnailUrl != null &&
+                                              house.thumbnailUrl!.trim().isNotEmpty
+                                          ? Image.network(
+                                              house.thumbnailUrl!.trim(),
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, _, _) => const Icon(
+                                                Icons.home_work_outlined,
+                                                color: Color(0xFF94A3B8),
+                                              ),
+                                            )
+                                          : const Icon(
+                                              Icons.home_work_outlined,
+                                              color: Color(0xFF94A3B8),
+                                            ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          house.houseName,
+                                          style: const TextStyle(
+                                            fontSize: 17,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.foregroundColor,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 3),
+                                        Text(
+                                          house.houseAddress,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            color: Color(0xFF64748B),
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  PopupMenuButton<String>(
+                                    icon: const Icon(Icons.more_vert, color: Color(0xFF64748B)),
+                                    onSelected: (action) {
+                                      if (action == 'details') {
+                                        _openHouseDetails(house);
+                                      } else if (action == 'edit') {
+                                        _openEditHouse(house);
+                                      } else if (action == 'delete') {
+                                        _confirmDeleteHouse(house);
+                                      }
+                                    },
+                                    itemBuilder: (ctx) => [
+                                      const PopupMenuItem(
+                                        value: 'details',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.visibility_outlined, size: 18, color: AppTheme.accentColor),
+                                            SizedBox(width: 8),
+                                            Text('View Details & Rooms'),
+                                          ],
+                                        ),
                                       ),
+                                      const PopupMenuItem(
+                                        value: 'edit',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.edit_outlined, size: 18, color: Color(0xFF475569)),
+                                            SizedBox(width: 8),
+                                            Text('Edit House'),
+                                          ],
+                                        ),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'delete',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.delete_outline, size: 18, color: Color(0xFFB33A3A)),
+                                            SizedBox(width: 8),
+                                            Text('Delete House', style: TextStyle(color: Color(0xFFB33A3A))),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const Divider(height: 20, color: Color(0xFFF1F5F9)),
+                              FutureBuilder<List<RoomModel>>(
+                                future: _roomService.getRooms(houseId: house.houseId),
+                                builder: (context, roomSnap) {
+                                  if (roomSnap.connectionState == ConnectionState.waiting) {
+                                    return const Center(child: LinearProgressIndicator());
+                                  }
+                                  final rooms = roomSnap.data ?? [];
+                                  if (rooms.isEmpty) {
+                                    return const Row(
+                                      children: [
+                                        Icon(Icons.info_outline, size: 16, color: Color(0xFF94A3B8)),
+                                        SizedBox(width: 6),
+                                        Text(
+                                          'No rooms added to this house yet.',
+                                          style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                                        ),
+                                      ],
                                     );
-                                  }).toList(),
-                                );
-                              },
-                            ),
-                          ],
+                                  }
+
+                                  final availableCount = rooms.where((r) => r.status == RoomStatus.available).length;
+                                  return Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        '${rooms.length} Rooms total ($availableCount available)',
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF475569),
+                                        ),
+                                      ),
+                                      const Text(
+                                        'Manage >',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppTheme.accentColor,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     );
