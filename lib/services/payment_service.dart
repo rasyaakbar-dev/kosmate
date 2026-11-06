@@ -1,9 +1,12 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/constants/supabase_constants.dart';
 import '../models/payment_model.dart';
+import '../models/user_model.dart';
+import 'midtrans_service.dart';
 
 class PaymentService {
   final SupabaseClient _client = supabase;
+  final MidtransService _midtransService = MidtransService();
 
   /// Fetch all payments/invoices for a tenant
   Future<List<PaymentModel>> getPaymentsByUser(int userId) async {
@@ -91,6 +94,97 @@ class PaymentService {
         .from(SupabaseConstants.paymentTable)
         .update(updateData)
         .eq('payment_id', paymentId)
+        .select('*, users!payment_user_id_fkey(*), room!payment_room_id_fkey(*, house!room_house_id_fkey(*))')
+        .single();
+
+    return PaymentModel.fromJson(response);
+  }
+
+  /// Initiate a Midtrans GoPay / QRIS transaction for an invoice
+  Future<PaymentModel> initiateMidtransPayment({
+    required PaymentModel payment,
+    required UserModel tenant,
+  }) async {
+    // If an order has already been charged and QR code exists, return the existing payment
+    if (payment.orderId != null && payment.qrCodeUrl != null) {
+      return payment;
+    }
+
+    final orderId = 'KOSMATE-INV-${payment.paymentId}-${DateTime.now().millisecondsSinceEpoch}';
+    final chargeRes = await _midtransService.chargeEWallet(
+      orderId: orderId,
+      grossAmount: payment.amount,
+      customer: tenant,
+    );
+
+    final updateData = <String, dynamic>{
+      'order_id': orderId,
+      'transaction_id': chargeRes.transactionId,
+      'payment_type': chargeRes.paymentType,
+      'qr_code_url': chargeRes.qrCodeUrl,
+      'deeplink_url': chargeRes.deeplinkUrl,
+    };
+
+    final response = await _client
+        .from(SupabaseConstants.paymentTable)
+        .update(updateData)
+        .eq('payment_id', payment.paymentId)
+        .select('*, users!payment_user_id_fkey(*), room!payment_room_id_fkey(*, house!room_house_id_fkey(*))')
+        .single();
+
+    return PaymentModel.fromJson(response);
+  }
+
+  /// Sync and check transaction status directly from Midtrans Core API
+  /// If settled, updates status to paid in Supabase automatically.
+  Future<PaymentModel> syncPaymentStatusWithMidtrans(PaymentModel payment) async {
+    if (payment.orderId == null) {
+      return payment;
+    }
+
+    final statusRes = await _midtransService.getTransactionStatus(payment.orderId!);
+
+    if (statusRes.isSettled) {
+      return await updatePaymentStatus(
+        paymentId: payment.paymentId,
+        status: PaymentStatus.paid,
+        paidDate: DateTime.now(),
+      );
+    } else if (statusRes.isExpiredOrCancelled) {
+      // Clear Midtrans order metadata so tenant can generate a fresh payment
+      final response = await _client
+          .from(SupabaseConstants.paymentTable)
+          .update({
+            'order_id': null,
+            'transaction_id': null,
+            'qr_code_url': null,
+            'deeplink_url': null,
+          })
+          .eq('payment_id', payment.paymentId)
+          .select('*, users!payment_user_id_fkey(*), room!payment_room_id_fkey(*, house!room_house_id_fkey(*))')
+          .single();
+
+      return PaymentModel.fromJson(response);
+    }
+
+    return payment;
+  }
+
+  /// Cancel an ongoing Midtrans transaction
+  Future<PaymentModel> cancelMidtransPayment(PaymentModel payment) async {
+    if (payment.orderId != null) {
+      await _midtransService.cancelTransaction(payment.orderId!);
+    }
+
+    final response = await _client
+        .from(SupabaseConstants.paymentTable)
+        .update({
+          'order_id': null,
+          'transaction_id': null,
+          'qr_code_url': null,
+          'deeplink_url': null,
+        })
+        .eq('payment_id', payment.paymentId)
         .select('*, users!payment_user_id_fkey(*), room!payment_room_id_fkey(*, house!room_house_id_fkey(*))')
         .single();
 

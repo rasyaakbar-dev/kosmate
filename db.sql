@@ -78,6 +78,11 @@ CREATE TABLE public.payment (
   status public.payment_status NOT NULL DEFAULT 'pending'::public.payment_status,
   paid_date date,
   receipt_url text,
+  order_id text UNIQUE,
+  transaction_id text,
+  payment_type text,
+  qr_code_url text,
+  deeplink_url text,
   created_at timestamptz NOT NULL DEFAULT timezone('utc'::text, now()),
   CONSTRAINT payment_pkey PRIMARY KEY (payment_id),
   CONSTRAINT payment_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE,
@@ -307,7 +312,6 @@ CREATE POLICY "Authenticated users can upload complaint attachments" ON storage.
   FOR INSERT TO authenticated
   WITH CHECK (bucket_id = 'complaint-attachments');
 
-
 -- ============================================================================
 -- 5. AUTOMATED ROOM OCCUPANCY TRIGGER ON BOOKING APPROVAL
 -- ============================================================================
@@ -369,3 +373,13 @@ CREATE POLICY "Authenticated users can view complaint attachments" ON storage.ob
 CREATE POLICY "Authenticated users can upload complaint attachments" ON storage.objects
   FOR INSERT TO authenticated
   WITH CHECK (bucket_id = 'complaint-attachments');
+  
+-- ============================================================================
+-- 7. MIDTRANS E-WALLET MIGRATION (Idempotent for existing databases)
+-- ============================================================================
+ALTER TABLE public.payment 
+  ADD COLUMN IF NOT EXISTS order_id text UNIQUE,
+  ADD COLUMN IF NOT EXISTS transaction_id text,
+  ADD COLUMN IF NOT EXISTS payment_type text,
+  ADD COLUMN IF NOT EXISTS qr_code_url text,
+  ADD COLUMN IF NOT EXISTS deeplink_url text;

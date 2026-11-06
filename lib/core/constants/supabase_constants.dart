@@ -18,5 +18,17 @@ class SupabaseConstants {
   static const String complaintAttachmentsBucket = 'complaint-attachments';
 }
 
+class MidtransConstants {
+  static const bool isProduction = false;
+  static const String sandboxBaseUrl = 'https://api.sandbox.midtrans.com/v2';
+  static const String productionBaseUrl = 'https://api.midtrans.com/v2';
+
+  /// Midtrans Sandbox Server Key (configured for testing)
+  static const String serverKey = 'SB-Mid-server-YOUR_SERVER_KEY_HERE';
+  static const String clientKey = 'SB-Mid-client-YOUR_CLIENT_KEY_HERE';
+
+  static String get baseUrl => isProduction ? productionBaseUrl : sandboxBaseUrl;
+}
+
 final supabase = Supabase.instance.client;
 

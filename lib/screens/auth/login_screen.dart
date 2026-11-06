@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/kosmate_app_bar.dart';
+import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
+import '../admin/admin_main_screen.dart';
+import '../owner/owner_main_screen.dart';
+import '../tenant/tenant_main_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -38,7 +42,37 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-      // Navigation is automatically handled by AuthGate
+
+      final user = await _authService.getCurrentUserProfile();
+      if (!mounted) return;
+
+      if (user == null) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Profile not found. Please contact support or retry.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      Widget destination;
+      switch (user.role) {
+        case UserRole.admin:
+          destination = AdminMainScreen(user: user);
+          break;
+        case UserRole.owner:
+          destination = OwnerMainScreen(user: user);
+          break;
+        case UserRole.tenant:
+          destination = TenantMainScreen(user: user);
+          break;
+      }
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => destination),
+        (route) => false,
+      );
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(

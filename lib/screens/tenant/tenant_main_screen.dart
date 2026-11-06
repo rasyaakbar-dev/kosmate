@@ -13,6 +13,7 @@ import '../../services/booking_service.dart';
 import '../../services/payment_service.dart';
 import '../../services/complaint_service.dart';
 import '../shared/profile_screen.dart';
+import 'widgets/midtrans_payment_sheet.dart';
 
 class TenantMainScreen extends StatefulWidget {
   final UserModel user;
@@ -887,6 +888,67 @@ class _TenantPaymentsTabState extends State<_TenantPaymentsTab> {
     });
   }
 
+  void _startMidtransPayment(PaymentModel payment) async {
+    // If invoice already has a generated Midtrans QR code, directly open sheet
+    if (payment.qrCodeUrl != null && payment.orderId != null) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => MidtransPaymentSheet(
+          payment: payment,
+          onPaymentSuccess: _loadPayments,
+        ),
+      );
+      return;
+    }
+
+    final messenger = ScaffoldMessenger.of(context);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Connecting to Midtrans Core API...'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final chargedPayment = await _paymentService.initiateMidtransPayment(
+        payment: payment,
+        tenant: widget.user,
+      );
+      if (mounted) Navigator.pop(context); // close loader dialog
+      if (!mounted) return;
+
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => MidtransPaymentSheet(
+          payment: chargedPayment,
+          onPaymentSuccess: _loadPayments,
+        ),
+      );
+    } catch (e) {
+      if (mounted) Navigator.pop(context); // close loader dialog
+      messenger.showSnackBar(
+        SnackBar(content: Text('Failed to initialize GoPay/QRIS: $e')),
+      );
+    }
+  }
+
   void _showSubmitReceiptDialog(PaymentModel payment) {
     final receiptController = TextEditingController();
 
@@ -1006,13 +1068,43 @@ class _TenantPaymentsTabState extends State<_TenantPaymentsTab> {
                       Text('Due Date: ${Formatters.formatDate(p.dueDate)}'),
                       if (p.paidDate != null)
                         Text('Paid On: ${Formatters.formatDate(p.paidDate)}'),
+                      if (p.orderId != null && p.status == PaymentStatus.pending) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Order ID: ${p.orderId}',
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        ),
+                      ],
                       if (p.status == PaymentStatus.pending) ...[
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primaryColor,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                icon: const Icon(Icons.qr_code_2_rounded, size: 20),
+                                label: Text(
+                                  p.qrCodeUrl != null ? 'Continue GoPay / QRIS' : 'Pay with GoPay / QRIS',
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                onPressed: () => _startMidtransPayment(p),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
                         Align(
                           alignment: Alignment.centerRight,
-                          child: OutlinedButton.icon(
-                            icon: const Icon(Icons.upload_file),
-                            label: const Text('Submit Transfer Receipt'),
+                          child: TextButton.icon(
+                            icon: const Icon(Icons.upload_file, size: 16),
+                            label: const Text('Or submit manual receipt', style: TextStyle(fontSize: 13)),
                             onPressed: () => _showSubmitReceiptDialog(p),
                           ),
                         ),

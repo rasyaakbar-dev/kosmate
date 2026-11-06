@@ -37,6 +37,11 @@ class PaymentModel {
   final PaymentStatus status;
   final DateTime? paidDate;
   final String? receiptUrl;
+  final String? orderId;
+  final String? transactionId;
+  final String? paymentType;
+  final String? qrCodeUrl;
+  final String? deeplinkUrl;
   final DateTime? createdAt;
   final UserModel? user;
   final RoomModel? room;
@@ -50,6 +55,11 @@ class PaymentModel {
     required this.status,
     this.paidDate,
     this.receiptUrl,
+    this.orderId,
+    this.transactionId,
+    this.paymentType,
+    this.qrCodeUrl,
+    this.deeplinkUrl,
     this.createdAt,
     this.user,
     this.room,
@@ -77,6 +87,11 @@ class PaymentModel {
           ? DateTime.tryParse(json['paid_date'].toString())
           : null,
       receiptUrl: json['receipt_url'] as String?,
+      orderId: json['order_id'] as String?,
+      transactionId: json['transaction_id'] as String?,
+      paymentType: json['payment_type'] as String?,
+      qrCodeUrl: json['qr_code_url'] as String?,
+      deeplinkUrl: json['deeplink_url'] as String?,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
@@ -98,6 +113,11 @@ class PaymentModel {
       'status': status.name,
       'paid_date': paidDate?.toIso8601String().split('T').first,
       'receipt_url': receiptUrl,
+      'order_id': orderId,
+      'transaction_id': transactionId,
+      'payment_type': paymentType,
+      'qr_code_url': qrCodeUrl,
+      'deeplink_url': deeplinkUrl,
     };
     if (includeId) {
       map['payment_id'] = paymentId;
@@ -114,6 +134,11 @@ class PaymentModel {
     PaymentStatus? status,
     DateTime? paidDate,
     String? receiptUrl,
+    String? orderId,
+    String? transactionId,
+    String? paymentType,
+    String? qrCodeUrl,
+    String? deeplinkUrl,
     DateTime? createdAt,
     UserModel? user,
     RoomModel? room,
@@ -127,6 +152,11 @@ class PaymentModel {
       status: status ?? this.status,
       paidDate: paidDate ?? this.paidDate,
       receiptUrl: receiptUrl ?? this.receiptUrl,
+      orderId: orderId ?? this.orderId,
+      transactionId: transactionId ?? this.transactionId,
+      paymentType: paymentType ?? this.paymentType,
+      qrCodeUrl: qrCodeUrl ?? this.qrCodeUrl,
+      deeplinkUrl: deeplinkUrl ?? this.deeplinkUrl,
       createdAt: createdAt ?? this.createdAt,
       user: user ?? this.user,
       room: room ?? this.room,

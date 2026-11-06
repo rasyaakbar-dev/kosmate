@@ -1083,6 +1083,13 @@ class _OwnerPaymentsTabState extends State<_OwnerPaymentsTab> {
                       ),
                       Text('Tenant: ${p.user?.name ?? "User"} • Room: ${p.room?.roomNumber ?? p.roomId}'),
                       Text('Due: ${Formatters.formatDate(p.dueDate)}'),
+                      if (p.orderId != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Midtrans Order: ${p.orderId}',
+                          style: const TextStyle(fontSize: 12, color: AppTheme.accentColor, fontWeight: FontWeight.w500),
+                        ),
+                      ],
                       if (p.receiptUrl != null) ...[
                         const SizedBox(height: 8),
                         Text('Receipt: ${p.receiptUrl}', style: const TextStyle(color: Colors.blue)),
