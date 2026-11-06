@@ -174,12 +174,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 32),
                 _buildPrefixedInput(
                   controller: _emailController,
-                  label: 'Username / E-mail',
+                  label: 'E-mail',
                   prefixIcon: Icons.account_circle_outlined,
                   keyboardType: TextInputType.emailAddress,
                   validator: (val) {
                     if (val == null || val.trim().isEmpty) {
-                      return 'Please enter your email or username';
+                      return 'Please enter your email';
                     }
                     if (!val.contains('@')) {
                       return 'Please enter a valid email address';

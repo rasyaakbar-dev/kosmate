@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/supabase_constants.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/formatters.dart';
 import '../../core/widgets/kosmate_app_bar.dart';
 import '../../core/widgets/kosmate_components.dart';
 import '../../models/user_model.dart';
@@ -140,8 +141,8 @@ class _AdminHomeDashboardState extends State<_AdminHomeDashboard> {
 
       if (mounted) {
         setState(() {
-          _userCount = usersList.isNotEmpty ? usersList.length : 48; // fallback realistic demo
-          _houseCount = housesRes.isNotEmpty ? housesRes.length : 6;
+          _userCount = usersList.length;
+          _houseCount = housesRes.length;
           _recentUsers = usersList;
           _recentHouses = housesRes;
           _isLoading = false;
@@ -467,24 +468,34 @@ class _AdminHomeDashboardState extends State<_AdminHomeDashboard> {
             const SizedBox(height: 12),
 
             // Recent Activity List Cards
-            _buildActivityCard(
-              icon: Icons.person_outline,
-              title: 'New owner account',
-              subtitle: _recentUsers.isNotEmpty
-                  ? '${_recentUsers.first.name} • ${_recentUsers.first.role.name.toUpperCase()}'
-                  : 'Maya Kusuma • Owner',
-              trailingText: 'Today',
-            ),
-            const SizedBox(height: 10),
+            if (_recentUsers.isNotEmpty) ...[
+              _buildActivityCard(
+                icon: Icons.person_outline,
+                title: 'User registered',
+                subtitle: '${_recentUsers.first.name} • ${_recentUsers.first.role.name.toUpperCase()}',
+                trailingText: Formatters.formatDate(_recentUsers.first.createdAt),
+              ),
+              const SizedBox(height: 10),
+            ],
 
-            _buildActivityCard(
-              icon: Icons.apartment_outlined,
-              title: 'Boarding house added',
-              subtitle: _recentHouses.isNotEmpty
-                  ? '${_recentHouses.first.houseName} • ${_recentHouses.first.houseAddress}'
-                  : 'Kost Sakura • Jakarta',
-              trailingText: 'Yesterday',
-            ),
+            if (_recentHouses.isNotEmpty) ...[
+              _buildActivityCard(
+                icon: Icons.apartment_outlined,
+                title: 'Boarding house added',
+                subtitle: '${_recentHouses.first.houseName} • ${_recentHouses.first.houseAddress}',
+                trailingText: Formatters.formatDate(_recentHouses.first.createdAt),
+              ),
+            ] else if (_recentUsers.isEmpty) ...[
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: Center(
+                  child: Text(
+                    'No recent activities yet.',
+                    style: TextStyle(color: Color(0xFF64748B)),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

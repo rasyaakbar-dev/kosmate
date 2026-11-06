@@ -15,6 +15,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _authService = AuthService();
@@ -29,6 +30,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -54,7 +56,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
         name: _nameController.text.trim(),
-        phone: '', // Default empty if not prompted in figma
+        phone: _phoneController.text.trim(),
         role: _selectedRole,
       );
 
@@ -141,53 +143,142 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildRoleCard({
-    required String title,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          height: 48,
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFF1F5F9) : Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: isSelected ? AppTheme.accentColor : const Color(0xFFCBD5E1),
-              width: isSelected ? 2.0 : 1.5,
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                decoration: const BoxDecoration(
-                  border: Border(
-                    right: BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
-                  ),
-                ),
-                child: Icon(
-                  icon,
-                  color: isSelected ? AppTheme.accentColor : const Color(0xFF94A3B8),
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                title,
-                style: TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 15,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: isSelected ? AppTheme.accentColor : const Color(0xFF64748B),
-                ),
-              ),
-            ],
+  void _showRoleSelectionDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Select Your Role',
+          style: TextStyle(
+            fontFamily: 'Roboto',
+            fontWeight: FontWeight.bold,
+            color: AppTheme.foregroundColor,
           ),
         ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Choose how you want to use KosMate:',
+              style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            InkWell(
+              onTap: () {
+                setState(() => _selectedRole = UserRole.tenant);
+                Navigator.pop(ctx);
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: _selectedRole == UserRole.tenant ? const Color(0xFFEBF3FA) : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _selectedRole == UserRole.tenant ? AppTheme.accentColor : const Color(0xFFCBD5E1),
+                    width: _selectedRole == UserRole.tenant ? 2.0 : 1.2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: _selectedRole == UserRole.tenant ? AppTheme.accentColor : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.vpn_key_outlined,
+                        color: _selectedRole == UserRole.tenant ? Colors.white : const Color(0xFF64748B),
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Renter / Tenant',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Find, book rooms, pay rent and submit complaints.',
+                            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (_selectedRole == UserRole.tenant)
+                      const Icon(Icons.check_circle, color: AppTheme.accentColor),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: () {
+                setState(() => _selectedRole = UserRole.owner);
+                Navigator.pop(ctx);
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: _selectedRole == UserRole.owner ? const Color(0xFFEBF3FA) : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _selectedRole == UserRole.owner ? AppTheme.accentColor : const Color(0xFFCBD5E1),
+                    width: _selectedRole == UserRole.owner ? 2.0 : 1.2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: _selectedRole == UserRole.owner ? AppTheme.accentColor : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.home_work_outlined,
+                        color: _selectedRole == UserRole.owner ? Colors.white : const Color(0xFF64748B),
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Kos Owner',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Manage boarding houses, rooms, payments and tenants.',
+                            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (_selectedRole == UserRole.owner)
+                      const Icon(Icons.check_circle, color: AppTheme.accentColor),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+        ],
       ),
     );
   }
@@ -239,12 +330,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                // Peran (Role Selector)
+                _buildPrefixedInput(
+                  controller: _phoneController,
+                  label: 'Phone number',
+                  prefixIcon: Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Please enter phone number';
+                    }
+                    if (val.trim().length < 8) {
+                      return 'Please enter a valid phone number';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                // Role Selector Button that triggers Role Selection Modal / Screen
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Peran',
+                      'Role',
                       style: TextStyle(
                         fontFamily: 'Roboto',
                         fontSize: 15,
@@ -253,22 +360,58 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        _buildRoleCard(
-                          title: 'Owner',
-                          icon: Icons.home_work_outlined,
-                          isSelected: _selectedRole == UserRole.owner,
-                          onTap: () => setState(() => _selectedRole = UserRole.owner),
+                    InkWell(
+                      onTap: _showRoleSelectionDialog,
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
                         ),
-                        const SizedBox(width: 12),
-                        _buildRoleCard(
-                          title: 'Renter',
-                          icon: Icons.vpn_key_outlined,
-                          isSelected: _selectedRole == UserRole.tenant,
-                          onTap: () => setState(() => _selectedRole = UserRole.tenant),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Icon(
+                                _selectedRole == UserRole.owner
+                                    ? Icons.home_work_outlined
+                                    : Icons.vpn_key_outlined,
+                                color: AppTheme.accentColor,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _selectedRole == UserRole.owner ? 'Kos Owner' : 'Renter / Tenant',
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.foregroundColor,
+                                    ),
+                                  ),
+                                  Text(
+                                    _selectedRole == UserRole.owner
+                                        ? 'Manage rooms and receive rent'
+                                        : 'Find room and pay monthly rent',
+                                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.arrow_drop_down, color: Color(0xFF64748B)),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),

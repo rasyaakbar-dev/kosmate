@@ -229,13 +229,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } else {
       switch (_currentUser.role) {
         case UserRole.tenant:
-          subtitle = 'Renter • Room A-03';
+          subtitle = 'Tenant';
           break;
         case UserRole.owner:
-          subtitle = 'Owner • Kos Melati';
+          subtitle = 'Kos Owner';
           break;
         case UserRole.admin:
-          subtitle = 'System administrator';
+          subtitle = 'System Administrator';
           break;
       }
     }
@@ -243,7 +243,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final username = _currentUser.name.isNotEmpty
         ? _currentUser.name.toLowerCase().replaceAll(' ', '')
         : 'user';
-    final phone = _currentUser.phone.isNotEmpty ? _currentUser.phone : '0813 8821 1042';
+    final phone = _currentUser.phone.isNotEmpty ? _currentUser.phone : '-';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),

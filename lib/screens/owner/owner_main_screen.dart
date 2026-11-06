@@ -169,9 +169,9 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
       if (mounted) {
         setState(() {
           _houses = houses;
-          _totalRooms = total > 0 ? total : 12; // Fallback to realistic demo counts if empty
-          _occupiedRooms = total > 0 ? occupied : 9;
-          _availableRooms = total > 0 ? available : 3;
+          _totalRooms = total;
+          _occupiedRooms = occupied;
+          _availableRooms = available;
           _recentBookings = bookings;
           _recentPayments = payments;
           _recentComplaints = complaints;
@@ -615,33 +615,49 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
             const SizedBox(height: 12),
 
             // Recent Information List Cards
-            _buildRecentCard(
-              icon: Icons.receipt_long_outlined,
-              title: 'Payment received',
-              subtitle: _recentPayments.isNotEmpty
-                  ? '${_recentPayments.first.user?.name ?? "Tenant"} • Room ${_recentPayments.first.room?.roomNumber ?? "A-03"}'
-                  : 'Alya Putri • Room A-03',
-              trailingText: 'Today',
-            ),
-            const SizedBox(height: 10),
+            if (_recentPayments.isNotEmpty) ...[
+              _buildRecentCard(
+                icon: Icons.receipt_long_outlined,
+                title: 'Payment received',
+                subtitle:
+                    '${_recentPayments.first.user?.name ?? "Tenant"} • Room ${_recentPayments.first.room?.roomNumber ?? _recentPayments.first.roomId}',
+                trailingText: Formatters.formatDate(_recentPayments.first.paidDate ?? _recentPayments.first.dueDate),
+              ),
+              const SizedBox(height: 10),
+            ],
 
-            _buildRecentCard(
-              icon: Icons.build_outlined,
-              title: 'New complaint',
-              subtitle: _recentComplaints.isNotEmpty
-                  ? '${_recentComplaints.first.title} • Room ${_recentComplaints.first.room?.roomNumber ?? "B-02"}'
-                  : 'Leaking faucet • Room B-02',
-              trailingBadge: 'Open',
-              trailingText: 'Yesterday',
-            ),
-            const SizedBox(height: 10),
+            if (_recentComplaints.isNotEmpty) ...[
+              _buildRecentCard(
+                icon: Icons.build_outlined,
+                title: 'Complaint: ${_recentComplaints.first.title}',
+                subtitle:
+                    '${_recentComplaints.first.description} • Room ${_recentComplaints.first.room?.roomNumber ?? _recentComplaints.first.roomId}',
+                trailingBadge: _recentComplaints.first.status.displayName,
+                trailingText: Formatters.formatDate(_recentComplaints.first.date),
+              ),
+              const SizedBox(height: 10),
+            ],
 
-            _buildRecentCard(
-              icon: Icons.info_outline_rounded,
-              title: 'Renter check-out',
-              subtitle: 'Dewi Lestari • Room A-04',
-              trailingText: '2 days ago',
-            ),
+            if (_recentBookings.isNotEmpty) ...[
+              _buildRecentCard(
+                icon: Icons.person_outline,
+                title: 'Booking request',
+                subtitle:
+                    '${_recentBookings.first.user?.name ?? "User"} • Room ${_recentBookings.first.room?.roomNumber ?? _recentBookings.first.roomId}',
+                trailingBadge: _recentBookings.first.status.displayName,
+                trailingText: Formatters.formatDate(_recentBookings.first.requestDate),
+              ),
+            ] else if (_recentPayments.isEmpty && _recentComplaints.isEmpty) ...[
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: Center(
+                  child: Text(
+                    'No recent activities yet.',
+                    style: TextStyle(color: Color(0xFF64748B)),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
