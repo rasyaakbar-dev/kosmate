@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/kosmate_app_bar.dart';
-import '../../core/widgets/kosmate_components.dart';
 import '../../models/user_model.dart';
 import '../../models/house_model.dart';
 import '../../models/room_model.dart';
@@ -16,7 +15,10 @@ import '../../services/booking_service.dart';
 import '../../services/payment_service.dart';
 import '../../services/complaint_service.dart';
 import '../shared/profile_screen.dart';
-import '../houses/house_list_tab.dart';
+import 'rooms/owner_rooms_tab.dart';
+import 'rooms/room_form_screen.dart';
+import 'payments/owner_payments_tab.dart';
+import 'complaints/owner_complaints_screen.dart';
 
 class OwnerMainScreen extends StatefulWidget {
   final UserModel user;
@@ -38,8 +40,8 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
   Widget build(BuildContext context) {
     final screens = [
       _OwnerHomeDashboard(user: widget.user, onNavigateToTab: _navigateToTab),
-      HouseListTab(currentUser: widget.user, filterOwnerId: widget.user.userId),
-      _OwnerPaymentsTab(user: widget.user),
+      OwnerRoomsTab(currentUser: widget.user),
+      OwnerPaymentsTab(user: widget.user),
       ProfileScreen(user: widget.user),
     ];
 
@@ -190,273 +192,30 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
     }
   }
 
-  void _showAddRoomDialog() {
-    if (_houses.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add a boarding house first.')),
-      );
-      widget.onNavigateToTab(1);
-      return;
+  Future<void> _openAddRoomScreen() async {
+    final created = await Navigator.push<RoomModel>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RoomFormScreen(
+          ownerId: widget.user.userId,
+          houseId: _houses.firstOrNull?.houseId,
+        ),
+      ),
+    );
+    if (created != null && mounted) {
+      _loadDashboardData();
     }
-
-    final numberCtrl = TextEditingController();
-    final typeCtrl = TextEditingController();
-    final priceCtrl = TextEditingController();
-    final facilitiesCtrl = TextEditingController();
-    int selectedHouseId = _houses.first.houseId;
-    RoomStatus selectedStatus = RoomStatus.available;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Add Room'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                DropdownButtonFormField<int>(
-                  initialValue: selectedHouseId,
-                  decoration: const InputDecoration(
-                    labelText: 'Boarding House',
-                  ),
-                  items: _houses.map((h) {
-                    return DropdownMenuItem(
-                      value: h.houseId,
-                      child: Text(h.houseName),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    if (val != null) {
-                      setDialogState(() => selectedHouseId = val);
-                    }
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: numberCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Room Number (e.g. A-01)',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: typeCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Room Type (e.g. Deluxe/Single)',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: priceCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Monthly Price (IDR)',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: facilitiesCtrl,
-                  decoration: const InputDecoration(labelText: 'Facilities'),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final price = double.tryParse(priceCtrl.text) ?? 0.0;
-                if (numberCtrl.text.trim().isEmpty) return;
-                final messenger = ScaffoldMessenger.of(context);
-                try {
-                  await _roomService.createRoom(
-                    RoomModel(
-                      roomId: 0,
-                      houseId: selectedHouseId,
-                      roomNumber: numberCtrl.text.trim(),
-                      roomType: typeCtrl.text.trim(),
-                      price: price,
-                      facilities: facilitiesCtrl.text.trim(),
-                      status: selectedStatus,
-                    ),
-                  );
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  if (mounted) _loadDashboardData();
-                } catch (e) {
-                  messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
-                }
-              },
-              child: const Text('Save Room'),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
-  void _showComplaintsModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        maxChildSize: 0.95,
-        minChildSize: 0.4,
-        expand: false,
-        builder: (context, scrollCtrl) => Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Tenant Complaints',
-                style: TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: _recentComplaints.isEmpty
-                    ? const KosMateEmptyState(
-                        icon: Icons.feedback_outlined,
-                        title: 'No complaints yet',
-                        subtitle: 'Tenant complaints will appear here.',
-                      )
-                    : ListView.builder(
-                        controller: scrollCtrl,
-                        itemCount: _recentComplaints.length,
-                        itemBuilder: (context, idx) {
-                          final c = _recentComplaints[idx];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            child: ListTile(
-                              title: Text(
-                                c.title,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              subtitle: Text(
-                                '${c.description}\nPriority: ${c.priority.displayName}${c.response != null ? "\nResponse: ${c.response}" : ""}',
-                              ),
-                              trailing: Chip(
-                                label: Text(c.status.displayName),
-                                backgroundColor:
-                                    c.status == ComplaintStatus.resolved
-                                    ? Colors.green.withValues(alpha: 0.15)
-                                    : c.status == ComplaintStatus.inProgress
-                                    ? Colors.blue.withValues(alpha: 0.15)
-                                    : Colors.amber.withValues(alpha: 0.15),
-                              ),
-                              onTap: () => _showComplaintResponseDialog(c),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
-        ),
+  void _openComplaintsScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OwnerComplaintsScreen(owner: widget.user),
       ),
-    );
-  }
-
-  void _showComplaintResponseDialog(ComplaintModel complaint) {
-    final responseCtrl = TextEditingController(text: complaint.response ?? '');
-    ComplaintStatus selectedStatus = complaint.status == ComplaintStatus.pending
-        ? ComplaintStatus.inProgress
-        : complaint.status;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text('Respond to: ${complaint.title}'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Tenant Description:\n${complaint.description}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF64748B),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<ComplaintStatus>(
-                  initialValue: selectedStatus,
-                  decoration: const InputDecoration(labelText: 'Status'),
-                  items: const [
-                    DropdownMenuItem(
-                      value: ComplaintStatus.inProgress,
-                      child: Text('In Progress'),
-                    ),
-                    DropdownMenuItem(
-                      value: ComplaintStatus.resolved,
-                      child: Text('Resolved'),
-                    ),
-                    DropdownMenuItem(
-                      value: ComplaintStatus.rejected,
-                      child: Text('Rejected'),
-                    ),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) {
-                      setDialogState(() => selectedStatus = val);
-                    }
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: responseCtrl,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Response / Action taken',
-                    hintText: 'e.g., Plumber has been contacted and scheduled.',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final messenger = ScaffoldMessenger.of(context);
-                try {
-                  await _complaintService.respondToComplaint(
-                    complaintId: complaint.complaintId,
-                    responseText: responseCtrl.text.trim(),
-                    status: selectedStatus,
-                  );
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  _loadDashboardData();
-                  messenger.showSnackBar(
-                    const SnackBar(
-                      content: Text('Complaint updated successfully!'),
-                    ),
-                  );
-                } catch (e) {
-                  messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
-                }
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        ),
-      ),
-    );
+    ).then((_) {
+      if (mounted) _loadDashboardData();
+    });
   }
 
   void _showBookingRequestsModal() {
@@ -629,7 +388,7 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
                 _buildQuickActionTile(
                   icon: Icons.add,
                   label: 'Add room',
-                  onTap: _showAddRoomDialog,
+                  onTap: _openAddRoomScreen,
                 ),
                 const SizedBox(width: 12),
                 _buildQuickActionTile(
@@ -641,7 +400,7 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
                 _buildQuickActionTile(
                   icon: Icons.feedback_outlined,
                   label: 'Complaints',
-                  onTap: _showComplaintsModal,
+                  onTap: _openComplaintsScreen,
                 ),
               ],
             ),
@@ -901,124 +660,6 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// TAB 2: PAYMENTS MANAGEMENT
-// -----------------------------------------------------------------------------
-class _OwnerPaymentsTab extends StatefulWidget {
-  final UserModel user;
-  const _OwnerPaymentsTab({required this.user});
-
-  @override
-  State<_OwnerPaymentsTab> createState() => _OwnerPaymentsTabState();
-}
-
-class _OwnerPaymentsTabState extends State<_OwnerPaymentsTab> {
-  final _paymentService = PaymentService();
-  late Future<List<PaymentModel>> _paymentsFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPayments();
-  }
-
-  void _loadPayments() {
-    setState(() {
-      _paymentsFuture = _paymentService.getPaymentsForOwner(widget.user.userId);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: () async => _loadPayments(),
-      child: FutureBuilder<List<PaymentModel>>(
-        future: _paymentsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final list = snapshot.data ?? [];
-          if (list.isEmpty) {
-            return const Center(child: Text('No payment invoices registered.'));
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: list.length,
-            itemBuilder: (context, index) {
-              final p = list[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            Formatters.formatCurrency(p.amount),
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryColor,
-                            ),
-                          ),
-                          Chip(label: Text(p.status.displayName)),
-                        ],
-                      ),
-                      Text(
-                        'Tenant: ${p.user?.name ?? "User"} • Room: ${p.room?.roomNumber ?? p.roomId}',
-                      ),
-                      Text('Due: ${Formatters.formatDate(p.dueDate)}'),
-                      if (p.orderId != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          'Midtrans Order: ${p.orderId}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.accentColor,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                      if (p.receiptUrl != null) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          'Receipt: ${p.receiptUrl}',
-                          style: const TextStyle(color: Colors.blue),
-                        ),
-                      ],
-                      if (p.status == PaymentStatus.pending) ...[
-                        const SizedBox(height: 10),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: ElevatedButton.icon(
-                            icon: const Icon(Icons.check, size: 18),
-                            label: const Text('Confirm as Paid'),
-                            onPressed: () async {
-                              await _paymentService.updatePaymentStatus(
-                                paymentId: p.paymentId,
-                                status: PaymentStatus.paid,
-                              );
-                              _loadPayments();
-                            },
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              );
-            },
-          );
-        },
       ),
     );
   }

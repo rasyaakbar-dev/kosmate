@@ -150,8 +150,9 @@ class _UserFormDialogState extends State<UserFormDialog> {
                   TextFormField(
                     controller: _nameController,
                     validator: (val) {
-                      if (val == null || val.trim().isEmpty)
+                      if (val == null || val.trim().isEmpty) {
                         return 'Please enter a name';
+                      }
                       return null;
                     },
                     decoration: _inputDecoration(
@@ -169,10 +170,12 @@ class _UserFormDialogState extends State<UserFormDialog> {
                     readOnly: widget.isEditing,
                     keyboardType: TextInputType.emailAddress,
                     validator: (val) {
-                      if (val == null || val.trim().isEmpty)
+                      if (val == null || val.trim().isEmpty) {
                         return 'Please enter an email';
-                      if (!val.contains('@') || !val.contains('.'))
+                      }
+                      if (!val.contains('@') || !val.contains('.')) {
                         return 'Invalid email address';
+                      }
                       return null;
                     },
                     decoration: _inputDecoration(
