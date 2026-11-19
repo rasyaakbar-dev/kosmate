@@ -302,11 +302,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   Expanded(
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFDC2626),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        side: const BorderSide(color: Color(0xFFCBD5E1)),
+                        side: const BorderSide(color: Color(0xFFDC2626), width: 1.5),
                       ),
                       onPressed: _isLoading
                           ? null
@@ -317,7 +318,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           fontFamily: 'Roboto',
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF64748B),
+                          color: Color(0xFFDC2626),
                         ),
                       ),
                     ),

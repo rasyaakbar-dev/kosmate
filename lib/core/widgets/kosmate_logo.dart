@@ -30,21 +30,24 @@ class _KosMateLogoPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 32.0 * scale
       ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
+      ..strokeJoin = StrokeJoin.round
+      ..isAntiAlias = true;
 
     final bodyPaint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 32.0 * scale
       ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
+      ..strokeJoin = StrokeJoin.round
+      ..isAntiAlias = true;
 
     final doorPaint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 28.0 * scale
       ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
+      ..strokeJoin = StrokeJoin.round
+      ..isAntiAlias = true;
 
     // Path 1: Roof (M16 144 L160 16 L304 144)
     final roofPath = Path()
