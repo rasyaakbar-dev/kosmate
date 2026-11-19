@@ -1,3 +1,6 @@
+import 'package:flutter/foundation.dart';
+
+import '../core/utils/json_helpers.dart';
 import 'house_model.dart';
 
 enum RoomStatus {
@@ -27,6 +30,7 @@ enum RoomStatus {
   }
 }
 
+@immutable
 class RoomModel {
   final int roomId;
   final int houseId;
@@ -39,7 +43,7 @@ class RoomModel {
   final DateTime? createdAt;
   final HouseModel? house;
 
-  RoomModel({
+  const RoomModel({
     required this.roomId,
     required this.houseId,
     required this.roomNumber,
@@ -63,12 +67,8 @@ class RoomModel {
     }
 
     return RoomModel(
-      roomId: json['room_id'] is int
-          ? json['room_id'] as int
-          : int.parse(json['room_id'].toString()),
-      houseId: json['house_id'] is int
-          ? json['house_id'] as int
-          : int.parse(json['house_id'].toString()),
+      roomId: parseIntField(json['room_id']),
+      houseId: parseIntField(json['house_id']),
       roomNumber: json['room_number'] as String? ?? '',
       roomType: json['room_type'] as String? ?? '',
       price: json['price'] != null

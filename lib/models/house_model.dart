@@ -1,5 +1,9 @@
+import 'package:flutter/foundation.dart';
+
+import '../core/utils/json_helpers.dart';
 import 'user_model.dart';
 
+@immutable
 class HouseModel {
   final int houseId;
   final int ownerId;
@@ -10,7 +14,7 @@ class HouseModel {
   final DateTime? createdAt;
   final UserModel? owner;
 
-  HouseModel({
+  const HouseModel({
     required this.houseId,
     required this.ownerId,
     required this.houseName,
@@ -23,12 +27,8 @@ class HouseModel {
 
   factory HouseModel.fromJson(Map<String, dynamic> json) {
     return HouseModel(
-      houseId: json['house_id'] is int
-          ? json['house_id'] as int
-          : int.parse(json['house_id'].toString()),
-      ownerId: json['owner_id'] is int
-          ? json['owner_id'] as int
-          : int.parse(json['owner_id'].toString()),
+      houseId: parseIntField(json['house_id']),
+      ownerId: parseIntField(json['owner_id']),
       houseName: json['house_name'] as String? ?? '',
       houseAddress: json['house_address'] as String? ?? '',
       description: json['description'] as String?,

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/constants/supabase_constants.dart';
+import '../core/errors/app_exception.dart';
 
 class StorageService {
   final SupabaseClient _client = supabase;
@@ -14,15 +15,19 @@ class StorageService {
     required Uint8List bytes,
     String? mimeType,
   }) async {
-    await _client.storage
-        .from(bucketName)
-        .uploadBinary(
-          path,
-          bytes,
-          fileOptions: FileOptions(upsert: true, contentType: mimeType),
-        );
+    try {
+      await _client.storage
+          .from(bucketName)
+          .uploadBinary(
+            path,
+            bytes,
+            fileOptions: FileOptions(upsert: true, contentType: mimeType),
+          );
 
-    return _client.storage.from(bucketName).getPublicUrl(path);
+      return _client.storage.from(bucketName).getPublicUrl(path);
+    } catch (e) {
+      throw ServiceException('Failed to upload file to storage.', cause: e);
+    }
   }
 
   /// Upload room image

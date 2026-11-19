@@ -1,3 +1,7 @@
+import 'package:flutter/foundation.dart';
+
+import '../core/utils/json_helpers.dart';
+
 enum UserRole {
   admin,
   owner,
@@ -11,6 +15,7 @@ enum UserRole {
   }
 }
 
+@immutable
 class UserModel {
   final int userId;
   final String? authId;
@@ -21,7 +26,7 @@ class UserModel {
   final String? avatarUrl;
   final DateTime? createdAt;
 
-  UserModel({
+  const UserModel({
     required this.userId,
     this.authId,
     required this.name,
@@ -34,9 +39,7 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      userId: json['user_id'] is int
-          ? json['user_id'] as int
-          : int.parse(json['user_id'].toString()),
+      userId: parseIntField(json['user_id']),
       authId: json['auth_id'] as String?,
       name: json['name'] as String? ?? '',
       email: json['email'] as String? ?? '',

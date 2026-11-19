@@ -1,5 +1,9 @@
-import 'user_model.dart';
+import 'package:flutter/foundation.dart';
+
+import '../core/utils/formatters.dart';
+import '../core/utils/json_helpers.dart';
 import 'room_model.dart';
+import 'user_model.dart';
 
 enum PaymentStatus {
   pending,
@@ -28,6 +32,7 @@ enum PaymentStatus {
   }
 }
 
+@immutable
 class PaymentModel {
   final int paymentId;
   final int userId;
@@ -46,7 +51,7 @@ class PaymentModel {
   final UserModel? user;
   final RoomModel? room;
 
-  PaymentModel({
+  const PaymentModel({
     required this.paymentId,
     required this.userId,
     required this.roomId,
@@ -67,15 +72,9 @@ class PaymentModel {
 
   factory PaymentModel.fromJson(Map<String, dynamic> json) {
     return PaymentModel(
-      paymentId: json['payment_id'] is int
-          ? json['payment_id'] as int
-          : int.parse(json['payment_id'].toString()),
-      userId: json['user_id'] is int
-          ? json['user_id'] as int
-          : int.parse(json['user_id'].toString()),
-      roomId: json['room_id'] is int
-          ? json['room_id'] as int
-          : int.parse(json['room_id'].toString()),
+      paymentId: parseIntField(json['payment_id']),
+      userId: parseIntField(json['user_id']),
+      roomId: parseIntField(json['room_id']),
       amount: json['amount'] != null
           ? double.tryParse(json['amount'].toString()) ?? 0.0
           : 0.0,
@@ -109,9 +108,9 @@ class PaymentModel {
       'user_id': userId,
       'room_id': roomId,
       'amount': amount,
-      'due_date': dueDate.toIso8601String().split('T').first,
+      'due_date': Formatters.toDateString(dueDate),
       'status': status.name,
-      'paid_date': paidDate?.toIso8601String().split('T').first,
+      'paid_date': paidDate != null ? Formatters.toDateString(paidDate!) : null,
       'receipt_url': receiptUrl,
       'order_id': orderId,
       'transaction_id': transactionId,

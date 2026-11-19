@@ -214,19 +214,19 @@ class _OwnerPaymentsTabState extends State<OwnerPaymentsTab> {
           // Payments List
           Expanded(
             child: _filteredPayments.isEmpty
-                ? Center(
+                ? const Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(24.0),
+                      padding: EdgeInsets.all(24.0),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.receipt_long_outlined,
                             size: 56,
                             color: Color(0xFFCBD5E1),
                           ),
-                          const SizedBox(height: 12),
-                          const Text(
+                          SizedBox(height: 12),
+                          Text(
                             'No payments found',
                             style: TextStyle(
                               fontSize: 16,
@@ -234,8 +234,8 @@ class _OwnerPaymentsTabState extends State<OwnerPaymentsTab> {
                               color: Color(0xFF64748B),
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          const Text(
+                          SizedBox(height: 4),
+                          Text(
                             'Payment records will show up here as rent invoices are issued.',
                             style: TextStyle(
                               fontSize: 13,
@@ -259,16 +259,16 @@ class _OwnerPaymentsTabState extends State<OwnerPaymentsTab> {
                       final roomNumber =
                           p.room?.roomNumber ?? 'Room ${p.roomId}';
 
-                      String dateInfo;
-                      if (p.status == PaymentStatus.paid) {
-                        dateInfo = p.paidDate != null
-                            ? 'Paid on ${Formatters.formatDate(p.paidDate)}'
-                            : 'Paid';
-                      } else {
-                        dateInfo = 'Due on ${Formatters.formatDate(p.dueDate)}';
-                      }
+                      final period = Formatters.formatMonthYear(
+                        p.status == PaymentStatus.paid ? p.paidDate : p.dueDate,
+                      );
+                      final dateInfo = p.status == PaymentStatus.paid
+                          ? p.paidDate != null
+                                ? 'Paid on ${Formatters.formatShortDate(p.paidDate)}'
+                                : 'Paid'
+                          : 'Due on ${Formatters.formatShortDate(p.dueDate)}';
 
-                      final subtitle = '$roomNumber • $dateInfo';
+                      final subtitle = '$roomNumber • $period • $dateInfo';
 
                       return Card(
                         margin: const EdgeInsets.only(bottom: 10),

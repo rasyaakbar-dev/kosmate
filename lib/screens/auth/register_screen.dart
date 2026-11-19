@@ -217,7 +217,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Renter / Tenant',
+                            'Tenant',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -288,7 +288,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Kos Owner',
+                            'Owner',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

@@ -1,5 +1,9 @@
-import 'user_model.dart';
+import 'package:flutter/foundation.dart';
+
+import '../core/utils/formatters.dart';
+import '../core/utils/json_helpers.dart';
 import 'room_model.dart';
+import 'user_model.dart';
 
 enum BookingStatus {
   pending,
@@ -28,6 +32,7 @@ enum BookingStatus {
   }
 }
 
+@immutable
 class BookingModel {
   final int bookingId;
   final int userId;
@@ -39,7 +44,7 @@ class BookingModel {
   final UserModel? user;
   final RoomModel? room;
 
-  BookingModel({
+  const BookingModel({
     required this.bookingId,
     required this.userId,
     required this.roomId,
@@ -53,15 +58,9 @@ class BookingModel {
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
     return BookingModel(
-      bookingId: json['booking_id'] is int
-          ? json['booking_id'] as int
-          : int.parse(json['booking_id'].toString()),
-      userId: json['user_id'] is int
-          ? json['user_id'] as int
-          : int.parse(json['user_id'].toString()),
-      roomId: json['room_id'] is int
-          ? json['room_id'] as int
-          : int.parse(json['room_id'].toString()),
+      bookingId: parseIntField(json['booking_id']),
+      userId: parseIntField(json['user_id']),
+      roomId: parseIntField(json['room_id']),
       requestDate: json['request_date'] != null
           ? DateTime.tryParse(json['request_date'].toString()) ?? DateTime.now()
           : DateTime.now(),
@@ -83,7 +82,7 @@ class BookingModel {
     final map = <String, dynamic>{
       'user_id': userId,
       'room_id': roomId,
-      'request_date': requestDate.toIso8601String().split('T').first,
+      'request_date': Formatters.toDateString(requestDate),
       'status': status.name,
       'notes': notes,
     };

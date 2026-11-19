@@ -27,6 +27,49 @@ class Formatters {
     return '$year-$month-$day';
   }
 
+  /// Formats DateTime to short readable date: e.g. "6 Sep 2026"
+  static String formatShortDate(DateTime? date) {
+    if (date == null) return '-';
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  /// Formats DateTime to month and year only: e.g. "October 2026"
+  static String formatMonthYear(DateTime? date) {
+    if (date == null) return '-';
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return '${months[date.month - 1]} ${date.year}';
+  }
+
+  /// Formats DateTime to YYYY-MM-DD for database storage
+  static String toDateString(DateTime date) => formatDate(date);
+
   /// Formats DateTime with time: YYYY-MM-DD HH:mm
   static String formatDateTime(DateTime? dateTime) {
     if (dateTime == null) return '-';

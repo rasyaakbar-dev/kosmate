@@ -303,19 +303,19 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
           // Rooms list
           Expanded(
             child: _filteredRooms.isEmpty
-                ? Center(
+                ? const Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(24.0),
+                      padding: EdgeInsets.all(24.0),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.meeting_room_outlined,
                             size: 56,
                             color: Color(0xFFCBD5E1),
                           ),
-                          const SizedBox(height: 12),
-                          const Text(
+                          SizedBox(height: 12),
+                          Text(
                             'No rooms found',
                             style: TextStyle(
                               fontSize: 16,
@@ -323,8 +323,8 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                               color: Color(0xFF64748B),
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          const Text(
+                          SizedBox(height: 4),
+                          Text(
                             'Tap "+ Add room" below to create a room.',
                             style: TextStyle(
                               fontSize: 13,

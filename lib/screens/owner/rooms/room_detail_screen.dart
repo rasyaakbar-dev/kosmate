@@ -376,7 +376,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                   children: [
                                     Text(
                                       _currentPayment != null
-                                          ? 'Invoice #${_currentPayment!.paymentId}'
+                                          ? Formatters.formatMonthYear(
+                                              _currentPayment!.dueDate,
+                                            )
                                           : 'Current Billing',
                                       style: const TextStyle(
                                         fontSize: 14,
@@ -387,7 +389,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                     const SizedBox(height: 2),
                                     Text(
                                       _currentPayment != null
-                                          ? 'Due ${Formatters.formatDate(_currentPayment!.dueDate)}'
+                                          ? 'Due ${Formatters.formatShortDate(_currentPayment!.dueDate)}'
                                           : 'No active dues recorded',
                                       style: const TextStyle(
                                         fontSize: 12,

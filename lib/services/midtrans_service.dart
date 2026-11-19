@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../core/constants/supabase_constants.dart';
+import '../core/errors/app_exception.dart';
 import '../models/user_model.dart';
 
 /// Models an action returned in the Midtrans Charge response
@@ -141,7 +142,7 @@ class MidtransService {
   final http.Client _client = http.Client();
 
   String get _authHeader {
-    final key = MidtransConstants.serverKey;
+    const key = MidtransConstants.serverKey;
     final bytes = utf8.encode('$key:');
     return 'Basic ${base64Encode(bytes)}';
   }
@@ -153,73 +154,91 @@ class MidtransService {
     required UserModel customer,
     String? callbackUrl,
   }) async {
-    final url = Uri.parse('${MidtransConstants.baseUrl}/charge');
+    try {
+      final url = Uri.parse('${MidtransConstants.baseUrl}/charge');
 
-    final payload = <String, dynamic>{
-      'payment_type': 'gopay',
-      'transaction_details': {
-        'order_id': orderId,
-        'gross_amount': grossAmount.round(),
-      },
-      'customer_details': {
-        'first_name': customer.name,
-        'email': customer.email,
-        'phone': customer.phone,
-      },
-      'gopay': {
-        'enable_callback': true,
-        'callback_url': callbackUrl ?? 'kosmate://payment-finish',
-      },
-    };
+      final payload = <String, dynamic>{
+        'payment_type': 'gopay',
+        'transaction_details': {
+          'order_id': orderId,
+          'gross_amount': grossAmount.round(),
+        },
+        'customer_details': {
+          'first_name': customer.name,
+          'email': customer.email,
+          'phone': customer.phone,
+        },
+        'gopay': {
+          'enable_callback': true,
+          'callback_url': callbackUrl ?? 'kosmate://payment-finish',
+        },
+      };
 
-    final response = await _client.post(
-      url,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': _authHeader,
-      },
-      body: jsonEncode(payload),
-    );
+      final response = await _client.post(
+        url,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': _authHeader,
+        },
+        body: jsonEncode(payload),
+      );
 
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      return MidtransChargeResponse.fromJson(json);
-    } else {
-      Map<String, dynamic>? errorJson;
-      try {
-        errorJson = jsonDecode(response.body) as Map<String, dynamic>?;
-      } catch (_) {}
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        return MidtransChargeResponse.fromJson(json);
+      } else {
+        Map<String, dynamic>? errorJson;
+        try {
+          errorJson = jsonDecode(response.body) as Map<String, dynamic>?;
+        } catch (_) {}
 
-      final message =
-          errorJson?['status_message'] ??
-          'Midtrans request failed with status code ${response.statusCode}';
-      throw Exception(message);
+        final message =
+            errorJson?['status_message'] ??
+            'Midtrans charge failed with status code ${response.statusCode}';
+        throw ServiceException(message, code: response.statusCode.toString());
+      }
+    } on AppException {
+      rethrow;
+    } catch (e) {
+      throw ServiceException(
+        'Network error connecting to Midtrans: $e',
+        cause: e,
+      );
     }
   }
 
   /// Check transaction status via Midtrans Core API /v2/{order_id}/status
   Future<MidtransStatusResponse> getTransactionStatus(String orderId) async {
-    final url = Uri.parse('${MidtransConstants.baseUrl}/$orderId/status');
+    try {
+      final url = Uri.parse('${MidtransConstants.baseUrl}/$orderId/status');
 
-    final response = await _client.get(
-      url,
-      headers: {'Accept': 'application/json', 'Authorization': _authHeader},
-    );
+      final response = await _client.get(
+        url,
+        headers: {'Accept': 'application/json', 'Authorization': _authHeader},
+      );
 
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      return MidtransStatusResponse.fromJson(json);
-    } else {
-      Map<String, dynamic>? errorJson;
-      try {
-        errorJson = jsonDecode(response.body) as Map<String, dynamic>?;
-      } catch (_) {}
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        return MidtransStatusResponse.fromJson(json);
+      } else {
+        Map<String, dynamic>? errorJson;
+        try {
+          errorJson = jsonDecode(response.body) as Map<String, dynamic>?;
+        } catch (_) {}
 
-      final message =
-          errorJson?['status_message'] ??
-          'Failed to check Midtrans status (${response.statusCode})';
-      throw Exception(message);
+        final message =
+            errorJson?['status_message'] ??
+            'Failed to check Midtrans status (${response.statusCode})';
+        throw ServiceException(message, code: response.statusCode.toString());
+      }
+    } on AppException {
+      rethrow;
+    } catch (e) {
+      throw ServiceException(
+        'Network error checking Midtrans status: $e',
+        cause: e,
+      );
     }
   }
 

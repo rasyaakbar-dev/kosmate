@@ -1,5 +1,9 @@
-import 'user_model.dart';
+import 'package:flutter/foundation.dart';
+
+import '../core/utils/formatters.dart';
+import '../core/utils/json_helpers.dart';
 import 'room_model.dart';
+import 'user_model.dart';
 
 enum ComplaintCategory {
   maintenance,
@@ -95,6 +99,7 @@ enum ComplaintStatus {
   }
 }
 
+@immutable
 class ComplaintModel {
   final int complaintId;
   final int userId;
@@ -111,7 +116,7 @@ class ComplaintModel {
   final UserModel? user;
   final RoomModel? room;
 
-  ComplaintModel({
+  const ComplaintModel({
     required this.complaintId,
     required this.userId,
     required this.roomId,
@@ -130,15 +135,9 @@ class ComplaintModel {
 
   factory ComplaintModel.fromJson(Map<String, dynamic> json) {
     return ComplaintModel(
-      complaintId: json['complaint_id'] is int
-          ? json['complaint_id'] as int
-          : int.parse(json['complaint_id'].toString()),
-      userId: json['user_id'] is int
-          ? json['user_id'] as int
-          : int.parse(json['user_id'].toString()),
-      roomId: json['room_id'] is int
-          ? json['room_id'] as int
-          : int.parse(json['room_id'].toString()),
+      complaintId: parseIntField(json['complaint_id']),
+      userId: parseIntField(json['user_id']),
+      roomId: parseIntField(json['room_id']),
       category: ComplaintCategory.fromString(
         json['category'] as String? ?? 'other',
       ),
@@ -175,7 +174,7 @@ class ComplaintModel {
       'title': title,
       'description': description,
       'priority': priority.name,
-      'date': date.toIso8601String().split('T').first,
+      'date': Formatters.toDateString(date),
       'response': response,
       'attachment_url': attachmentUrl,
       'status': status.dbValue,
