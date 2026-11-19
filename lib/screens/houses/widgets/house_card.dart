@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/house_model.dart';
 import '../../../models/room_model.dart';
-import '../../../services/room_service.dart';
 
 class HouseCard extends StatelessWidget {
   final HouseModel house;
@@ -23,7 +23,7 @@ class HouseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final roomService = RoomService();
+    final roomService = sl.room;
 
     return Card(
       elevation: 0,

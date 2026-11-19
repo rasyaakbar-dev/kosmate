@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/user_model.dart';
-import '../../services/auth_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final UserModel user;
@@ -18,7 +18,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
   late final TextEditingController _avatarUrlController;
-  final _authService = AuthService();
+  final _authService = sl.auth;
 
   bool _isLoading = false;
 
@@ -307,7 +307,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        side: const BorderSide(color: Color(0xFFDC2626), width: 1.5),
+                        side: const BorderSide(
+                          color: Color(0xFFDC2626),
+                          width: 1.5,
+                        ),
                       ),
                       onPressed: _isLoading
                           ? null

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/kosmate_components.dart';
 import '../../../models/user_model.dart';
-import '../../../services/user_service.dart';
 import 'user_form_dialog.dart';
 
 class UserManagementTab extends StatefulWidget {
@@ -16,7 +16,7 @@ class UserManagementTab extends StatefulWidget {
 }
 
 class _UserManagementTabState extends State<UserManagementTab> {
-  final _userService = UserService();
+  final _userService = sl.user;
   final _searchController = TextEditingController();
 
   late Future<List<UserModel>> _usersFuture;

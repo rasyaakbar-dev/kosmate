@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/supabase_constants.dart';
+import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
+import '../../../core/widgets/kosmate_components.dart';
 import '../../../models/booking_model.dart';
 import '../../../models/payment_model.dart';
 import '../../../models/room_model.dart';
 import '../../../models/user_model.dart';
-import '../../../services/room_service.dart';
 import 'room_form_screen.dart';
 
 class RoomDetailScreen extends StatefulWidget {
@@ -26,7 +27,7 @@ class RoomDetailScreen extends StatefulWidget {
 }
 
 class _RoomDetailScreenState extends State<RoomDetailScreen> {
-  final _roomService = RoomService();
+  final _roomService = sl.room;
   late RoomModel _room;
   bool _isLoading = true;
 
@@ -255,7 +256,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           ],
                         ),
                       ),
-                      _buildStatusPill(_room.status),
+                      KosMateStatusChip.fromRoomStatus(_room.status),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -399,31 +400,8 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                   ],
                                 ),
                               ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color:
-                                      _currentPayment?.status ==
-                                          PaymentStatus.paid
-                                      ? const Color(0xFFE6F4EA)
-                                      : const Color(0xFFFEF9E7),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  _currentPayment?.status.displayName ?? 'Paid',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color:
-                                        _currentPayment?.status ==
-                                            PaymentStatus.paid
-                                        ? const Color(0xFF1E7E34)
-                                        : const Color(0xFFB45309),
-                                  ),
-                                ),
+                              KosMateStatusChip.fromPaymentStatus(
+                                _currentPayment?.status ?? PaymentStatus.paid,
                               ),
                             ],
                           ),
@@ -486,47 +464,6 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 ],
               ),
             ),
-    );
-  }
-
-  Widget _buildStatusPill(RoomStatus status) {
-    Color bg;
-    Color text;
-    String label;
-
-    switch (status) {
-      case RoomStatus.available:
-        bg = const Color(0xFFE6F4EA);
-        text = const Color(0xFF1E7E34);
-        label = 'Available';
-        break;
-      case RoomStatus.occupied:
-        bg = const Color(0xFFEBF3FA);
-        text = const Color(0xFF1D4ED8);
-        label = 'Occupied';
-        break;
-      case RoomStatus.maintenance:
-      case RoomStatus.unavailable:
-        bg = const Color(0xFFFEF9E7);
-        text = const Color(0xFFB45309);
-        label = 'Repair';
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: text,
-        ),
-      ),
     );
   }
 

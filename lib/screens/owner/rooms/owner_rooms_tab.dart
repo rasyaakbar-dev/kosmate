@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/supabase_constants.dart';
+import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/kosmate_components.dart';
 import '../../../models/house_model.dart';
 import '../../../models/room_model.dart';
 import '../../../models/user_model.dart';
-import '../../../services/house_service.dart';
-import '../../../services/room_service.dart';
 import 'room_detail_screen.dart';
 import 'room_form_screen.dart';
 
@@ -20,8 +20,8 @@ class OwnerRoomsTab extends StatefulWidget {
 }
 
 class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
-  final _roomService = RoomService();
-  final _houseService = HouseService();
+  final _roomService = sl.room;
+  final _houseService = sl.house;
   final _searchController = TextEditingController();
 
   List<HouseModel> _houses = [];
@@ -170,53 +170,21 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
             child: Row(
               children: [
                 Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: const Color(0xFFCBD5E1),
-                        width: 1.2,
-                      ),
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (val) {
-                        setState(() {
-                          _searchQuery = val.trim();
-                          _applyFilter();
-                        });
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Search room or renter',
-                        hintStyle: const TextStyle(
-                          color: Color(0xFF94A3B8),
-                          fontSize: 14,
-                        ),
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          color: Color(0xFF64748B),
-                          size: 20,
-                        ),
-                        suffixIcon: _searchController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear, size: 18),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() {
-                                    _searchQuery = '';
-                                    _applyFilter();
-                                  });
-                                },
-                              )
-                            : null,
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
-                        ),
-                      ),
-                    ),
+                  child: KosMateSearchBar(
+                    controller: _searchController,
+                    hintText: 'Search room or renter',
+                    onChanged: (val) {
+                      setState(() {
+                        _searchQuery = val.trim();
+                        _applyFilter();
+                      });
+                    },
+                    onClear: () {
+                      setState(() {
+                        _searchQuery = '';
+                        _applyFilter();
+                      });
+                    },
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -303,37 +271,11 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
           // Rooms list
           Expanded(
             child: _filteredRooms.isEmpty
-                ? const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(24.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.meeting_room_outlined,
-                            size: 56,
-                            color: Color(0xFFCBD5E1),
-                          ),
-                          SizedBox(height: 12),
-                          Text(
-                            'No rooms found',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF64748B),
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Tap "+ Add room" below to create a room.',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF94A3B8),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                ? const KosMateEmptyState(
+                    icon: Icons.meeting_room_outlined,
+                    title: 'No rooms found',
+                    subtitle: 'Tap "+ Add room" below to create a room.',
+                    plain: true,
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(
@@ -411,7 +353,7 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                                     ],
                                   ),
                                 ),
-                                _buildStatusPill(room.status),
+                                KosMateStatusChip.fromRoomStatus(room.status),
                               ],
                             ),
                           ),
@@ -459,47 +401,6 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildStatusPill(RoomStatus status) {
-    Color bg;
-    Color text;
-    String label;
-
-    switch (status) {
-      case RoomStatus.available:
-        bg = const Color(0xFFE6F4EA);
-        text = const Color(0xFF1E7E34);
-        label = 'Available';
-        break;
-      case RoomStatus.occupied:
-        bg = const Color(0xFFEBF3FA);
-        text = const Color(0xFF1D4ED8);
-        label = 'Occupied';
-        break;
-      case RoomStatus.maintenance:
-      case RoomStatus.unavailable:
-        bg = const Color(0xFFFEF9E7);
-        text = const Color(0xFFB45309);
-        label = 'Repair';
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: text,
-        ),
       ),
     );
   }

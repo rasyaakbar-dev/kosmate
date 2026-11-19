@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/kosmate_app_bar.dart';
 import '../../models/user_model.dart';
-import '../../services/auth_service.dart';
 import 'widgets/terms_of_service_dialog.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -20,7 +20,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _authService = AuthService();
+  final _authService = sl.auth;
 
   UserRole _selectedRole = UserRole.tenant; // Tenant = Renter
   bool _agreeTerms = false;
@@ -576,8 +576,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: () => Navigator.pop(context),
                       child: const Text(
                         'Already have an account?',
                         style: TextStyle(

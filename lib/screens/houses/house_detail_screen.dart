@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/house_model.dart';
 import '../../models/room_model.dart';
 import '../../models/user_model.dart';
-import '../../services/house_service.dart';
-import '../../services/room_service.dart';
 import 'house_form_screen.dart';
 
 class HouseDetailScreen extends StatefulWidget {
@@ -25,8 +24,8 @@ class HouseDetailScreen extends StatefulWidget {
 
 class _HouseDetailScreenState extends State<HouseDetailScreen> {
   late HouseModel _house;
-  final _houseService = HouseService();
-  final _roomService = RoomService();
+  final _houseService = sl.house;
+  final _roomService = sl.room;
 
   List<RoomModel> _rooms = [];
   bool _isLoading = true;

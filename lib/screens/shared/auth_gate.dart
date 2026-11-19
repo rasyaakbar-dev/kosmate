@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/constants/supabase_constants.dart';
+import '../../core/di/service_locator.dart';
 import '../../models/user_model.dart';
-import '../../services/auth_service.dart';
 import '../admin/admin_main_screen.dart';
 import '../auth/login_screen.dart';
 import '../owner/owner_main_screen.dart';
@@ -20,7 +20,7 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
-  final _authService = AuthService();
+  final _authService = sl.auth;
   StreamSubscription<AuthState>? _authSubscription;
 
   UserModel? _cachedUser;

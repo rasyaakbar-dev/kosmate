@@ -9,6 +9,8 @@ class KosMateAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showBackButton;
   final bool showHelp;
   final IconData actionIcon;
+  final String helpTitle;
+  final String helpMessage;
   final VoidCallback? onHelpPressed;
   final VoidCallback? onActionPressed;
 
@@ -19,6 +21,8 @@ class KosMateAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.showBackButton = false,
     this.showHelp = true,
     this.actionIcon = Icons.help_outline_rounded,
+    this.helpTitle = 'KosMate Help',
+    this.helpMessage = 'KosMate is your smart boarding house management solution. Need help or have questions? Contact support at support@kosmate.app.',
     this.onHelpPressed,
     this.onActionPressed,
   });
@@ -79,10 +83,8 @@ class KosMateAppBar extends StatelessWidget implements PreferredSizeWidget {
                           showDialog(
                             context: context,
                             builder: (ctx) => AlertDialog(
-                              title: const Text('KosMate Help'),
-                              content: const Text(
-                                'KosMate is your smart boarding house management solution. Need help or have questions? Contact support at support@kosmate.app.',
-                              ),
+                              title: Text(helpTitle),
+                              content: Text(helpMessage),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(ctx),

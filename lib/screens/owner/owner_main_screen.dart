@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/kosmate_app_bar.dart';
@@ -9,11 +10,6 @@ import '../../models/room_model.dart';
 import '../../models/booking_model.dart';
 import '../../models/payment_model.dart';
 import '../../models/complaint_model.dart';
-import '../../services/house_service.dart';
-import '../../services/room_service.dart';
-import '../../services/booking_service.dart';
-import '../../services/payment_service.dart';
-import '../../services/complaint_service.dart';
 import '../shared/profile_screen.dart';
 import 'rooms/owner_rooms_tab.dart';
 import 'rooms/room_form_screen.dart';
@@ -127,11 +123,11 @@ class _OwnerHomeDashboard extends StatefulWidget {
 }
 
 class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
-  final _roomService = RoomService();
-  final _houseService = HouseService();
-  final _bookingService = BookingService();
-  final _paymentService = PaymentService();
-  final _complaintService = ComplaintService();
+  final _roomService = sl.room;
+  final _houseService = sl.house;
+  final _bookingService = sl.booking;
+  final _paymentService = sl.payment;
+  final _complaintService = sl.complaint;
 
   int _totalRooms = 0;
   int _occupiedRooms = 0;
@@ -419,8 +415,8 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
                     color: AppTheme.foregroundColor,
                   ),
                 ),
-                GestureDetector(
-                  onTap: () => widget.onNavigateToTab(2),
+                TextButton(
+                  onPressed: () => widget.onNavigateToTab(2),
                   child: const Text(
                     'View all',
                     style: TextStyle(
@@ -551,31 +547,35 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
     required VoidCallback onTap,
   }) {
     return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: AppTheme.accentColor, size: 28),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.foregroundColor,
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 18),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: AppTheme.accentColor, size: 28),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.foregroundColor,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

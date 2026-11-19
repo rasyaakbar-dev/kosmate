@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/kosmate_components.dart';
 import '../../../models/payment_model.dart';
-import '../../../services/payment_service.dart';
 
 class MidtransPaymentSheet extends StatefulWidget {
   final PaymentModel payment;
@@ -22,7 +22,7 @@ class MidtransPaymentSheet extends StatefulWidget {
 }
 
 class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
-  final _paymentService = PaymentService();
+  final _paymentService = sl.payment;
   late PaymentModel _currentPayment;
   bool _isCheckingStatus = false;
   bool _isCancelling = false;

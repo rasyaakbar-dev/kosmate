@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/house_model.dart';
-import '../../services/house_service.dart';
 
 class HouseFormScreen extends StatefulWidget {
   final HouseModel? house;
@@ -22,7 +22,7 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
   late final TextEditingController _addressController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _thumbnailUrlController;
-  final _houseService = HouseService();
+  final _houseService = sl.house;
 
   bool _isLoading = false;
 

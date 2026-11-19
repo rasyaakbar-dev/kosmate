@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/kosmate_app_bar.dart';
@@ -9,10 +10,6 @@ import '../../models/room_model.dart';
 import '../../models/booking_model.dart';
 import '../../models/payment_model.dart';
 import '../../models/complaint_model.dart';
-import '../../services/room_service.dart';
-import '../../services/booking_service.dart';
-import '../../services/payment_service.dart';
-import '../../services/complaint_service.dart';
 import '../shared/profile_screen.dart';
 import 'widgets/midtrans_payment_sheet.dart';
 
@@ -123,9 +120,9 @@ class _TenantHomeDashboard extends StatefulWidget {
 }
 
 class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
-  final _bookingService = BookingService();
-  final _paymentService = PaymentService();
-  final _complaintService = ComplaintService();
+  final _bookingService = sl.booking;
+  final _paymentService = sl.payment;
+  final _complaintService = sl.complaint;
 
   BookingModel? _activeBooking;
   PaymentModel? _latestPayment;
@@ -645,31 +642,35 @@ class _TenantHomeDashboardState extends State<_TenantHomeDashboard> {
     required VoidCallback onTap,
   }) {
     return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: AppTheme.accentColor, size: 28),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.foregroundColor,
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: AppTheme.accentColor, size: 28),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.foregroundColor,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -689,8 +690,8 @@ class _TenantRoomsTab extends StatefulWidget {
 }
 
 class _TenantRoomsTabState extends State<_TenantRoomsTab> {
-  final _roomService = RoomService();
-  final _bookingService = BookingService();
+  final _roomService = sl.room;
+  final _bookingService = sl.booking;
 
   late Future<List<RoomModel>> _roomsFuture;
   String _searchQuery = '';
@@ -866,24 +867,7 @@ class _TenantRoomsTabState extends State<_TenantRoomsTab> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: const Text(
-                                    'Available',
-                                    style: TextStyle(
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
+                                KosMateStatusChip.fromRoomStatus(room.status),
                               ],
                             ),
                             const SizedBox(height: 4),
@@ -947,7 +931,7 @@ class _TenantPaymentsTab extends StatefulWidget {
 }
 
 class _TenantPaymentsTabState extends State<_TenantPaymentsTab> {
-  final _paymentService = PaymentService();
+  final _paymentService = sl.payment;
   late Future<List<PaymentModel>> _paymentsFuture;
 
   @override
@@ -1123,27 +1107,7 @@ class _TenantPaymentsTabState extends State<_TenantPaymentsTab> {
                               color: AppTheme.primaryColor,
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: p.status == PaymentStatus.paid
-                                  ? Colors.green.withValues(alpha: 0.12)
-                                  : Colors.orange.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              p.status.displayName,
-                              style: TextStyle(
-                                color: p.status == PaymentStatus.paid
-                                    ? Colors.green
-                                    : Colors.orange,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
+                          KosMateStatusChip.fromPaymentStatus(p.status),
                         ],
                       ),
                       const SizedBox(height: 6),

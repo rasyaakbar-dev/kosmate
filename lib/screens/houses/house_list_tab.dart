@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/house_model.dart';
 import '../../models/user_model.dart';
-import '../../services/house_service.dart';
 import 'house_detail_screen.dart';
 import 'house_form_screen.dart';
 import 'widgets/house_card.dart';
@@ -25,7 +25,7 @@ class HouseListTab extends StatefulWidget {
 }
 
 class _HouseListTabState extends State<HouseListTab> {
-  final _houseService = HouseService();
+  final _houseService = sl.house;
   final _searchController = TextEditingController();
 
   late Future<List<HouseModel>> _housesFuture;

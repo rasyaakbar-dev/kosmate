@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/kosmate_components.dart';
 import '../../../models/payment_model.dart';
 import '../../../models/user_model.dart';
-import '../../../services/payment_service.dart';
 
 class OwnerPaymentsTab extends StatefulWidget {
   final UserModel user;
@@ -16,7 +17,7 @@ class OwnerPaymentsTab extends StatefulWidget {
 }
 
 class _OwnerPaymentsTabState extends State<OwnerPaymentsTab> {
-  final _paymentService = PaymentService();
+  final _paymentService = sl.payment;
   final _searchController = TextEditingController();
 
   List<PaymentModel> _allPayments = [];
@@ -143,50 +144,21 @@ class _OwnerPaymentsTabState extends State<OwnerPaymentsTab> {
           // Top search input
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
-              ),
-              child: TextField(
-                controller: _searchController,
-                onChanged: (val) {
-                  setState(() {
-                    _searchQuery = val.trim();
-                    _applyFilter();
-                  });
-                },
-                decoration: InputDecoration(
-                  hintText: 'Search payment or renter',
-                  hintStyle: const TextStyle(
-                    color: Color(0xFF94A3B8),
-                    fontSize: 14,
-                  ),
-                  prefixIcon: const Icon(
-                    Icons.search,
-                    color: Color(0xFF64748B),
-                    size: 20,
-                  ),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear, size: 18),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() {
-                              _searchQuery = '';
-                              _applyFilter();
-                            });
-                          },
-                        )
-                      : null,
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                ),
-              ),
+            child: KosMateSearchBar(
+              controller: _searchController,
+              hintText: 'Search payment or renter',
+              onChanged: (val) {
+                setState(() {
+                  _searchQuery = val.trim();
+                  _applyFilter();
+                });
+              },
+              onClear: () {
+                setState(() {
+                  _searchQuery = '';
+                  _applyFilter();
+                });
+              },
             ),
           ),
 
@@ -214,38 +186,11 @@ class _OwnerPaymentsTabState extends State<OwnerPaymentsTab> {
           // Payments List
           Expanded(
             child: _filteredPayments.isEmpty
-                ? const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(24.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.receipt_long_outlined,
-                            size: 56,
-                            color: Color(0xFFCBD5E1),
-                          ),
-                          SizedBox(height: 12),
-                          Text(
-                            'No payments found',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF64748B),
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Payment records will show up here as rent invoices are issued.',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF94A3B8),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
+                ? const KosMateEmptyState(
+                    icon: Icons.receipt_long_outlined,
+                    title: 'No payments found',
+                    subtitle: 'Payment records will show up here as rent invoices are issued.',
+                    plain: true,
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(
@@ -331,7 +276,9 @@ class _OwnerPaymentsTabState extends State<OwnerPaymentsTab> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
-                                    _buildStatusPill(p.status),
+                                    KosMateStatusChip.fromPaymentStatus(
+                                      p.status,
+                                    ),
                                     const SizedBox(height: 4),
                                     Text(
                                       Formatters.formatCurrency(p.amount),
@@ -353,51 +300,6 @@ class _OwnerPaymentsTabState extends State<OwnerPaymentsTab> {
                   ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildStatusPill(PaymentStatus status) {
-    Color bg;
-    Color text;
-    String label;
-
-    switch (status) {
-      case PaymentStatus.paid:
-        bg = const Color(0xFFE6F4EA);
-        text = const Color(0xFF1E7E34);
-        label = 'Paid';
-        break;
-      case PaymentStatus.pending:
-        bg = const Color(0xFFFEF9E7);
-        text = const Color(0xFFB45309);
-        label = 'Pending';
-        break;
-      case PaymentStatus.overdue:
-        bg = const Color(0xFFFEE2E2);
-        text = const Color(0xFFB91C1C);
-        label = 'Overdue';
-        break;
-      case PaymentStatus.cancelled:
-        bg = const Color(0xFFF1F5F9);
-        text = const Color(0xFF64748B);
-        label = 'Cancelled';
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: text,
-        ),
       ),
     );
   }

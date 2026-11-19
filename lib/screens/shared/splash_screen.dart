@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/supabase_constants.dart';
+import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/kosmate_logo.dart';
 import '../../models/user_model.dart';
-import '../../services/auth_service.dart';
 import '../admin/admin_main_screen.dart';
 import '../auth/login_screen.dart';
 import '../owner/owner_main_screen.dart';
@@ -18,7 +18,7 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  final _authService = AuthService();
+  final _authService = sl.auth;
 
   @override
   void initState() {

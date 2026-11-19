@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/supabase_constants.dart';
+import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/kosmate_app_bar.dart';
 import '../../models/user_model.dart';
 import '../../models/house_model.dart';
-import '../../services/house_service.dart';
 import '../shared/profile_screen.dart';
 import '../houses/house_form_screen.dart';
 import '../houses/house_list_tab.dart';
@@ -134,7 +134,7 @@ class _AdminHomeDashboardState extends State<_AdminHomeDashboard> {
       final usersRes = await supabase
           .from(SupabaseConstants.usersTable)
           .select();
-      final housesRes = await HouseService().getAllHouses();
+      final housesRes = await sl.house.getAllHouses();
 
       final usersList = (usersRes as List)
           .map((j) => UserModel.fromJson(j as Map<String, dynamic>))

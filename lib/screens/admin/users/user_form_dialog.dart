@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/user_model.dart';
-import '../../../services/user_service.dart';
 
 class UserFormDialog extends StatefulWidget {
   final UserModel? user;
@@ -25,7 +25,7 @@ class UserFormDialog extends StatefulWidget {
 
 class _UserFormDialogState extends State<UserFormDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _userService = UserService();
+  final _userService = sl.user;
 
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
 import '../../../models/house_model.dart';
 import '../../../models/room_model.dart';
-import '../../../services/house_service.dart';
-import '../../../services/room_service.dart';
 
 class RoomFormScreen extends StatefulWidget {
   final RoomModel? room;
@@ -27,8 +26,8 @@ class RoomFormScreen extends StatefulWidget {
 
 class _RoomFormScreenState extends State<RoomFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _roomService = RoomService();
-  final _houseService = HouseService();
+  final _roomService = sl.room;
+  final _houseService = sl.house;
 
   late TextEditingController _nameController;
   late TextEditingController _rentController;

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
+import '../../../core/widgets/kosmate_components.dart';
 import '../../../models/complaint_model.dart';
 import '../../../models/user_model.dart';
-import '../../../services/complaint_service.dart';
 
 class OwnerComplaintsScreen extends StatefulWidget {
   final UserModel owner;
@@ -16,7 +17,7 @@ class OwnerComplaintsScreen extends StatefulWidget {
 }
 
 class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
-  final _complaintService = ComplaintService();
+  final _complaintService = sl.complaint;
   final _searchController = TextEditingController();
 
   List<ComplaintModel> _allComplaints = [];
@@ -294,53 +295,21 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                   // Search input
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: const Color(0xFFCBD5E1),
-                          width: 1.2,
-                        ),
-                      ),
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (val) {
-                          setState(() {
-                            _searchQuery = val.trim();
-                            _applyFilter();
-                          });
-                        },
-                        decoration: InputDecoration(
-                          hintText: 'Search complaints',
-                          hintStyle: const TextStyle(
-                            color: Color(0xFF94A3B8),
-                            fontSize: 14,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.search,
-                            color: Color(0xFF64748B),
-                            size: 20,
-                          ),
-                          suffixIcon: _searchController.text.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.clear, size: 18),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    setState(() {
-                                      _searchQuery = '';
-                                      _applyFilter();
-                                    });
-                                  },
-                                )
-                              : null,
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                        ),
-                      ),
+                    child: KosMateSearchBar(
+                      controller: _searchController,
+                      hintText: 'Search complaints',
+                      onChanged: (val) {
+                        setState(() {
+                          _searchQuery = val.trim();
+                          _applyFilter();
+                        });
+                      },
+                      onClear: () {
+                        setState(() {
+                          _searchQuery = '';
+                          _applyFilter();
+                        });
+                      },
                     ),
                   ),
 
@@ -383,39 +352,13 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                   // Complaints List
                   Expanded(
                     child: _filteredComplaints.isEmpty
-                        ? Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(24.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.build_circle_outlined,
-                                    size: 56,
-                                    color: Color(0xFFCBD5E1),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  const Text(
-                                    'No complaints found',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF64748B),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    _selectedFilterTab == 1
-                                        ? 'Resolved tickets will appear here.'
-                                        : 'Tenant maintenance tickets will appear here.',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: Color(0xFF94A3B8),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                        ? KosMateEmptyState(
+                            icon: Icons.build_circle_outlined,
+                            title: 'No complaints found',
+                            subtitle: _selectedFilterTab == 1
+                                ? 'Resolved tickets will appear here.'
+                                : 'Tenant maintenance tickets will appear here.',
+                            plain: true,
                           )
                         : ListView.builder(
                             padding: const EdgeInsets.symmetric(
@@ -491,7 +434,9 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                                           ),
                                         ),
                                         const SizedBox(width: 8),
-                                        _buildStatusPill(c.status),
+                                        KosMateStatusChip.fromComplaintStatus(
+                                          c.status,
+                                        ),
                                         const SizedBox(width: 6),
                                         const Icon(
                                           Icons.chevron_right_rounded,
@@ -509,51 +454,6 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                 ],
               ),
             ),
-    );
-  }
-
-  Widget _buildStatusPill(ComplaintStatus status) {
-    Color bg;
-    Color text;
-    String label;
-
-    switch (status) {
-      case ComplaintStatus.resolved:
-        bg = const Color(0xFFE6F4EA);
-        text = const Color(0xFF1E7E34);
-        label = 'Resolved';
-        break;
-      case ComplaintStatus.inProgress:
-        bg = const Color(0xFFFEF9E7);
-        text = const Color(0xFFB45309);
-        label = 'In Progress';
-        break;
-      case ComplaintStatus.pending:
-        bg = const Color(0xFFFEE2E2);
-        text = const Color(0xFFB91C1C);
-        label = 'Open';
-        break;
-      case ComplaintStatus.rejected:
-        bg = const Color(0xFFF1F5F9);
-        text = const Color(0xFF64748B);
-        label = 'Rejected';
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: text,
-        ),
-      ),
     );
   }
 }
