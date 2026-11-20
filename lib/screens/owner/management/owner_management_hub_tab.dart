@@ -28,11 +28,7 @@ class OwnerManagementHubTab extends StatefulWidget {
 class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
   int _selectedSegment = 0;
 
-  static const _segmentLabels = [
-    'Rooms & Renters',
-    'Payments',
-    'Complaints',
-  ];
+  static const _segmentLabels = ['Rooms & Renters', 'Payments', 'Complaints'];
 
   static const _segmentIcons = [
     Icons.people_outline_rounded,
@@ -44,7 +40,7 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-                Container(
+        Container(
           color: Colors.white,
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
           child: Row(
@@ -96,7 +92,7 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
           ),
         ),
 
-                Expanded(
+        Expanded(
           child: IndexedStack(
             index: _selectedSegment,
             children: [
@@ -196,8 +192,9 @@ class _RoomsRentersSegmentState extends State<_RoomsRentersSegment> {
       // Complaints — open only
       final Map<int, List<ComplaintModel>> complaintsMap = {};
       try {
-        final complaints =
-            await _complaintService.getComplaintsForOwner(ownerId);
+        final complaints = await _complaintService.getComplaintsForOwner(
+          ownerId,
+        );
         for (final c in complaints) {
           if (c.status == ComplaintStatus.pending ||
               c.status == ComplaintStatus.inProgress) {
@@ -263,8 +260,8 @@ class _RoomsRentersSegmentState extends State<_RoomsRentersSegment> {
             booking: booking,
             payment: payment,
             openComplaints: openComplaints,
-            onMarkPaid: payment != null &&
-                    payment.status == PaymentStatus.pending
+            onMarkPaid:
+                payment != null && payment.status == PaymentStatus.pending
                 ? () => _markPaid(payment)
                 : null,
           );
@@ -315,9 +312,8 @@ class _RoomsRentersSegmentState extends State<_RoomsRentersSegment> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed: $e')),
-          );
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('Failed: $e')));
         }
       }
     }
@@ -362,7 +358,7 @@ class _RoomRenterCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-                        Row(
+            Row(
               children: [
                 Expanded(
                   child: Column(
@@ -397,7 +393,7 @@ class _RoomRenterCard extends StatelessWidget {
               child: Divider(height: 1, color: Color(0xFFE2E8F0)),
             ),
 
-                        Row(
+            Row(
               children: [
                 const Icon(
                   Icons.person_outline_rounded,
@@ -415,8 +411,7 @@ class _RoomRenterCard extends StatelessWidget {
                       color: isVacant
                           ? const Color(0xFF94A3B8)
                           : const Color(0xFF0F172A),
-                      fontStyle:
-                          isVacant ? FontStyle.italic : FontStyle.normal,
+                      fontStyle: isVacant ? FontStyle.italic : FontStyle.normal,
                     ),
                   ),
                 ),
@@ -425,7 +420,7 @@ class _RoomRenterCard extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-                        Row(
+            Row(
               children: [
                 const Icon(
                   Icons.receipt_long_outlined,
@@ -486,7 +481,7 @@ class _RoomRenterCard extends StatelessWidget {
               ],
             ),
 
-                        if (openComplaints.isNotEmpty) ...[
+            if (openComplaints.isNotEmpty) ...[
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -554,8 +549,9 @@ class _PaymentsSegmentState extends State<_PaymentsSegment> {
   Future<void> _loadPayments() async {
     setState(() => _isLoading = true);
     try {
-      final payments =
-          await _paymentService.getPaymentsForOwner(widget.user.userId);
+      final payments = await _paymentService.getPaymentsForOwner(
+        widget.user.userId,
+      );
       if (mounted) {
         setState(() {
           _allPayments = payments;
@@ -804,14 +800,12 @@ class _PaymentsSegmentState extends State<_PaymentsSegment> {
                       final roomNumber =
                           p.room?.roomNumber ?? 'Room ${p.roomId}';
                       final period = Formatters.formatMonthYear(
-                        p.status == PaymentStatus.paid
-                            ? p.paidDate
-                            : p.dueDate,
+                        p.status == PaymentStatus.paid ? p.paidDate : p.dueDate,
                       );
                       final dateInfo = p.status == PaymentStatus.paid
                           ? (p.paidDate != null
-                              ? 'Paid on ${Formatters.formatShortDate(p.paidDate)}'
-                              : 'Paid')
+                                ? 'Paid on ${Formatters.formatShortDate(p.paidDate)}'
+                                : 'Paid')
                           : 'Due on ${Formatters.formatShortDate(p.dueDate)}';
                       final subtitle = '$roomNumber • $period • $dateInfo';
 
@@ -973,8 +967,9 @@ class _ComplaintsSegmentState extends State<_ComplaintsSegment> {
   Future<void> _loadComplaints() async {
     setState(() => _isLoading = true);
     try {
-      final complaints =
-          await _complaintService.getComplaintsForOwner(widget.user.userId);
+      final complaints = await _complaintService.getComplaintsForOwner(
+        widget.user.userId,
+      );
       if (mounted) {
         setState(() {
           _allComplaints = complaints;
@@ -991,8 +986,7 @@ class _ComplaintsSegmentState extends State<_ComplaintsSegment> {
     var list = List<ComplaintModel>.from(_allComplaints);
 
     if (_selectedFilterTab == 1) {
-      list =
-          list.where((c) => c.status == ComplaintStatus.resolved).toList();
+      list = list.where((c) => c.status == ComplaintStatus.resolved).toList();
     }
 
     if (_searchQuery.isNotEmpty) {
@@ -1014,10 +1008,9 @@ class _ComplaintsSegmentState extends State<_ComplaintsSegment> {
 
   void _showComplaintResponseDialog(ComplaintModel complaint) {
     final responseCtrl = TextEditingController(text: complaint.response ?? '');
-    ComplaintStatus selectedStatus =
-        complaint.status == ComplaintStatus.pending
-            ? ComplaintStatus.inProgress
-            : complaint.status;
+    ComplaintStatus selectedStatus = complaint.status == ComplaintStatus.pending
+        ? ComplaintStatus.inProgress
+        : complaint.status;
 
     showDialog(
       context: context,
@@ -1109,9 +1102,7 @@ class _ComplaintsSegmentState extends State<_ComplaintsSegment> {
                     ),
                   );
                 } catch (e) {
-                  messenger.showSnackBar(
-                    SnackBar(content: Text('Error: $e')),
-                  );
+                  messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
                 }
               },
               child: const Text('Save'),
@@ -1233,8 +1224,7 @@ class _ComplaintsSegmentState extends State<_ComplaintsSegment> {
                     itemBuilder: (context, index) {
                       final c = _filteredComplaints[index];
                       final tenant = c.user?.name ?? 'Tenant';
-                      final room =
-                          c.room?.roomNumber ?? 'Room ${c.roomId}';
+                      final room = c.room?.roomNumber ?? 'Room ${c.roomId}';
 
                       return Card(
                         margin: const EdgeInsets.only(bottom: 10),
@@ -1295,9 +1285,7 @@ class _ComplaintsSegmentState extends State<_ComplaintsSegment> {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                KosMateStatusChip.fromComplaintStatus(
-                                  c.status,
-                                ),
+                                KosMateStatusChip.fromComplaintStatus(c.status),
                                 const SizedBox(width: 6),
                                 const Icon(
                                   Icons.chevron_right_rounded,

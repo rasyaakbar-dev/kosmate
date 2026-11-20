@@ -86,12 +86,16 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       try {
         final complaintRes = await supabase
             .from(SupabaseConstants.complaintTable)
-            .select('*, users!complaint_user_id_fkey(*), room!complaint_room_id_fkey(*)')
+            .select(
+              '*, users!complaint_user_id_fkey(*), room!complaint_room_id_fkey(*)',
+            )
             .eq('room_id', _room.roomId)
             .order('created_at', ascending: false);
         if (mounted) {
           _roomComplaints = (complaintRes as List)
-              .map((row) => ComplaintModel.fromJson(row as Map<String, dynamic>))
+              .map(
+                (row) => ComplaintModel.fromJson(row as Map<String, dynamic>),
+              )
               .toList();
         }
       } catch (_) {}
@@ -108,10 +112,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
   void _showComplaintResponseDialog(ComplaintModel complaint) {
     final responseCtrl = TextEditingController(text: complaint.response ?? '');
-    ComplaintStatus selectedStatus =
-        complaint.status == ComplaintStatus.pending
-            ? ComplaintStatus.inProgress
-            : complaint.status;
+    ComplaintStatus selectedStatus = complaint.status == ComplaintStatus.pending
+        ? ComplaintStatus.inProgress
+        : complaint.status;
 
     showDialog(
       context: context,
@@ -203,9 +206,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                     ),
                   );
                 } catch (e) {
-                  messenger.showSnackBar(
-                    SnackBar(content: Text('Error: $e')),
-                  );
+                  messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
                 }
               },
               child: const Text('Save'),
@@ -585,12 +586,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           ...List.generate(_roomComplaints.length, (i) {
                             final c = _roomComplaints[i];
                             return Padding(
-                              padding: EdgeInsets.only(
-                                top: i == 0 ? 0 : 10,
-                              ),
+                              padding: EdgeInsets.only(top: i == 0 ? 0 : 10),
                               child: InkWell(
-                                onTap: () =>
-                                    _showComplaintResponseDialog(c),
+                                onTap: () => _showComplaintResponseDialog(c),
                                 borderRadius: BorderRadius.circular(10),
                                 child: Container(
                                   padding: const EdgeInsets.all(12),

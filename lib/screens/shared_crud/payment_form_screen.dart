@@ -50,7 +50,9 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
     _selectedUserId = widget.existingPayment?.userId ?? widget.initialUserId;
     _selectedRoomId = widget.existingPayment?.roomId ?? widget.initialRoomId;
     if (widget.existingPayment != null) {
-      _amountController.text = widget.existingPayment!.amount.toStringAsFixed(0);
+      _amountController.text = widget.existingPayment!.amount.toStringAsFixed(
+        0,
+      );
       _dueDate = widget.existingPayment!.dueDate;
       _selectedStatus = widget.existingPayment!.status;
     }
@@ -65,7 +67,9 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
 
   Future<void> _loadPrerequisites() async {
     try {
-      final usersRes = await supabase.from(SupabaseConstants.usersTable).select();
+      final usersRes = await supabase
+          .from(SupabaseConstants.usersTable)
+          .select();
       final users = (usersRes as List)
           .map((j) => UserModel.fromJson(j as Map<String, dynamic>))
           .toList();
@@ -120,7 +124,10 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
           status: _selectedStatus,
         );
         messenger.showSnackBar(
-          const SnackBar(content: Text('Payment updated successfully!'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Payment updated successfully!'),
+            backgroundColor: Colors.green,
+          ),
         );
       } else {
         await _paymentService.createPayment(
@@ -130,7 +137,10 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
           dueDate: _dueDate,
         );
         messenger.showSnackBar(
-          const SnackBar(content: Text('Invoice issued successfully!'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Invoice issued successfully!'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
 
@@ -138,7 +148,9 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
-        messenger.showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+        messenger.showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
       }
     }
   }
@@ -186,7 +198,8 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
                       onChanged: isEditMode
                           ? null
                           : (val) => setState(() => _selectedUserId = val),
-                      validator: (val) => val == null ? 'Please select a tenant' : null,
+                      validator: (val) =>
+                          val == null ? 'Please select a tenant' : null,
                     ),
                     const SizedBox(height: 16),
 
@@ -208,11 +221,15 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
                           : (val) {
                               setState(() {
                                 _selectedRoomId = val;
-                                final room = _rooms.firstWhere((r) => r.roomId == val);
-                                _amountController.text = room.price.toStringAsFixed(0);
+                                final room = _rooms.firstWhere(
+                                  (r) => r.roomId == val,
+                                );
+                                _amountController.text = room.price
+                                    .toStringAsFixed(0);
                               });
                             },
-                      validator: (val) => val == null ? 'Please select a room' : null,
+                      validator: (val) =>
+                          val == null ? 'Please select a room' : null,
                     ),
                     const SizedBox(height: 16),
 
@@ -225,8 +242,10 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
                         prefixIcon: Icon(Icons.payments_outlined),
                       ),
                       validator: (val) {
-                        if (val == null || val.trim().isEmpty) return 'Enter amount';
-                        if (double.tryParse(val.trim()) == null) return 'Must be a valid number';
+                        if (val == null || val.trim().isEmpty)
+                          return 'Enter amount';
+                        if (double.tryParse(val.trim()) == null)
+                          return 'Must be a valid number';
                         return null;
                       },
                     ),
@@ -239,8 +258,12 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
                               final picked = await showDatePicker(
                                 context: context,
                                 initialDate: _dueDate,
-                                firstDate: DateTime.now().subtract(const Duration(days: 30)),
-                                lastDate: DateTime.now().add(const Duration(days: 365)),
+                                firstDate: DateTime.now().subtract(
+                                  const Duration(days: 30),
+                                ),
+                                lastDate: DateTime.now().add(
+                                  const Duration(days: 365),
+                                ),
                               );
                               if (picked != null) {
                                 setState(() => _dueDate = picked);
@@ -273,7 +296,8 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
                           );
                         }).toList(),
                         onChanged: (val) {
-                          if (val != null) setState(() => _selectedStatus = val);
+                          if (val != null)
+                            setState(() => _selectedStatus = val);
                         },
                       ),
                       const SizedBox(height: 16),

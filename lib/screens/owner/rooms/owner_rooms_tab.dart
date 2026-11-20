@@ -170,10 +170,8 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
     final updated = await Navigator.push<HouseModel>(
       context,
       MaterialPageRoute(
-        builder: (_) => HouseFormScreen(
-          house: house,
-          ownerId: widget.currentUser.userId,
-        ),
+        builder: (_) =>
+            HouseFormScreen(house: house, ownerId: widget.currentUser.userId),
       ),
     );
 

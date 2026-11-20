@@ -65,7 +65,9 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
 
   Future<void> _loadPrerequisites() async {
     try {
-      final usersRes = await supabase.from(SupabaseConstants.usersTable).select();
+      final usersRes = await supabase
+          .from(SupabaseConstants.usersTable)
+          .select();
       final users = (usersRes as List)
           .map((j) => UserModel.fromJson(j as Map<String, dynamic>))
           .toList();
@@ -110,17 +112,25 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
           roomId: _selectedRoomId,
         );
         messenger.showSnackBar(
-          const SnackBar(content: Text('Booking updated successfully!'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Booking updated successfully!'),
+            backgroundColor: Colors.green,
+          ),
         );
       } else {
         await _bookingService.createBooking(
           userId: _selectedUserId!,
           roomId: _selectedRoomId!,
           requestDate: _requestDate,
-          notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+          notes: _notesController.text.trim().isEmpty
+              ? null
+              : _notesController.text.trim(),
         );
         messenger.showSnackBar(
-          const SnackBar(content: Text('Booking request created successfully!'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Booking request created successfully!'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
 
@@ -128,7 +138,9 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
-        messenger.showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+        messenger.showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
       }
     }
   }
@@ -176,7 +188,8 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
                       onChanged: isEditMode
                           ? null
                           : (val) => setState(() => _selectedUserId = val),
-                      validator: (val) => val == null ? 'Please select a user' : null,
+                      validator: (val) =>
+                          val == null ? 'Please select a user' : null,
                     ),
                     const SizedBox(height: 16),
 
@@ -190,13 +203,16 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
                         final house = r.house?.houseName ?? 'Kos';
                         return DropdownMenuItem(
                           value: r.roomId,
-                          child: Text('Room ${r.roomNumber} • $house (${Formatters.formatCurrency(r.price)})'),
+                          child: Text(
+                            'Room ${r.roomNumber} • $house (${Formatters.formatCurrency(r.price)})',
+                          ),
                         );
                       }).toList(),
                       onChanged: isEditMode
                           ? null
                           : (val) => setState(() => _selectedRoomId = val),
-                      validator: (val) => val == null ? 'Please select a room' : null,
+                      validator: (val) =>
+                          val == null ? 'Please select a room' : null,
                     ),
                     const SizedBox(height: 16),
 
@@ -205,8 +221,12 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
                         final picked = await showDatePicker(
                           context: context,
                           initialDate: _requestDate,
-                          firstDate: DateTime.now().subtract(const Duration(days: 30)),
-                          lastDate: DateTime.now().add(const Duration(days: 180)),
+                          firstDate: DateTime.now().subtract(
+                            const Duration(days: 30),
+                          ),
+                          lastDate: DateTime.now().add(
+                            const Duration(days: 180),
+                          ),
                         );
                         if (picked != null) {
                           setState(() => _requestDate = picked);
@@ -239,7 +259,8 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
                           );
                         }).toList(),
                         onChanged: (val) {
-                          if (val != null) setState(() => _selectedStatus = val);
+                          if (val != null)
+                            setState(() => _selectedStatus = val);
                         },
                       ),
                       const SizedBox(height: 16),
@@ -250,7 +271,8 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
                       maxLines: 3,
                       decoration: const InputDecoration(
                         labelText: 'Notes (optional)',
-                        hintText: 'e.g. Move-in preferences, parking requirements...',
+                        hintText:
+                            'e.g. Move-in preferences, parking requirements...',
                         prefixIcon: Icon(Icons.notes_outlined),
                       ),
                     ),
@@ -259,7 +281,9 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
                     KosMateButton.primary(
                       label: _isSaving
                           ? 'Saving...'
-                          : (isEditMode ? 'Update Booking' : 'Create Booking Request'),
+                          : (isEditMode
+                                ? 'Update Booking'
+                                : 'Create Booking Request'),
                       onPressed: _isSaving ? null : _submit,
                     ),
                   ],

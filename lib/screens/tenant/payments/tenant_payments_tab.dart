@@ -115,40 +115,40 @@ class _TenantPaymentsTabState extends State<TenantPaymentsTab> {
           ],
         ),
         actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () async {
-            if (receiptController.text.trim().isEmpty) return;
-            try {
-              await _paymentService.submitReceipt(
-                paymentId: payment.paymentId,
-                receiptUrl: receiptController.text.trim(),
-              );
-              if (ctx.mounted) Navigator.pop(ctx);
-              _loadPayments();
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Receipt submitted successfully!'),
-                  ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (receiptController.text.trim().isEmpty) return;
+              try {
+                await _paymentService.submitReceipt(
+                  paymentId: payment.paymentId,
+                  receiptUrl: receiptController.text.trim(),
                 );
+                if (ctx.mounted) Navigator.pop(ctx);
+                _loadPayments();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Receipt submitted successfully!'),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(SnackBar(content: Text('Error: $e')));
+                }
               }
-            } catch (e) {
-              if (mounted) {
-                ScaffoldMessenger.of(context)
-                    .showSnackBar(SnackBar(content: Text('Error: $e')));
-              }
-            }
-          },
-          child: const Text('Submit'),
-        ),
-      ],
-    ),
-  );
-}
+            },
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

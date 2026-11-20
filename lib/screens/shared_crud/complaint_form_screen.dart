@@ -54,7 +54,8 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
     if (widget.existingComplaint != null) {
       _titleController.text = widget.existingComplaint!.title;
       _descriptionController.text = widget.existingComplaint!.description;
-      _attachmentUrlController.text = widget.existingComplaint!.attachmentUrl ?? '';
+      _attachmentUrlController.text =
+          widget.existingComplaint!.attachmentUrl ?? '';
       _selectedCategory = widget.existingComplaint!.category;
       _selectedPriority = widget.existingComplaint!.priority;
       _selectedStatus = widget.existingComplaint!.status;
@@ -72,7 +73,9 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
 
   Future<void> _loadPrerequisites() async {
     try {
-      final usersRes = await supabase.from(SupabaseConstants.usersTable).select();
+      final usersRes = await supabase
+          .from(SupabaseConstants.usersTable)
+          .select();
       final users = (usersRes as List)
           .map((j) => UserModel.fromJson(j as Map<String, dynamic>))
           .toList();
@@ -117,7 +120,10 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
           status: _selectedStatus,
         );
         messenger.showSnackBar(
-          const SnackBar(content: Text('Complaint updated successfully!'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Complaint updated successfully!'),
+            backgroundColor: Colors.green,
+          ),
         );
       } else {
         await _complaintService.createComplaint(
@@ -132,7 +138,10 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
               : _attachmentUrlController.text.trim(),
         );
         messenger.showSnackBar(
-          const SnackBar(content: Text('Complaint filed successfully!'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Complaint filed successfully!'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
 
@@ -140,7 +149,9 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
-        messenger.showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+        messenger.showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
       }
     }
   }
@@ -188,7 +199,8 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
                       onChanged: isEditMode
                           ? null
                           : (val) => setState(() => _selectedUserId = val),
-                      validator: (val) => val == null ? 'Please select a tenant' : null,
+                      validator: (val) =>
+                          val == null ? 'Please select a tenant' : null,
                     ),
                     const SizedBox(height: 16),
 
@@ -208,7 +220,8 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
                       onChanged: isEditMode
                           ? null
                           : (val) => setState(() => _selectedRoomId = val),
-                      validator: (val) => val == null ? 'Please select a room' : null,
+                      validator: (val) =>
+                          val == null ? 'Please select a room' : null,
                     ),
                     const SizedBox(height: 16),
 
@@ -228,7 +241,8 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
                               );
                             }).toList(),
                             onChanged: (val) {
-                              if (val != null) setState(() => _selectedCategory = val);
+                              if (val != null)
+                                setState(() => _selectedCategory = val);
                             },
                           ),
                         ),
@@ -247,7 +261,8 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
                               );
                             }).toList(),
                             onChanged: (val) {
-                              if (val != null) setState(() => _selectedPriority = val);
+                              if (val != null)
+                                setState(() => _selectedPriority = val);
                             },
                           ),
                         ),
@@ -262,8 +277,9 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
                         hintText: 'e.g. Broken AC in Room 102',
                         prefixIcon: Icon(Icons.title_outlined),
                       ),
-                      validator: (val) =>
-                          (val == null || val.trim().isEmpty) ? 'Please enter a title' : null,
+                      validator: (val) => (val == null || val.trim().isEmpty)
+                          ? 'Please enter a title'
+                          : null,
                     ),
                     const SizedBox(height: 16),
 
@@ -275,8 +291,9 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
                         hintText: 'Describe the issue or action taken...',
                         prefixIcon: Icon(Icons.description_outlined),
                       ),
-                      validator: (val) =>
-                          (val == null || val.trim().isEmpty) ? 'Please enter a description' : null,
+                      validator: (val) => (val == null || val.trim().isEmpty)
+                          ? 'Please enter a description'
+                          : null,
                     ),
                     const SizedBox(height: 16),
 
@@ -302,7 +319,8 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
                           ),
                         ],
                         onChanged: (val) {
-                          if (val != null) setState(() => _selectedStatus = val);
+                          if (val != null)
+                            setState(() => _selectedStatus = val);
                         },
                       ),
                       const SizedBox(height: 16),

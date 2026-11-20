@@ -44,12 +44,24 @@ class _CrudTestScreenState extends State<CrudTestScreen> {
     });
 
     try {
-      final u = await supabase.from(SupabaseConstants.usersTable).select('user_id');
-      final h = await supabase.from(SupabaseConstants.houseTable).select('house_id');
-      final r = await supabase.from(SupabaseConstants.roomTable).select('room_id');
-      final b = await supabase.from(SupabaseConstants.bookingTable).select('booking_id');
-      final p = await supabase.from(SupabaseConstants.paymentTable).select('payment_id');
-      final c = await supabase.from(SupabaseConstants.complaintTable).select('complaint_id');
+      final u = await supabase
+          .from(SupabaseConstants.usersTable)
+          .select('user_id');
+      final h = await supabase
+          .from(SupabaseConstants.houseTable)
+          .select('house_id');
+      final r = await supabase
+          .from(SupabaseConstants.roomTable)
+          .select('room_id');
+      final b = await supabase
+          .from(SupabaseConstants.bookingTable)
+          .select('booking_id');
+      final p = await supabase
+          .from(SupabaseConstants.paymentTable)
+          .select('payment_id');
+      final c = await supabase
+          .from(SupabaseConstants.complaintTable)
+          .select('complaint_id');
 
       if (mounted) {
         setState(() {
@@ -179,7 +191,9 @@ class _CrudTestScreenState extends State<CrudTestScreen> {
                       final created = await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => HouseFormScreen(ownerId: widget.currentUser.userId),
+                          builder: (_) => HouseFormScreen(
+                            ownerId: widget.currentUser.userId,
+                          ),
                         ),
                       );
                       if (created != null) _loadAllCounts();
@@ -197,7 +211,9 @@ class _CrudTestScreenState extends State<CrudTestScreen> {
                       final created = await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => RoomFormScreen(ownerId: widget.currentUser.userId),
+                          builder: (_) => RoomFormScreen(
+                            ownerId: widget.currentUser.userId,
+                          ),
                         ),
                       );
                       if (created != null) _loadAllCounts();
@@ -215,7 +231,9 @@ class _CrudTestScreenState extends State<CrudTestScreen> {
                       final created = await Navigator.push<bool>(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => BookingFormScreen(initialUserId: widget.currentUser.userId),
+                          builder: (_) => BookingFormScreen(
+                            initialUserId: widget.currentUser.userId,
+                          ),
                         ),
                       );
                       if (created == true) _loadAllCounts();
@@ -233,7 +251,9 @@ class _CrudTestScreenState extends State<CrudTestScreen> {
                       final created = await Navigator.push<bool>(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => PaymentFormScreen(initialUserId: widget.currentUser.userId),
+                          builder: (_) => PaymentFormScreen(
+                            initialUserId: widget.currentUser.userId,
+                          ),
                         ),
                       );
                       if (created == true) _loadAllCounts();
@@ -251,7 +271,9 @@ class _CrudTestScreenState extends State<CrudTestScreen> {
                       final created = await Navigator.push<bool>(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => ComplaintFormScreen(initialUserId: widget.currentUser.userId),
+                          builder: (_) => ComplaintFormScreen(
+                            initialUserId: widget.currentUser.userId,
+                          ),
                         ),
                       );
                       if (created == true) _loadAllCounts();
@@ -318,8 +340,13 @@ class _CrudTestScreenState extends State<CrudTestScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.accentColor,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               onPressed: onAction,
               child: Text(actionLabel, style: const TextStyle(fontSize: 12)),
