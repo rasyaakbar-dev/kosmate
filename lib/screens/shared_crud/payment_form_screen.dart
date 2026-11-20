@@ -242,10 +242,12 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
                         prefixIcon: Icon(Icons.payments_outlined),
                       ),
                       validator: (val) {
-                        if (val == null || val.trim().isEmpty)
+                        if (val == null || val.trim().isEmpty) {
                           return 'Enter amount';
-                        if (double.tryParse(val.trim()) == null)
+                        }
+                        if (double.tryParse(val.trim()) == null) {
                           return 'Must be a valid number';
+                        }
                         return null;
                       },
                     ),
@@ -296,8 +298,9 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
                           );
                         }).toList(),
                         onChanged: (val) {
-                          if (val != null)
+                          if (val != null) {
                             setState(() => _selectedStatus = val);
+                          }
                         },
                       ),
                       const SizedBox(height: 16),

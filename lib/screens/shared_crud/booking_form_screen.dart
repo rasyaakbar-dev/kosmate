@@ -259,8 +259,9 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
                           );
                         }).toList(),
                         onChanged: (val) {
-                          if (val != null)
+                          if (val != null) {
                             setState(() => _selectedStatus = val);
+                          }
                         },
                       ),
                       const SizedBox(height: 16),

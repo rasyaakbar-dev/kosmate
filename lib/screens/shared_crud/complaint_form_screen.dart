@@ -241,8 +241,9 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
                               );
                             }).toList(),
                             onChanged: (val) {
-                              if (val != null)
+                              if (val != null) {
                                 setState(() => _selectedCategory = val);
+                              }
                             },
                           ),
                         ),
@@ -261,8 +262,9 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
                               );
                             }).toList(),
                             onChanged: (val) {
-                              if (val != null)
+                              if (val != null) {
                                 setState(() => _selectedPriority = val);
+                              }
                             },
                           ),
                         ),
@@ -319,8 +321,9 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
                           ),
                         ],
                         onChanged: (val) {
-                          if (val != null)
+                          if (val != null) {
                             setState(() => _selectedStatus = val);
+                          }
                         },
                       ),
                       const SizedBox(height: 16),
