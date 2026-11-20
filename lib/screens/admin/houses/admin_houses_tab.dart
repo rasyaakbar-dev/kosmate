@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 
-import '../../core/di/service_locator.dart';
-import '../../core/theme/app_theme.dart';
-import '../../models/house_model.dart';
-import '../../models/user_model.dart';
-import 'house_detail_screen.dart';
-import 'house_form_screen.dart';
-import 'widgets/house_card.dart';
+import '../../../core/di/service_locator.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../models/house_model.dart';
+import '../../../models/user_model.dart';
+import '../../houses/house_detail_screen.dart';
+import '../../houses/house_form_screen.dart';
+import '../../houses/widgets/house_card.dart';
 
-class HouseListTab extends StatefulWidget {
+class AdminHousesTab extends StatefulWidget {
   final UserModel currentUser;
   final int? filterOwnerId;
 
-  const HouseListTab({
+  const AdminHousesTab({
     super.key,
     required this.currentUser,
     this.filterOwnerId,
@@ -21,10 +21,10 @@ class HouseListTab extends StatefulWidget {
   bool get isOwnerMode => filterOwnerId != null;
 
   @override
-  State<HouseListTab> createState() => _HouseListTabState();
+  State<AdminHousesTab> createState() => _AdminHousesTabState();
 }
 
-class _HouseListTabState extends State<HouseListTab> {
+class _AdminHousesTabState extends State<AdminHousesTab> {
   final _houseService = sl.house;
   final _searchController = TextEditingController();
 

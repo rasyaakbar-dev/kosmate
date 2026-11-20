@@ -5,9 +5,7 @@ import '../../models/room_model.dart';
 import '../../models/payment_model.dart';
 import '../../models/complaint_model.dart';
 
-// =============================================================================
-// 1. STATUS BADGE CHIPS (Matches figma/Components.png)
-// =============================================================================
+/// Status chip types for rooms, payments, and complaints.
 enum KosMateChipType {
   paid, // green
   pending, // amber
@@ -29,9 +27,7 @@ class KosMateStatusChip extends StatelessWidget {
 
   const KosMateStatusChip({super.key, required this.label, required this.type});
 
-  // ---------------------------------------------------------------------------
-  // String-based factory (backward compat)
-  // ---------------------------------------------------------------------------
+  /// Factory constructor to derive status chip from a raw status string.
   factory KosMateStatusChip.fromStatus(String status) {
     final lower = status.toLowerCase().replaceAll(' ', '').replaceAll('_', '');
     switch (lower) {
@@ -97,9 +93,7 @@ class KosMateStatusChip extends StatelessWidget {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Type-safe named constructors
-  // ---------------------------------------------------------------------------
+  /// Type-safe named constructors
   factory KosMateStatusChip.fromRoomStatus(RoomStatus status) {
     switch (status) {
       case RoomStatus.available:
@@ -225,9 +219,7 @@ class KosMateStatusChip extends StatelessWidget {
   }
 }
 
-// =============================================================================
-// 2. SEARCH BAR (shared bordered TextField used in list screens)
-// =============================================================================
+/// Search bar with bordered field and clear button.
 class KosMateSearchBar extends StatelessWidget {
   final TextEditingController controller;
   final String hintText;
@@ -281,9 +273,7 @@ class KosMateSearchBar extends StatelessWidget {
   }
 }
 
-// =============================================================================
-// 3. EMPTY STATE CARD (Matches figma/Components.png)
-// =============================================================================
+/// Empty state widget supporting both plain and card styles.
 class KosMateEmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -334,7 +324,7 @@ class KosMateEmptyState extends StatelessWidget {
       );
     }
 
-    // Blue-card variant (original Figma design)
+    // Card variant
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
@@ -391,9 +381,7 @@ class KosMateEmptyState extends StatelessWidget {
   }
 }
 
-// =============================================================================
-// 3. ACTION BUTTONS (Matches figma/Components.png)
-// =============================================================================
+/// Standard app button with primary, outlined, and destructive styles.
 class KosMateButton extends StatelessWidget {
   final String label;
   final IconData? icon;

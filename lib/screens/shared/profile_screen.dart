@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/kosmate_components.dart';
 import '../../models/user_model.dart';
 import 'auth_gate.dart';
+import 'crud_test_screen.dart';
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -174,6 +175,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 24),
 
           // Actions
+          KosMateButton.outlined(
+            label: 'Database & CRUD Test Hub',
+            icon: Icons.storage_rounded,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => CrudTestScreen(currentUser: _currentUser),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
           KosMateButton.outlined(
             label: 'Edit profile',
             icon: Icons.edit_outlined,

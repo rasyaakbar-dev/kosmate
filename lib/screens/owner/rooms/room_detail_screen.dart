@@ -450,7 +450,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Current Status Box (Yellow Card from Figma)
+                  // Current Status Box
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -538,7 +538,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // ── Maintenance & Complaints section ──────────────────
+                  // Maintenance & Complaints section
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(18),

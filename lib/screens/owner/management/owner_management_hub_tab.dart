@@ -12,12 +12,10 @@ import '../../../models/payment_model.dart';
 import '../../../models/room_model.dart';
 import '../../../models/user_model.dart';
 
-// ---------------------------------------------------------------------------
 // OwnerManagementHubTab — 3-segment operations hub:
 //   0: Rooms & Renters (per-room summary cards)
 //   1: Invoices & Payments (enhanced payment list)
 //   2: Complaints (inline complaint management)
-// ---------------------------------------------------------------------------
 class OwnerManagementHubTab extends StatefulWidget {
   final UserModel user;
 
@@ -46,8 +44,7 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // ── Top segment selector ──────────────────────────────────────────
-        Container(
+                Container(
           color: Colors.white,
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
           child: Row(
@@ -99,8 +96,7 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
           ),
         ),
 
-        // ── Segment content ───────────────────────────────────────────────
-        Expanded(
+                Expanded(
           child: IndexedStack(
             index: _selectedSegment,
             children: [
@@ -115,9 +111,7 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
   }
 }
 
-// ===========================================================================
 // SEGMENT 0: Rooms & Renters
-// ===========================================================================
 class _RoomsRentersSegment extends StatefulWidget {
   final UserModel user;
 
@@ -368,8 +362,7 @@ class _RoomRenterCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header: Room number + House + Status chip ──
-            Row(
+                        Row(
               children: [
                 Expanded(
                   child: Column(
@@ -404,8 +397,7 @@ class _RoomRenterCard extends StatelessWidget {
               child: Divider(height: 1, color: Color(0xFFE2E8F0)),
             ),
 
-            // ── Renter row ──
-            Row(
+                        Row(
               children: [
                 const Icon(
                   Icons.person_outline_rounded,
@@ -433,8 +425,7 @@ class _RoomRenterCard extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            // ── Payment row ──
-            Row(
+                        Row(
               children: [
                 const Icon(
                   Icons.receipt_long_outlined,
@@ -495,8 +486,7 @@ class _RoomRenterCard extends StatelessWidget {
               ],
             ),
 
-            // ── Open complaints row (only if any) ──
-            if (openComplaints.isNotEmpty) ...[
+                        if (openComplaints.isNotEmpty) ...[
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -528,9 +518,7 @@ class _RoomRenterCard extends StatelessWidget {
   }
 }
 
-// ===========================================================================
 // SEGMENT 1: Invoices & Payments
-// ===========================================================================
 class _PaymentsSegment extends StatefulWidget {
   final UserModel user;
 
@@ -949,9 +937,7 @@ class _PaymentsSegmentState extends State<_PaymentsSegment> {
   }
 }
 
-// ===========================================================================
 // SEGMENT 2: Complaints
-// ===========================================================================
 class _ComplaintsSegment extends StatefulWidget {
   final UserModel user;
 
