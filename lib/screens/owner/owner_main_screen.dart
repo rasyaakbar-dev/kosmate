@@ -10,10 +10,11 @@ import '../../models/room_model.dart';
 import '../../models/booking_model.dart';
 import '../../models/payment_model.dart';
 import '../../models/complaint_model.dart';
+import '../houses/house_form_screen.dart';
 import '../shared/profile_screen.dart';
 import 'rooms/owner_rooms_tab.dart';
 import 'rooms/room_form_screen.dart';
-import 'payments/owner_payments_tab.dart';
+import 'payments/owner_payments_tab.dart' show OwnerManagementHubTab;
 import 'complaints/owner_complaints_screen.dart';
 
 class OwnerMainScreen extends StatefulWidget {
@@ -37,7 +38,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
     final screens = [
       _OwnerHomeDashboard(user: widget.user, onNavigateToTab: _navigateToTab),
       OwnerRoomsTab(currentUser: widget.user),
-      OwnerPaymentsTab(user: widget.user),
+      OwnerManagementHubTab(user: widget.user),
       ProfileScreen(user: widget.user),
     ];
 
@@ -49,7 +50,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
         actionIcon = Icons.help_outline_rounded;
         break;
       case 2:
-        appBarTitle = 'Payments';
+        appBarTitle = 'Management';
         actionIcon = Icons.help_outline_rounded;
         break;
       case 3:
@@ -90,9 +91,12 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
               label: 'Rooms',
             ),
             NavigationDestination(
-              icon: Icon(Icons.mail_outline_rounded),
-              selectedIcon: Icon(Icons.mail, color: AppTheme.primaryColor),
-              label: 'Payments',
+              icon: Icon(Icons.assignment_outlined),
+              selectedIcon: Icon(
+                Icons.assignment,
+                color: AppTheme.primaryColor,
+              ),
+              label: 'Management',
             ),
             NavigationDestination(
               icon: Icon(Icons.person_outline),
@@ -189,6 +193,46 @@ class _OwnerHomeDashboardState extends State<_OwnerHomeDashboard> {
   }
 
   Future<void> _openAddRoomScreen() async {
+    if (_houses.isEmpty) {
+      final createdHouse = await Navigator.push<HouseModel>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => HouseFormScreen(ownerId: widget.user.userId),
+        ),
+      );
+      if (createdHouse != null && mounted) {
+        await _loadDashboardData();
+        if (!mounted) return;
+        final wantAddRoom = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text('House "${createdHouse.houseName}" Created!'),
+            content: const Text(
+              'Would you like to add the first room to this boarding house now?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Later'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.accentColor,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Add Room Now'),
+              ),
+            ],
+          ),
+        );
+        if (wantAddRoom == true && mounted) {
+          _openAddRoomScreen();
+        }
+      }
+      return;
+    }
+
     final created = await Navigator.push<RoomModel>(
       context,
       MaterialPageRoute(

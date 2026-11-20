@@ -7,6 +7,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
 import '../../../core/widgets/kosmate_components.dart';
 import '../../../models/booking_model.dart';
+import '../../../models/complaint_model.dart';
 import '../../../models/payment_model.dart';
 import '../../../models/room_model.dart';
 import '../../../models/user_model.dart';
@@ -28,11 +29,13 @@ class RoomDetailScreen extends StatefulWidget {
 
 class _RoomDetailScreenState extends State<RoomDetailScreen> {
   final _roomService = sl.room;
+  final _complaintService = sl.complaint;
   late RoomModel _room;
   bool _isLoading = true;
 
   BookingModel? _activeBooking;
   PaymentModel? _currentPayment;
+  List<ComplaintModel> _roomComplaints = [];
 
   @override
   void initState() {
@@ -79,6 +82,20 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
         }
       } catch (_) {}
 
+      // Fetch complaints for this room
+      try {
+        final complaintRes = await supabase
+            .from(SupabaseConstants.complaintTable)
+            .select('*, users!complaint_user_id_fkey(*), room!complaint_room_id_fkey(*)')
+            .eq('room_id', _room.roomId)
+            .order('created_at', ascending: false);
+        if (mounted) {
+          _roomComplaints = (complaintRes as List)
+              .map((row) => ComplaintModel.fromJson(row as Map<String, dynamic>))
+              .toList();
+        }
+      } catch (_) {}
+
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -87,6 +104,116 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  void _showComplaintResponseDialog(ComplaintModel complaint) {
+    final responseCtrl = TextEditingController(text: complaint.response ?? '');
+    ComplaintStatus selectedStatus =
+        complaint.status == ComplaintStatus.pending
+            ? ComplaintStatus.inProgress
+            : complaint.status;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(complaint.title),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Tenant: ${complaint.user?.name ?? "Tenant"}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Description:\n${complaint.description}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<ComplaintStatus>(
+                  initialValue: selectedStatus,
+                  decoration: const InputDecoration(labelText: 'Status'),
+                  items: const [
+                    DropdownMenuItem(
+                      value: ComplaintStatus.inProgress,
+                      child: Text('In Progress'),
+                    ),
+                    DropdownMenuItem(
+                      value: ComplaintStatus.resolved,
+                      child: Text('Resolved'),
+                    ),
+                    DropdownMenuItem(
+                      value: ComplaintStatus.rejected,
+                      child: Text('Rejected'),
+                    ),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      setDialogState(() => selectedStatus = val);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: responseCtrl,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Response / Action taken',
+                    hintText: 'e.g., Plumber has completed the repairs.',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.accentColor,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                try {
+                  await _complaintService.respondToComplaint(
+                    complaintId: complaint.complaintId,
+                    responseText: responseCtrl.text.trim(),
+                    status: selectedStatus,
+                  );
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  setState(() => _isLoading = true);
+                  _loadRoomDetails();
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Complaint updated successfully!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } catch (e) {
+                  messenger.showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _deleteRoom() async {
@@ -409,6 +536,111 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 20),
+
+                  // ── Maintenance & Complaints section ──────────────────
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: const Color(0xFFE2E8F0),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Maintenance & Complaints',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        if (_roomComplaints.isEmpty)
+                          const Row(
+                            children: [
+                              Icon(
+                                Icons.check_circle_outline_rounded,
+                                size: 18,
+                                color: Color(0xFF16A34A),
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'No maintenance tickets for this room',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF16A34A),
+                                ),
+                              ),
+                            ],
+                          )
+                        else
+                          ...List.generate(_roomComplaints.length, (i) {
+                            final c = _roomComplaints[i];
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                top: i == 0 ? 0 : 10,
+                              ),
+                              child: InkWell(
+                                onTap: () =>
+                                    _showComplaintResponseDialog(c),
+                                borderRadius: BorderRadius.circular(10),
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: const Color(0xFFE2E8F0),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.build_outlined,
+                                        size: 18,
+                                        color: AppTheme.accentColor,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          c.title,
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF0F172A),
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      KosMateStatusChip.fromComplaintStatus(
+                                        c.status,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Icon(
+                                        Icons.chevron_right_rounded,
+                                        size: 18,
+                                        color: AppTheme.accentColor,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                      ],
+                    ),
+                  ),
+
                   const SizedBox(height: 36),
 
                   // Action Buttons: Delete and Edit room

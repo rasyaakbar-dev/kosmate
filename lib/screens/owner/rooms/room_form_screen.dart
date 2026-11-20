@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
 import '../../../models/house_model.dart';
 import '../../../models/room_model.dart';
+import '../../houses/house_form_screen.dart';
 
 class RoomFormScreen extends StatefulWidget {
   final RoomModel? room;
@@ -97,6 +98,21 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
     }
   }
 
+  Future<void> _openAddHouse() async {
+    final created = await Navigator.push<HouseModel>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HouseFormScreen(ownerId: widget.ownerId),
+      ),
+    );
+    if (created != null && mounted) {
+      await _loadHouses();
+      setState(() {
+        _selectedHouseId = created.houseId;
+      });
+    }
+  }
+
   Future<void> _saveRoom() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedHouseId == null) {
@@ -183,19 +199,88 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Boarding house dropdown if multiple available
-                      if (_houses.length > 1) ...[
-                        const Text(
-                          'Boarding house',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF1E293B),
+                      // Boarding house selection
+                      if (_houses.isEmpty) ...[
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF9E7),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFF9E8B5)),
                           ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Row(
+                                children: [
+                                  Icon(
+                                    Icons.warning_amber_rounded,
+                                    color: Color(0xFFB45309),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'No boarding house found',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF92400E),
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              const Text(
+                                'You must create a boarding house first before you can add rooms to it.',
+                                style: TextStyle(
+                                  color: Color(0xFF78350F),
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              ElevatedButton.icon(
+                                onPressed: _openAddHouse,
+                                icon: const Icon(Icons.add, size: 18),
+                                label: const Text('Create Boarding House'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.accentColor,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ] else ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Boarding house',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF1E293B),
+                              ),
+                            ),
+                            TextButton.icon(
+                              onPressed: _openAddHouse,
+                              icon: const Icon(Icons.add, size: 16),
+                              label: const Text('New house'),
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 6),
                         DropdownButtonFormField<int>(
-                          initialValue: _selectedHouseId,
+                          value: _selectedHouseId,
                           decoration: _inputDecoration(
                             prefixIcon: Icons.apartment_outlined,
                           ),
