@@ -14,6 +14,7 @@ class SupabaseConstants {
   static const String complaintTable = 'complaint';
 
   // Storage Buckets
+  static const String avatarsBucket = 'avatars';
   static const String roomImagesBucket = 'room-images';
   static const String paymentReceiptsBucket = 'payment-receipts';
   static const String complaintAttachmentsBucket = 'complaint-attachments';

@@ -102,12 +102,17 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 DropdownButtonFormField<ComplaintCategory>(
+                  isExpanded: true,
                   initialValue: selectedCategory,
                   decoration: const InputDecoration(labelText: 'Category'),
                   items: ComplaintCategory.values.map((c) {
                     return DropdownMenuItem(
                       value: c,
-                      child: Text(c.displayName),
+                      child: Text(
+                        c.displayName,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                     );
                   }).toList(),
                   onChanged: (val) {
@@ -118,12 +123,17 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<ComplaintPriority>(
+                  isExpanded: true,
                   initialValue: selectedPriority,
                   decoration: const InputDecoration(labelText: 'Priority'),
                   items: ComplaintPriority.values.map((p) {
                     return DropdownMenuItem(
                       value: p,
-                      child: Text(p.displayName),
+                      child: Text(
+                        p.displayName,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                     );
                   }).toList(),
                   onChanged: (val) {

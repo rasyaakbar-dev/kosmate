@@ -5,7 +5,6 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/kosmate_components.dart';
 import '../../models/user_model.dart';
 import 'auth_gate.dart';
-import 'crud_test_screen.dart';
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -51,7 +50,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFB33A3A),
+              backgroundColor: AppTheme.destructiveColor,
             ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Logout', style: TextStyle(color: Colors.white)),
@@ -101,21 +100,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Circular Avatar (Light blue circle #EBF3FA with #4A6FA5 person icon)
-          Container(
-            width: 96,
-            height: 96,
-            decoration: const BoxDecoration(
-              color: Color(0xFFEBF3FA),
-              shape: BoxShape.circle,
-            ),
-            child: const Center(
-              child: Icon(
-                Icons.person_outline_rounded,
-                size: 52,
-                color: AppTheme.accentColor,
-              ),
-            ),
+          // Circular Avatar
+          CircleAvatar(
+            radius: 48,
+            backgroundColor: AppTheme.primaryLight,
+            backgroundImage:
+                _currentUser.avatarUrl != null &&
+                    _currentUser.avatarUrl!.isNotEmpty
+                ? NetworkImage(_currentUser.avatarUrl!)
+                : null,
+            child:
+                _currentUser.avatarUrl == null ||
+                    _currentUser.avatarUrl!.isEmpty
+                ? const Icon(
+                    Icons.person_outline_rounded,
+                    size: 52,
+                    color: AppTheme.accentColor,
+                  )
+                : null,
           ),
           const SizedBox(height: 16),
 
@@ -137,7 +139,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: const TextStyle(
               fontFamily: 'Roboto',
               fontSize: 14,
-              color: Color(0xFF64748B),
+              color: AppTheme.textMuted,
             ),
           ),
           const SizedBox(height: 24),
@@ -149,7 +151,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
+              border: Border.all(color: AppTheme.borderMedium, width: 1.2),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,19 +177,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 24),
 
           // Actions
-          KosMateButton.outlined(
-            label: 'Database & CRUD Test Hub',
-            icon: Icons.storage_rounded,
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => CrudTestScreen(currentUser: _currentUser),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 12),
           KosMateButton.outlined(
             label: 'Edit profile',
             icon: Icons.edit_outlined,
@@ -215,7 +204,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: const TextStyle(
               fontFamily: 'Roboto',
               fontSize: 14,
-              color: Color(0xFF64748B),
+              color: AppTheme.textMuted,
             ),
           ),
         ),

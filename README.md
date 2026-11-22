@@ -31,9 +31,11 @@ KosMate is a comprehensive, multi-tenant boarding house management platform desi
 - **User Management**: Complete CRUD over users with role assignment (`admin`, `owner`, `tenant`).
 - **Boarding Houses Directory**: Platform-wide catalog of all boarding houses and owners.
 
-### 🧪 Diagnostic & Developer Tools
+### 🔐 Security & Account Management
 
-- **CRUD Testing Hub**: Dedicated test screen accessible from Profile to test end-to-end frontend-to-database connectivity across all 6 schema tables (*Users*, *Houses*, *Rooms*, *Bookings*, *Payments*, *Complaints*).
+- **Password Recovery**: Integrated "Forgot Password" workflow sending password reset links via Supabase Auth.
+- **Profile Customization**: Local image picker for camera & gallery with automatic 512x512 client-side compression and deterministic storage bucket management (`avatars` bucket).
+- **Account Controls**: In-app password updating and permanent account deletion from Edit Profile.
 
 ---
 
@@ -74,7 +76,7 @@ lib/
 │   ├── houses/               # Shared house detail & creation forms
 │   ├── owner/                # Owner screens (Home Dashboard, Rooms, Management Hub)
 │   ├── tenant/               # Tenant screens (Home, Room Explorer, Payments)
-│   ├── shared/               # Shared screens (AuthGate, Profile, Splash, CRUD Test Hub)
+│   ├── shared/               # Shared screens (AuthGate, Profile, Splash, Edit Profile)
 │   └── shared_crud/          # Standalone CRUD form screens (Booking, Payment, Complaint)
 └── services/                 # Business logic and Supabase client interaction
     ├── auth_service.dart

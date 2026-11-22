@@ -174,29 +174,29 @@ class KosMateStatusChip extends StatelessWidget {
       case KosMateChipType.paid:
       case KosMateChipType.available:
       case KosMateChipType.resolved:
-        bg = const Color(0xFFE6F4EA);
-        text = const Color(0xFF1E7E34);
+        bg = AppTheme.successLight;
+        text = AppTheme.successColor;
         break;
       case KosMateChipType.pending:
       case KosMateChipType.inProgress:
       case KosMateChipType.repair:
-        bg = const Color(0xFFFEF9E7);
-        text = const Color(0xFFB45309);
+        bg = AppTheme.warningLight;
+        text = AppTheme.warningColor;
         break;
       case KosMateChipType.open:
       case KosMateChipType.overdue:
-        bg = const Color(0xFFFEE2E2);
-        text = const Color(0xFFB91C1C);
+        bg = AppTheme.destructiveLight;
+        text = AppTheme.destructiveColor;
         break;
       case KosMateChipType.active:
       case KosMateChipType.occupied:
-        bg = const Color(0xFFEBF3FA);
-        text = const Color(0xFF1D4ED8);
+        bg = AppTheme.primaryLight;
+        text = AppTheme.accentColor;
         break;
       case KosMateChipType.rejected:
       case KosMateChipType.cancelled:
-        bg = const Color(0xFFF1F5F9);
-        text = const Color(0xFF64748B);
+        bg = AppTheme.surfaceLight;
+        text = AppTheme.textMuted;
         break;
     }
 
@@ -240,17 +240,17 @@ class KosMateSearchBar extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
+        border: Border.all(color: AppTheme.borderMedium, width: 1.2),
       ),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+          hintStyle: const TextStyle(color: AppTheme.textSubtle, fontSize: 14),
           prefixIcon: const Icon(
             Icons.search,
-            color: Color(0xFF64748B),
+            color: AppTheme.textMuted,
             size: 20,
           ),
           suffixIcon: controller.text.isNotEmpty
@@ -302,21 +302,24 @@ class KosMateEmptyState extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 56, color: const Color(0xFFCBD5E1)),
+              Icon(icon, size: 56, color: AppTheme.borderMedium),
               const SizedBox(height: 12),
               Text(
                 title,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF64748B),
+                  color: AppTheme.textMuted,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 subtitle,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.textSubtle,
+                ),
               ),
             ],
           ),
@@ -329,9 +332,9 @@ class KosMateEmptyState extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
       decoration: BoxDecoration(
-        color: const Color(0xFFEBF3FA),
+        color: AppTheme.primaryLight,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFD0E1F3)),
+        border: Border.all(color: AppTheme.borderLight),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -354,7 +357,7 @@ class KosMateEmptyState extends StatelessWidget {
             style: const TextStyle(
               fontFamily: 'Roboto',
               fontSize: 14,
-              color: Color(0xFF64748B),
+              color: AppTheme.textMuted,
             ),
           ),
           if (buttonLabel != null && onButtonPressed != null) ...[
@@ -462,7 +465,7 @@ class KosMateButton extends StatelessWidget {
     }
 
     final Color bgColor = isDestructive
-        ? const Color(0xFFB33A3A)
+        ? AppTheme.destructiveColor
         : AppTheme.accentColor;
 
     return ElevatedButton(

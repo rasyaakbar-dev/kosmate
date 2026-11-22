@@ -1,8 +1,12 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/user_model.dart';
+import '../auth/login_screen.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final UserModel user;
@@ -17,9 +21,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
-  late final TextEditingController _avatarUrlController;
   final _authService = sl.auth;
+  final _storageService = sl.storage;
+  final _imagePicker = ImagePicker();
 
+  Uint8List? _newAvatarBytes;
+  String? _currentAvatarUrl;
+  bool _resetAvatar = false;
   bool _isLoading = false;
 
   @override
@@ -27,17 +35,116 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     _nameController = TextEditingController(text: widget.user.name);
     _phoneController = TextEditingController(text: widget.user.phone);
-    _avatarUrlController = TextEditingController(
-      text: widget.user.avatarUrl ?? '',
-    );
+    _currentAvatarUrl = widget.user.avatarUrl;
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _avatarUrlController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picked = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 75,
+      );
+      if (picked != null) {
+        final bytes = await picked.readAsBytes();
+        setState(() {
+          _newAvatarBytes = bytes;
+          _resetAvatar = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to pick image: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showAvatarOptionsModal() {
+    final hasAvatar =
+        _newAvatarBytes != null ||
+        (!_resetAvatar &&
+            _currentAvatarUrl != null &&
+            _currentAvatarUrl!.isNotEmpty);
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Text(
+                'Profile Picture',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.foregroundColor,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.camera_alt_outlined,
+                color: AppTheme.accentColor,
+              ),
+              title: const Text('Take Photo'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.photo_library_outlined,
+                color: AppTheme.accentColor,
+              ),
+              title: const Text('Choose from Gallery'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            if (hasAvatar)
+              ListTile(
+                leading: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: AppTheme.destructiveColor,
+                ),
+                title: const Text(
+                  'Reset to Default',
+                  style: TextStyle(color: AppTheme.destructiveColor),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  setState(() {
+                    _newAvatarBytes = null;
+                    _currentAvatarUrl = null;
+                    _resetAvatar = true;
+                  });
+                },
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _handleSave() async {
@@ -47,13 +154,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final messenger = ScaffoldMessenger.of(context);
 
     try {
+      String? finalAvatarUrl = _currentAvatarUrl;
+
+      if (_newAvatarBytes != null) {
+        finalAvatarUrl = await _storageService.uploadAvatar(
+          widget.user.userId,
+          _newAvatarBytes!,
+        );
+      } else if (_resetAvatar) {
+        await _storageService.deleteAvatar(widget.user.userId);
+        finalAvatarUrl = null;
+      }
+
       final updatedUser = await _authService.updateProfile(
         userId: widget.user.userId,
         name: _nameController.text.trim(),
         phone: _phoneController.text.trim(),
-        avatarUrl: _avatarUrlController.text.trim().isNotEmpty
-            ? _avatarUrlController.text.trim()
-            : null,
+        avatarUrl: finalAvatarUrl,
+        clearAvatar: _resetAvatar,
       );
 
       messenger.showSnackBar(
@@ -78,10 +196,233 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  void _showChangePasswordDialog() {
+    final newPassCtrl = TextEditingController();
+    final confirmPassCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool obscureNew = true;
+    bool obscureConfirm = true;
+    bool isSaving = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.lock_outline_rounded, color: AppTheme.accentColor),
+              SizedBox(width: 10),
+              Text(
+                'Change Password',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: newPassCtrl,
+                  obscureText: obscureNew,
+                  decoration: InputDecoration(
+                    labelText: 'New Password',
+                    prefixIcon: const Icon(Icons.vpn_key_outlined),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        obscureNew
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        size: 20,
+                      ),
+                      onPressed: () =>
+                          setDialogState(() => obscureNew = !obscureNew),
+                    ),
+                  ),
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Please enter new password';
+                    }
+                    if (val.length < 6) {
+                      return 'Password must be at least 6 characters';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: confirmPassCtrl,
+                  obscureText: obscureConfirm,
+                  decoration: InputDecoration(
+                    labelText: 'Confirm New Password',
+                    prefixIcon: const Icon(Icons.lock_clock_outlined),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        obscureConfirm
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        size: 20,
+                      ),
+                      onPressed: () => setDialogState(
+                        () => obscureConfirm = !obscureConfirm,
+                      ),
+                    ),
+                  ),
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Please confirm your password';
+                    }
+                    if (val != newPassCtrl.text) {
+                      return 'Passwords do not match';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSaving ? null : () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.accentColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: isSaving
+                  ? null
+                  : () async {
+                      if (!formKey.currentState!.validate()) return;
+                      final messenger = ScaffoldMessenger.of(context);
+                      final navigator = Navigator.of(ctx);
+                      setDialogState(() => isSaving = true);
+                      try {
+                        await _authService.updatePassword(
+                          newPassCtrl.text.trim(),
+                        );
+                        navigator.pop();
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text('Password changed successfully!'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      } catch (e) {
+                        setDialogState(() => isSaving = false);
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text('Failed to update password: $e'),
+                            backgroundColor: Colors.redAccent,
+                          ),
+                        );
+                      }
+                    },
+              child: isSaving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text('Update Password'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteAccountDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: AppTheme.destructiveColor),
+            SizedBox(width: 10),
+            Text(
+              'Delete Account',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.destructiveColor,
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to permanently delete your account?\n\nThis action cannot be undone. All your profile data, personal history, and active sessions will be removed.',
+          style: TextStyle(fontSize: 14, color: AppTheme.textMuted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.destructiveColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              setState(() => _isLoading = true);
+              try {
+                await _authService.deleteAccount(widget.user.userId);
+                if (mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    (route) => false,
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  setState(() => _isLoading = false);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete account: $e'),
+                      backgroundColor: Colors.redAccent,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Delete Permanently'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    ImageProvider? avatarImage;
+    if (_newAvatarBytes != null) {
+      avatarImage = MemoryImage(_newAvatarBytes!);
+    } else if (!_resetAvatar &&
+        _currentAvatarUrl != null &&
+        _currentAvatarUrl!.isNotEmpty) {
+      avatarImage = NetworkImage(_currentAvatarUrl!);
+    }
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.scaffoldBackground,
       appBar: AppBar(
         title: const Text(
           'Edit Profile',
@@ -100,7 +441,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: const Color(0xFFE2E8F0), height: 1),
+          child: Container(color: AppTheme.borderLight, height: 1),
         ),
       ),
       body: SingleChildScrollView(
@@ -110,63 +451,68 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Avatar Preview & URL
+              // Avatar Preview with interactive camera badge
               Center(
                 child: Column(
                   children: [
-                    Stack(
-                      alignment: Alignment.bottomRight,
-                      children: [
-                        CircleAvatar(
-                          radius: 46,
-                          backgroundColor: const Color(0xFFE2E8F0),
-                          backgroundImage:
-                              _avatarUrlController.text.trim().isNotEmpty
-                              ? NetworkImage(_avatarUrlController.text.trim())
-                              : null,
-                          child: _avatarUrlController.text.trim().isEmpty
-                              ? Text(
-                                  widget.user.name.isNotEmpty
-                                      ? widget.user.name[0].toUpperCase()
-                                      : 'U',
-                                  style: const TextStyle(
-                                    fontSize: 36,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppTheme.primaryColor,
-                                  ),
-                                )
-                              : null,
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(
-                            color: AppTheme.accentColor,
-                            shape: BoxShape.circle,
+                    GestureDetector(
+                      onTap: _showAvatarOptionsModal,
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          CircleAvatar(
+                            radius: 48,
+                            backgroundColor: AppTheme.borderLight,
+                            backgroundImage: avatarImage,
+                            child: avatarImage == null
+                                ? Text(
+                                    widget.user.name.isNotEmpty
+                                        ? widget.user.name[0].toUpperCase()
+                                        : 'U',
+                                    style: const TextStyle(
+                                      fontSize: 36,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                  )
+                                : null,
                           ),
-                          child: const Icon(
-                            Icons.camera_alt_rounded,
-                            size: 16,
-                            color: Colors.white,
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: AppTheme.accentColor,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt_rounded,
+                              size: 16,
+                              color: Colors.white,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      widget.user.name,
-                      style: const TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.foregroundColor,
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: _showAvatarOptionsModal,
+                      icon: const Icon(Icons.photo_camera_outlined, size: 16),
+                      label: const Text(
+                        'Change Photo',
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.accentColor,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 20),
 
-              // Section Header: Editable Information
+              // Section: Personal Information
               const Text(
                 'Personal Information',
                 style: TextStyle(
@@ -178,7 +524,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: 14),
 
-              // Full Name Field (Editable)
               _buildInputField(
                 controller: _nameController,
                 label: 'Full Name',
@@ -196,7 +541,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Phone Field (Editable)
               _buildInputField(
                 controller: _phoneController,
                 label: 'Phone Number',
@@ -213,20 +557,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
-
-              // Avatar URL (Editable)
-              _buildInputField(
-                controller: _avatarUrlController,
-                label: 'Avatar / Profile Image URL (optional)',
-                icon: Icons.image_outlined,
-                hint: 'https://example.com/avatar.jpg',
-                keyboardType: TextInputType.url,
-                onChanged: (_) => setState(() {}),
-              ),
               const SizedBox(height: 28),
 
-              // Section Header: Account Details (Read-only per requirements)
+              // Section: Account Details
               const Text(
                 'Account Details',
                 style: TextStyle(
@@ -238,77 +571,170 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: 6),
               const Text(
-                'Email, role, and password cannot be modified from this screen for security.',
+                'Manage your authentication and security settings.',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 12,
-                  color: Color(0xFF64748B),
+                  color: AppTheme.textMuted,
                 ),
               ),
               const SizedBox(height: 14),
 
-              // Email Card (Read-only)
+              // Read-only Email Card
               _buildReadOnlyCard(
                 label: 'Email Address',
                 value: widget.user.email,
                 icon: Icons.email_outlined,
-                badge: 'Verified via Auth',
+                badge: 'Verified',
               ),
               const SizedBox(height: 12),
 
-              // Role Card (Read-only)
+              // Read-only Role Card
               _buildReadOnlyCard(
                 label: 'Account Role',
                 value: widget.user.role.name.toUpperCase(),
                 icon: Icons.admin_panel_settings_outlined,
                 badge: 'Assigned',
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
-              // Password info notice
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(
-                      Icons.lock_outline,
-                      color: Color(0xFF64748B),
-                      size: 20,
+              // Interactive: Change Password Tile
+              Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  onTap: _showChangePasswordDialog,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
                     ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Password is managed securely via Supabase Auth credentials.',
-                        style: TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 13,
-                          color: Color(0xFF475569),
-                        ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppTheme.borderMedium,
+                        width: 1.2,
                       ),
                     ),
-                  ],
+                    child: const Row(
+                      children: [
+                        Icon(
+                          Icons.lock_outline_rounded,
+                          color: AppTheme.accentColor,
+                          size: 22,
+                        ),
+                        SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Change Password',
+                                style: TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textDark,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Update your account login password',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: AppTheme.textSubtle,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Interactive: Delete Account Tile
+              Material(
+                color: AppTheme.destructiveLight,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  onTap: _showDeleteAccountDialog,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppTheme.destructiveColor.withValues(alpha: 0.3),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(
+                          Icons.delete_forever_outlined,
+                          color: AppTheme.destructiveColor,
+                          size: 22,
+                        ),
+                        SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Delete Account',
+                                style: TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.destructiveColor,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Permanently delete your profile and account',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.destructiveColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: AppTheme.destructiveColor,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 36),
 
-              // Action Buttons
+              // Action Buttons: Cancel (Red) & Save
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFFDC2626),
+                        foregroundColor: AppTheme.destructiveColor,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
                         side: const BorderSide(
-                          color: Color(0xFFDC2626),
+                          color: AppTheme.destructiveColor,
                           width: 1.5,
                         ),
                       ),
@@ -321,7 +747,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           fontFamily: 'Roboto',
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFFDC2626),
+                          color: AppTheme.destructiveColor,
                         ),
                       ),
                     ),
@@ -375,7 +801,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     required String hint,
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
-    void Function(String)? onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,11 +819,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           controller: controller,
           keyboardType: keyboardType,
           validator: validator,
-          onChanged: onChanged,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
-            prefixIcon: Icon(icon, color: const Color(0xFF64748B), size: 20),
+            hintStyle: const TextStyle(
+              color: AppTheme.textSubtle,
+              fontSize: 14,
+            ),
+            prefixIcon: Icon(icon, color: AppTheme.textMuted, size: 20),
             filled: true,
             fillColor: Colors.white,
             contentPadding: const EdgeInsets.symmetric(
@@ -408,14 +835,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
-                color: Color(0xFFCBD5E1),
+                color: AppTheme.borderMedium,
                 width: 1.2,
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
-                color: Color(0xFFCBD5E1),
+                color: AppTheme.borderMedium,
                 width: 1.2,
               ),
             ),
@@ -441,13 +868,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppTheme.scaffoldBackground,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.borderLight),
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF94A3B8), size: 22),
+          Icon(icon, color: AppTheme.textSubtle, size: 22),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -458,7 +885,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   style: const TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 12,
-                    color: Color(0xFF94A3B8),
+                    color: AppTheme.textSubtle,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -468,7 +895,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     fontFamily: 'Roboto',
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF475569),
+                    color: AppTheme.textDark,
                   ),
                 ),
               ],
@@ -477,7 +904,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFE2E8F0),
+              color: AppTheme.borderLight,
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
@@ -486,7 +913,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 fontFamily: 'Roboto',
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF475569),
+                color: AppTheme.textDark,
               ),
             ),
           ),

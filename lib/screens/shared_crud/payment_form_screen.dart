@@ -184,6 +184,7 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
                     const SizedBox(height: 16),
 
                     DropdownButtonFormField<int>(
+                      isExpanded: true,
                       initialValue: _selectedUserId,
                       decoration: const InputDecoration(
                         labelText: 'Billed Tenant',
@@ -192,7 +193,11 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
                       items: _users.map((u) {
                         return DropdownMenuItem(
                           value: u.userId,
-                          child: Text('${u.name} (${u.email})'),
+                          child: Text(
+                            '${u.name} (${u.email})',
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
                         );
                       }).toList(),
                       onChanged: isEditMode
@@ -204,6 +209,7 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
                     const SizedBox(height: 16),
 
                     DropdownButtonFormField<int>(
+                      isExpanded: true,
                       initialValue: _selectedRoomId,
                       decoration: const InputDecoration(
                         labelText: 'Room',
@@ -213,7 +219,11 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
                         final house = r.house?.houseName ?? 'Kos';
                         return DropdownMenuItem(
                           value: r.roomId,
-                          child: Text('Room ${r.roomNumber} • $house'),
+                          child: Text(
+                            'Room ${r.roomNumber} • $house',
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
                         );
                       }).toList(),
                       onChanged: isEditMode
@@ -286,6 +296,7 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
 
                     if (isEditMode) ...[
                       DropdownButtonFormField<PaymentStatus>(
+                        isExpanded: true,
                         initialValue: _selectedStatus,
                         decoration: const InputDecoration(
                           labelText: 'Payment Status',
@@ -294,7 +305,11 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
                         items: PaymentStatus.values.map((s) {
                           return DropdownMenuItem(
                             value: s,
-                            child: Text(s.displayName),
+                            child: Text(
+                              s.displayName,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           );
                         }).toList(),
                         onChanged: (val) {

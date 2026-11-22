@@ -74,4 +74,30 @@ class StorageService {
       bytes: bytes,
     );
   }
+
+  /// Upload user profile picture (efficient overwrite per user)
+  Future<String> uploadAvatar(
+    int userId,
+    Uint8List bytes, {
+    String extension = 'jpg',
+  }) async {
+    final fileName = 'user_$userId.$extension';
+    final url = await uploadBytes(
+      bucketName: SupabaseConstants.avatarsBucket,
+      path: fileName,
+      bytes: bytes,
+      mimeType: 'image/jpeg',
+    );
+    return '$url?t=${DateTime.now().millisecondsSinceEpoch}';
+  }
+
+  /// Delete user profile picture from storage
+  Future<void> deleteAvatar(int userId, {String extension = 'jpg'}) async {
+    try {
+      final fileName = 'user_$userId.$extension';
+      await _client.storage.from(SupabaseConstants.avatarsBucket).remove([
+        fileName,
+      ]);
+    } catch (_) {}
+  }
 }

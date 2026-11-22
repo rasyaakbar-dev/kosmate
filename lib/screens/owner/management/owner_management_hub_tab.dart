@@ -1041,20 +1041,33 @@ class _ComplaintsSegmentState extends State<_ComplaintsSegment> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<ComplaintStatus>(
+                  isExpanded: true,
                   initialValue: selectedStatus,
                   decoration: const InputDecoration(labelText: 'Status'),
                   items: const [
                     DropdownMenuItem(
                       value: ComplaintStatus.inProgress,
-                      child: Text('In Progress'),
+                      child: Text(
+                        'In Progress',
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                     ),
                     DropdownMenuItem(
                       value: ComplaintStatus.resolved,
-                      child: Text('Resolved'),
+                      child: Text(
+                        'Resolved',
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                     ),
                     DropdownMenuItem(
                       value: ComplaintStatus.rejected,
-                      child: Text('Rejected'),
+                      child: Text(
+                        'Rejected',
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                     ),
                   ],
                   onChanged: (val) {

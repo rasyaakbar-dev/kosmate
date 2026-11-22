@@ -280,6 +280,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                         ),
                         const SizedBox(height: 6),
                         DropdownButtonFormField<int>(
+                          isExpanded: true,
                           value: _selectedHouseId,
                           decoration: _inputDecoration(
                             prefixIcon: Icons.apartment_outlined,
@@ -288,7 +289,11 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                               .map(
                                 (h) => DropdownMenuItem(
                                   value: h.houseId,
-                                  child: Text(h.houseName),
+                                  child: Text(
+                                    h.houseName,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
                                 ),
                               )
                               .toList(),
@@ -337,6 +342,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                       ),
                       const SizedBox(height: 6),
                       DropdownButtonFormField<String>(
+                        isExpanded: true,
                         initialValue: _selectedFloor,
                         decoration: _inputDecoration(),
                         icon: const Icon(
@@ -347,7 +353,11 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                             .map(
                               (floor) => DropdownMenuItem(
                                 value: floor,
-                                child: Text(floor),
+                                child: Text(
+                                  floor,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
                               ),
                             )
                             .toList(),
@@ -400,6 +410,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                       ),
                       const SizedBox(height: 6),
                       DropdownButtonFormField<RoomStatus>(
+                        isExpanded: true,
                         initialValue: _selectedStatus,
                         decoration: _inputDecoration(),
                         icon: const Icon(
@@ -410,7 +421,11 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                             .map(
                               (s) => DropdownMenuItem(
                                 value: s,
-                                child: Text(s.displayName),
+                                child: Text(
+                                  s.displayName,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
                               ),
                             )
                             .toList(),

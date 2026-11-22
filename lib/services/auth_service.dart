@@ -113,13 +113,16 @@ class AuthService {
     required String name,
     required String phone,
     String? avatarUrl,
+    bool clearAvatar = false,
   }) async {
     try {
       final updateData = <String, dynamic>{
         'name': name.trim(),
         'phone': phone.trim(),
       };
-      if (avatarUrl != null) {
+      if (clearAvatar) {
+        updateData['avatar_url'] = null;
+      } else if (avatarUrl != null) {
         updateData['avatar_url'] = avatarUrl;
       }
 
@@ -133,6 +136,44 @@ class AuthService {
       return UserModel.fromJson(response);
     } catch (e) {
       throw ServiceException('Failed to update profile.', cause: e);
+    }
+  }
+
+  /// Send a password reset email
+  Future<void> resetPasswordForEmail(String email) async {
+    try {
+      await _client.auth.resetPasswordForEmail(email.trim());
+    } on AuthException catch (e) {
+      throw AuthAppException(e.message, code: e.statusCode);
+    } catch (e) {
+      throw AuthAppException('Failed to send password reset email.', cause: e);
+    }
+  }
+
+  /// Update the current user's password
+  Future<UserResponse> updatePassword(String newPassword) async {
+    try {
+      return await _client.auth.updateUser(
+        UserAttributes(password: newPassword),
+      );
+    } on AuthException catch (e) {
+      throw AuthAppException(e.message, code: e.statusCode);
+    } catch (e) {
+      throw AuthAppException('Failed to update password.', cause: e);
+    }
+  }
+
+  /// Delete the user account and sign out
+  Future<void> deleteAccount(int userId) async {
+    try {
+      await _client
+          .from(SupabaseConstants.usersTable)
+          .delete()
+          .eq('user_id', userId);
+
+      await signOut();
+    } catch (e) {
+      throw ServiceException('Failed to delete account.', cause: e);
     }
   }
 }

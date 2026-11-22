@@ -65,7 +65,7 @@ CREATE TABLE public.booking (
   created_at timestamptz NOT NULL DEFAULT timezone('utc'::text, now()),
   CONSTRAINT booking_pkey PRIMARY KEY (booking_id),
   CONSTRAINT booking_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE,
-  CONSTRAINT booking_room_id_fkey FOREIGN KEY (room_id) REFERENCES public.room(room_id) ON DELETE RESTRICT
+  CONSTRAINT booking_room_id_fkey FOREIGN KEY (room_id) REFERENCES public.room(room_id) ON DELETE CASCADE
 );
 
 -- Payment
@@ -86,7 +86,7 @@ CREATE TABLE public.payment (
   created_at timestamptz NOT NULL DEFAULT timezone('utc'::text, now()),
   CONSTRAINT payment_pkey PRIMARY KEY (payment_id),
   CONSTRAINT payment_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE,
-  CONSTRAINT payment_room_id_fkey FOREIGN KEY (room_id) REFERENCES public.room(room_id) ON DELETE RESTRICT
+  CONSTRAINT payment_room_id_fkey FOREIGN KEY (room_id) REFERENCES public.room(room_id) ON DELETE CASCADE
 );
 
 -- Complaint
@@ -105,7 +105,7 @@ CREATE TABLE public.complaint (
   created_at timestamptz NOT NULL DEFAULT timezone('utc'::text, now()),
   CONSTRAINT complaint_pkey PRIMARY KEY (complaint_id),
   CONSTRAINT complaint_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE,
-  CONSTRAINT complaint_room_id_fkey FOREIGN KEY (room_id) REFERENCES public.room(room_id) ON DELETE RESTRICT
+  CONSTRAINT complaint_room_id_fkey FOREIGN KEY (room_id) REFERENCES public.room(room_id) ON DELETE CASCADE
 );
 
 -- ==========================================================================
@@ -145,6 +145,25 @@ $$;
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+CREATE OR REPLACE FUNCTION public.handle_user_deleted()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth, pg_temp
+AS $$
+BEGIN
+  IF OLD.auth_id IS NOT NULL THEN
+    DELETE FROM auth.users WHERE id = OLD.auth_id;
+  END IF;
+  RETURN OLD;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_public_user_deleted ON public.users;
+CREATE TRIGGER on_public_user_deleted
+  AFTER DELETE ON public.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_user_deleted();
 
 -- ============================================================================
 -- 5. ROW LEVEL SECURITY (RLS) POLICIES & FUNCTIONS
@@ -189,6 +208,14 @@ CREATE POLICY "Users can update their own profile or admin can update any" ON pu
   FOR UPDATE TO authenticated
   USING (auth_id = auth.uid() OR public.is_admin())
   WITH CHECK (auth_id = auth.uid() OR public.is_admin());
+
+CREATE POLICY "Users can delete their own profile or admin can delete any" ON public.users
+  FOR DELETE TO authenticated
+  USING (auth_id = auth.uid() OR public.is_admin());
+
+CREATE POLICY "Admins can insert users directly" ON public.users
+  FOR INSERT TO authenticated
+  WITH CHECK (public.is_admin());
 
 -- House policies (Anyone can read; owners & admins can insert/update/delete)
 CREATE POLICY "Houses are viewable by authenticated users" ON public.house
@@ -311,7 +338,8 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES 
   ('room-images', 'room-images', true),
   ('payment-receipts', 'payment-receipts', true),
-  ('complaint-attachments', 'complaint-attachments', true)
+  ('complaint-attachments', 'complaint-attachments', true),
+  ('avatars', 'avatars', true)
 ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public;
 
 -- Fix B: Broad SELECT policies are removed — public buckets serve files via URL without
@@ -320,11 +348,21 @@ ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public;
 DROP POLICY IF EXISTS "Public can view room images" ON storage.objects;
 DROP POLICY IF EXISTS "Authenticated users can view payment receipts" ON storage.objects;
 DROP POLICY IF EXISTS "Authenticated users can view complaint attachments" ON storage.objects;
+DROP POLICY IF EXISTS "Public can view avatars" ON storage.objects;
 
--- Storage RLS: Upload policies (kept — only SELECT is removed)
+-- Storage RLS: Upload, Update & Delete policies
 CREATE POLICY "Authenticated users can upload room images" ON storage.objects
   FOR INSERT TO authenticated
   WITH CHECK (bucket_id = 'room-images');
+
+CREATE POLICY "Authenticated users can update room images" ON storage.objects
+  FOR UPDATE TO authenticated
+  USING (bucket_id = 'room-images')
+  WITH CHECK (bucket_id = 'room-images');
+
+CREATE POLICY "Authenticated users can delete room images" ON storage.objects
+  FOR DELETE TO authenticated
+  USING (bucket_id = 'room-images');
 
 CREATE POLICY "Authenticated users can upload payment receipts" ON storage.objects
   FOR INSERT TO authenticated
@@ -333,6 +371,23 @@ CREATE POLICY "Authenticated users can upload payment receipts" ON storage.objec
 CREATE POLICY "Authenticated users can upload complaint attachments" ON storage.objects
   FOR INSERT TO authenticated
   WITH CHECK (bucket_id = 'complaint-attachments');
+
+CREATE POLICY "Authenticated users can delete complaint attachments" ON storage.objects
+  FOR DELETE TO authenticated
+  USING (bucket_id = 'complaint-attachments');
+
+CREATE POLICY "Authenticated users can upload avatars" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'avatars');
+
+CREATE POLICY "Authenticated users can update avatars" ON storage.objects
+  FOR UPDATE TO authenticated
+  USING (bucket_id = 'avatars')
+  WITH CHECK (bucket_id = 'avatars');
+
+CREATE POLICY "Authenticated users can delete avatars" ON storage.objects
+  FOR DELETE TO authenticated
+  USING (bucket_id = 'avatars');
 
 
 -- ============================================================================
@@ -346,10 +401,11 @@ ALTER TABLE public.payment
   ADD COLUMN IF NOT EXISTS deeplink_url text;
 
 -- ============================================================================
--- 9. SECURITY HARDENIN
+-- 9. SECURITY HARDENING
 -- ============================================================================
 -- Trigger-only functions (never callable via PostgREST RPC)
 REVOKE ALL ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.handle_user_deleted() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.handle_booking_status_change() FROM PUBLIC, anon, authenticated;
 
 -- Security invoker helpers (only authenticated users can call)

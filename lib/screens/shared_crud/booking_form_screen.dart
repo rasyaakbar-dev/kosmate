@@ -174,6 +174,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
                     const SizedBox(height: 16),
 
                     DropdownButtonFormField<int>(
+                      isExpanded: true,
                       initialValue: _selectedUserId,
                       decoration: const InputDecoration(
                         labelText: 'Tenant / User',
@@ -182,7 +183,11 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
                       items: _users.map((u) {
                         return DropdownMenuItem(
                           value: u.userId,
-                          child: Text('${u.name} (${u.role.name})'),
+                          child: Text(
+                            '${u.name} (${u.role.name})',
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
                         );
                       }).toList(),
                       onChanged: isEditMode
@@ -194,6 +199,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
                     const SizedBox(height: 16),
 
                     DropdownButtonFormField<int>(
+                      isExpanded: true,
                       initialValue: _selectedRoomId,
                       decoration: const InputDecoration(
                         labelText: 'Room',
@@ -205,6 +211,8 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
                           value: r.roomId,
                           child: Text(
                             'Room ${r.roomNumber} • $house (${Formatters.formatCurrency(r.price)})',
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                           ),
                         );
                       }).toList(),
@@ -247,6 +255,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
 
                     if (isEditMode) ...[
                       DropdownButtonFormField<BookingStatus>(
+                        isExpanded: true,
                         initialValue: _selectedStatus,
                         decoration: const InputDecoration(
                           labelText: 'Booking Status',
@@ -255,7 +264,11 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
                         items: BookingStatus.values.map((s) {
                           return DropdownMenuItem(
                             value: s,
-                            child: Text(s.displayName),
+                            child: Text(
+                              s.displayName,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           );
                         }).toList(),
                         onChanged: (val) {

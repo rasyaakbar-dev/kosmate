@@ -73,27 +73,19 @@ class KosMateAppBar extends StatelessWidget implements PreferredSizeWidget {
                       onActionPressed ??
                       onHelpPressed ??
                       () {
-                        if (actionIcon == Icons.settings_outlined) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('App Settings & Preferences'),
-                            ),
-                          );
-                        } else {
-                          showDialog(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                              title: Text(helpTitle),
-                              content: Text(helpMessage),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(ctx),
-                                  child: const Text('OK'),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: Text(helpTitle),
+                            content: Text(helpMessage),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text('OK'),
+                              ),
+                            ],
+                          ),
+                        );
                       },
                 ),
             ],

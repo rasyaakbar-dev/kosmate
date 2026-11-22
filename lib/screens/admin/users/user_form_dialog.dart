@@ -236,6 +236,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
                   _buildLabel('Account Role *'),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<UserRole>(
+                    isExpanded: true,
                     initialValue: _selectedRole,
                     decoration: _inputDecoration(
                       hintText: 'Select role',
@@ -244,15 +245,27 @@ class _UserFormDialogState extends State<UserFormDialog> {
                     items: const [
                       DropdownMenuItem(
                         value: UserRole.tenant,
-                        child: Text('Tenant / Renter'),
+                        child: Text(
+                          'Tenant / Renter',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                       DropdownMenuItem(
                         value: UserRole.owner,
-                        child: Text('Kos Owner'),
+                        child: Text(
+                          'Kos Owner',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                       DropdownMenuItem(
                         value: UserRole.admin,
-                        child: Text('Administrator'),
+                        child: Text(
+                          'Administrator',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                     ],
                     onChanged: (val) {

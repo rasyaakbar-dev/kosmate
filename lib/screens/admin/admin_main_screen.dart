@@ -46,7 +46,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
         break;
       case 3:
         appBarTitle = 'Profile';
-        actionIcon = Icons.settings_outlined;
+        actionIcon = Icons.help_outline_rounded;
         break;
       default:
         appBarTitle = 'KosMate';

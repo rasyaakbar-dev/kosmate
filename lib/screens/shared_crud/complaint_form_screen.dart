@@ -185,6 +185,7 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
                     const SizedBox(height: 16),
 
                     DropdownButtonFormField<int>(
+                      isExpanded: true,
                       initialValue: _selectedUserId,
                       decoration: const InputDecoration(
                         labelText: 'Reporting Tenant',
@@ -193,7 +194,11 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
                       items: _users.map((u) {
                         return DropdownMenuItem(
                           value: u.userId,
-                          child: Text('${u.name} (${u.role.name})'),
+                          child: Text(
+                            '${u.name} (${u.role.name})',
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
                         );
                       }).toList(),
                       onChanged: isEditMode
@@ -205,6 +210,7 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
                     const SizedBox(height: 16),
 
                     DropdownButtonFormField<int>(
+                      isExpanded: true,
                       initialValue: _selectedRoomId,
                       decoration: const InputDecoration(
                         labelText: 'Affected Room',
@@ -214,7 +220,11 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
                         final house = r.house?.houseName ?? 'Kos';
                         return DropdownMenuItem(
                           value: r.roomId,
-                          child: Text('Room ${r.roomNumber} • $house'),
+                          child: Text(
+                            'Room ${r.roomNumber} • $house',
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
                         );
                       }).toList(),
                       onChanged: isEditMode
@@ -229,6 +239,7 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
                       children: [
                         Expanded(
                           child: DropdownButtonFormField<ComplaintCategory>(
+                            isExpanded: true,
                             initialValue: _selectedCategory,
                             decoration: const InputDecoration(
                               labelText: 'Category',
@@ -237,7 +248,11 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
                             items: ComplaintCategory.values.map((c) {
                               return DropdownMenuItem(
                                 value: c,
-                                child: Text(c.displayName),
+                                child: Text(
+                                  c.displayName,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
                               );
                             }).toList(),
                             onChanged: (val) {
@@ -250,6 +265,7 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: DropdownButtonFormField<ComplaintPriority>(
+                            isExpanded: true,
                             initialValue: _selectedPriority,
                             decoration: const InputDecoration(
                               labelText: 'Priority',
@@ -258,7 +274,11 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
                             items: ComplaintPriority.values.map((p) {
                               return DropdownMenuItem(
                                 value: p,
-                                child: Text(p.displayName),
+                                child: Text(
+                                  p.displayName,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
                               );
                             }).toList(),
                             onChanged: (val) {
@@ -301,6 +321,7 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
 
                     if (isEditMode) ...[
                       DropdownButtonFormField<ComplaintStatus>(
+                        isExpanded: true,
                         initialValue: _selectedStatus,
                         decoration: const InputDecoration(
                           labelText: 'Ticket Status',
@@ -309,15 +330,27 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
                         items: const [
                           DropdownMenuItem(
                             value: ComplaintStatus.inProgress,
-                            child: Text('In Progress'),
+                            child: Text(
+                              'In Progress',
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           ),
                           DropdownMenuItem(
                             value: ComplaintStatus.resolved,
-                            child: Text('Resolved'),
+                            child: Text(
+                              'Resolved',
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           ),
                           DropdownMenuItem(
                             value: ComplaintStatus.rejected,
-                            child: Text('Rejected'),
+                            child: Text(
+                              'Rejected',
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           ),
                         ],
                         onChanged: (val) {

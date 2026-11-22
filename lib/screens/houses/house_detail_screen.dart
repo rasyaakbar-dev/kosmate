@@ -169,6 +169,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<RoomStatus>(
+                  isExpanded: true,
                   initialValue: selectedStatus,
                   decoration: const InputDecoration(
                     labelText: 'Initial Status',
@@ -177,7 +178,11 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                       .map(
                         (s) => DropdownMenuItem(
                           value: s,
-                          child: Text(s.displayName),
+                          child: Text(
+                            s.displayName,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
                         ),
                       )
                       .toList(),

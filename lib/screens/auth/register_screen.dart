@@ -107,7 +107,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+            border: Border.all(color: AppTheme.borderMedium, width: 1.5),
           ),
           child: Row(
             children: [
@@ -116,14 +116,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 height: 48,
                 decoration: const BoxDecoration(
                   border: Border(
-                    right: BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
+                    right: BorderSide(color: AppTheme.borderLight, width: 1.5),
                   ),
                 ),
-                child: Icon(
-                  prefixIcon,
-                  color: const Color(0xFF94A3B8),
-                  size: 22,
-                ),
+                child: Icon(prefixIcon, color: AppTheme.textSubtle, size: 22),
               ),
               Expanded(
                 child: TextFormField(
@@ -170,7 +166,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           children: [
             const Text(
               'Choose how you want to use KosMate:',
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
+              style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
             ),
             const SizedBox(height: 16),
             InkWell(
@@ -183,13 +179,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: _selectedRole == UserRole.tenant
-                      ? const Color(0xFFEBF3FA)
+                      ? AppTheme.primaryLight
                       : Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: _selectedRole == UserRole.tenant
                         ? AppTheme.accentColor
-                        : const Color(0xFFCBD5E1),
+                        : AppTheme.borderMedium,
                     width: _selectedRole == UserRole.tenant ? 2.0 : 1.2,
                   ),
                 ),
@@ -200,14 +196,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       decoration: BoxDecoration(
                         color: _selectedRole == UserRole.tenant
                             ? AppTheme.accentColor
-                            : const Color(0xFFF1F5F9),
+                            : AppTheme.surfaceLight,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
                         Icons.vpn_key_outlined,
                         color: _selectedRole == UserRole.tenant
                             ? Colors.white
-                            : const Color(0xFF64748B),
+                            : AppTheme.textMuted,
                         size: 24,
                       ),
                     ),
@@ -228,7 +224,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             'Find, book rooms, pay rent and submit complaints.',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF64748B),
+                              color: AppTheme.textMuted,
                             ),
                           ),
                         ],
@@ -254,13 +250,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: _selectedRole == UserRole.owner
-                      ? const Color(0xFFEBF3FA)
+                      ? AppTheme.primaryLight
                       : Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: _selectedRole == UserRole.owner
                         ? AppTheme.accentColor
-                        : const Color(0xFFCBD5E1),
+                        : AppTheme.borderMedium,
                     width: _selectedRole == UserRole.owner ? 2.0 : 1.2,
                   ),
                 ),
@@ -271,14 +267,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       decoration: BoxDecoration(
                         color: _selectedRole == UserRole.owner
                             ? AppTheme.accentColor
-                            : const Color(0xFFF1F5F9),
+                            : AppTheme.surfaceLight,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
                         Icons.home_work_outlined,
                         color: _selectedRole == UserRole.owner
                             ? Colors.white
-                            : const Color(0xFF64748B),
+                            : AppTheme.textMuted,
                         size: 24,
                       ),
                     ),
@@ -299,7 +295,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             'Manage boarding houses, rooms, payments and tenants.',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF64748B),
+                              color: AppTheme.textMuted,
                             ),
                           ),
                         ],
@@ -417,7 +413,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: const Color(0xFFCBD5E1),
+                            color: AppTheme.borderMedium,
                             width: 1.5,
                           ),
                         ),
@@ -426,7 +422,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             Container(
                               padding: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFEFF6FF),
+                                color: AppTheme.iconBadgeBackground,
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Icon(
@@ -458,7 +454,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         : 'Find room and pay monthly rent',
                                     style: const TextStyle(
                                       fontSize: 12,
-                                      color: Color(0xFF64748B),
+                                      color: AppTheme.textMuted,
                                     ),
                                   ),
                                 ],
@@ -466,7 +462,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             const Icon(
                               Icons.arrow_drop_down,
-                              color: Color(0xFF64748B),
+                              color: AppTheme.textMuted,
                             ),
                           ],
                         ),
@@ -485,7 +481,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       _obscurePassword
                           ? Icons.visibility_outlined
                           : Icons.visibility_off_outlined,
-                      color: const Color(0xFF94A3B8),
+                      color: AppTheme.textSubtle,
                     ),
                     onPressed: () =>
                         setState(() => _obscurePassword = !_obscurePassword),
@@ -508,7 +504,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       _obscureConfirmPassword
                           ? Icons.visibility_outlined
                           : Icons.visibility_off_outlined,
-                      color: const Color(0xFF94A3B8),
+                      color: AppTheme.textSubtle,
                     ),
                     onPressed: () => setState(
                       () => _obscureConfirmPassword = !_obscureConfirmPassword,
@@ -535,7 +531,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         side: const BorderSide(
-                          color: Color(0xFFCBD5E1),
+                          color: AppTheme.borderMedium,
                           width: 1.5,
                         ),
                         onChanged: (val) =>
@@ -548,7 +544,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       style: TextStyle(
                         fontFamily: 'Roboto',
                         fontSize: 14,
-                        color: Color(0xFF334155),
+                        color: AppTheme.textDark,
                       ),
                     ),
                     InkWell(
@@ -588,7 +584,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         style: TextStyle(
                           fontFamily: 'Roboto',
                           fontSize: 14,
-                          color: Color(0xFF334155),
+                          color: AppTheme.textDark,
                           decoration: TextDecoration.underline,
                         ),
                       ),
