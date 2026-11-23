@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_navigation_bar.dart';
 import '../../core/widgets/kosmate_app_bar.dart';
 import '../../models/user_model.dart';
 import '../shared/profile_screen.dart';
@@ -34,68 +34,48 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
     ];
 
     String appBarTitle;
-    IconData actionIcon;
     switch (_currentIndex) {
       case 1:
         appBarTitle = 'Rooms';
-        actionIcon = Icons.help_outline_rounded;
         break;
       case 2:
         appBarTitle = 'Management';
-        actionIcon = Icons.help_outline_rounded;
         break;
       case 3:
         appBarTitle = 'Profile';
-        actionIcon = Icons.help_outline_rounded;
         break;
       default:
         appBarTitle = 'KosMate';
-        actionIcon = Icons.help_outline_rounded;
     }
 
     return Scaffold(
-      appBar: KosMateAppBar(title: appBarTitle, actionIcon: actionIcon),
+      appBar: KosMateAppBar(title: appBarTitle),
       body: IndexedStack(index: _currentIndex, children: screens),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-        ),
-        child: NavigationBar(
-          selectedIndex: _currentIndex,
-          backgroundColor: Colors.white,
-          indicatorColor: const Color(0xFFEBF3FA),
-          elevation: 0,
-          onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home, color: AppTheme.primaryColor),
-              label: 'Home',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.sensor_door_outlined),
-              selectedIcon: Icon(
-                Icons.sensor_door,
-                color: AppTheme.primaryColor,
-              ),
-              label: 'Rooms',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.assignment_outlined),
-              selectedIcon: Icon(
-                Icons.assignment,
-                color: AppTheme.primaryColor,
-              ),
-              label: 'Management',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person, color: AppTheme.primaryColor),
-              label: 'Profile',
-            ),
-          ],
-        ),
+      bottomNavigationBar: AppNavigationBar(
+        currentIndex: _currentIndex,
+        onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
+        destinations: const [
+          AppNavigationItem(
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home,
+            label: 'Home',
+          ),
+          AppNavigationItem(
+            icon: Icons.sensor_door_outlined,
+            activeIcon: Icons.sensor_door,
+            label: 'Rooms',
+          ),
+          AppNavigationItem(
+            icon: Icons.assignment_outlined,
+            activeIcon: Icons.assignment,
+            label: 'Management',
+          ),
+          AppNavigationItem(
+            icon: Icons.person_outline,
+            activeIcon: Icons.person,
+            label: 'Profile',
+          ),
+        ],
       ),
     );
   }

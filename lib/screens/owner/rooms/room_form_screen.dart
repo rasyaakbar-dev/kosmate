@@ -184,7 +184,6 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
         title: title,
         showBackButton: true,
         showLogo: false,
-        showHelp: false,
       ),
       body: _isLoadingHouses
           ? const Center(child: CircularProgressIndicator())
@@ -204,9 +203,11 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFEF9E7),
+                            color: AppTheme.warningLight,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFF9E8B5)),
+                            border: Border.all(
+                              color: AppTheme.borderColor.withValues(alpha: 0.3),
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,14 +216,14 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                                 children: [
                                   Icon(
                                     Icons.warning_amber_rounded,
-                                    color: Color(0xFFB45309),
+                                    color: AppTheme.warningColor,
                                   ),
                                   SizedBox(width: 8),
                                   Text(
                                     'No boarding house found',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF92400E),
+                                      color: AppTheme.warningColor,
                                       fontSize: 15,
                                     ),
                                   ),
@@ -232,7 +233,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                               const Text(
                                 'You must create a boarding house first before you can add rooms to it.',
                                 style: TextStyle(
-                                  color: Color(0xFF78350F),
+                                  color: AppTheme.textDark,
                                   fontSize: 13,
                                 ),
                               ),
@@ -263,7 +264,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF1E293B),
+                                color: AppTheme.textDark,
                               ),
                             ),
                             TextButton.icon(
@@ -312,7 +313,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF1E293B),
+                          color: AppTheme.textDark,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -337,7 +338,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF1E293B),
+                          color: AppTheme.textDark,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -375,7 +376,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF1E293B),
+                          color: AppTheme.textDark,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -405,7 +406,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF1E293B),
+                          color: AppTheme.textDark,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -443,7 +444,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF1E293B),
+                          color: AppTheme.textDark,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -535,20 +536,20 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
   InputDecoration _inputDecoration({String? hintText, IconData? prefixIcon}) {
     return InputDecoration(
       hintText: hintText,
-      hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+      hintStyle: const TextStyle(color: AppTheme.textSubtle, fontSize: 14),
       prefixIcon: prefixIcon != null
-          ? Icon(prefixIcon, color: const Color(0xFF94A3B8), size: 20)
+          ? Icon(prefixIcon, color: AppTheme.textSubtle, size: 20)
           : null,
       filled: true,
       fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
+        borderSide: const BorderSide(color: AppTheme.borderMedium, width: 1.2),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
+        borderSide: const BorderSide(color: AppTheme.borderMedium, width: 1.2),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),

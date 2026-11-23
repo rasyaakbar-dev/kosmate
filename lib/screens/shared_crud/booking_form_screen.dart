@@ -152,7 +152,6 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
         title: isEditMode ? 'Edit Booking' : 'New Booking Request',
         showBackButton: true,
         showLogo: false,
-        showHelp: false,
       ),
       body: _isLoadingInitial
           ? const Center(child: CircularProgressIndicator())

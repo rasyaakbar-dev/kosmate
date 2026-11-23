@@ -109,7 +109,7 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
               style: TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 14,
-                color: Color(0xFF64748B),
+                color: AppTheme.textMuted,
               ),
             ),
             const SizedBox(height: 20),
@@ -120,9 +120,9 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEBF3FA),
+                      color: AppTheme.primaryLight,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFD0E1F3)),
+                      border: Border.all(color: AppTheme.borderLight),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,7 +135,7 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
                               style: TextStyle(
                                 fontFamily: 'Roboto',
                                 fontSize: 14,
-                                color: Color(0xFF475569),
+                                color: AppTheme.textDark,
                               ),
                             ),
                             Icon(
@@ -164,9 +164,9 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEF9E7),
+                      color: AppTheme.warningLight,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFF9E8B5)),
+                      border: Border.all(color: AppTheme.warningLight),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,7 +179,7 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
                               style: TextStyle(
                                 fontFamily: 'Roboto',
                                 fontSize: 14,
-                                color: Color(0xFF475569),
+                                color: AppTheme.textDark,
                               ),
                             ),
                             Icon(
@@ -241,31 +241,14 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
             ),
             const SizedBox(height: 26),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Recent activity',
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.foregroundColor,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => widget.onNavigateToTab(1),
-                  child: const Text(
-                    'View all',
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.accentColor,
-                    ),
-                  ),
-                ),
-              ],
+            const Text(
+              'Recent activity',
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.foregroundColor,
+              ),
             ),
             const SizedBox(height: 12),
 
@@ -298,7 +281,7 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
                 child: Center(
                   child: Text(
                     'No recent activities yet.',
-                    style: TextStyle(color: Color(0xFF64748B)),
+                    style: TextStyle(color: AppTheme.textMuted),
                   ),
                 ),
               ),
@@ -322,7 +305,7 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
+            border: Border.all(color: AppTheme.borderMedium, width: 1.2),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -357,7 +340,7 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.borderLight),
       ),
       child: Row(
         children: [
@@ -365,7 +348,7 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
+              color: AppTheme.iconBadgeBackground,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: AppTheme.accentColor),
@@ -389,7 +372,7 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
                   subtitle,
                   style: const TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF64748B),
+                    color: AppTheme.textMuted,
                   ),
                 ),
               ],
@@ -400,7 +383,7 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
             style: const TextStyle(
               fontFamily: 'Roboto',
               fontSize: 12,
-              color: Color(0xFF64748B),
+              color: AppTheme.textMuted,
             ),
           ),
         ],

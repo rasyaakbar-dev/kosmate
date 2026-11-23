@@ -135,14 +135,14 @@ class _UserFormDialogState extends State<UserFormDialog> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close, color: Color(0xFF64748B)),
+                        icon: const Icon(Icons.close, color: AppTheme.textMuted),
                         onPressed: _isLoading
                             ? null
                             : () => Navigator.pop(context, false),
                       ),
                     ],
                   ),
-                  const Divider(height: 20, color: Color(0xFFE2E8F0)),
+                  const Divider(height: 20, color: AppTheme.borderLight),
 
                   // Full Name
                   _buildLabel('Full Name *'),
@@ -207,7 +207,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
                             _obscurePassword
                                 ? Icons.visibility_off
                                 : Icons.visibility,
-                            color: const Color(0xFF64748B),
+                            color: AppTheme.textMuted,
                             size: 20,
                           ),
                           onPressed: () => setState(
@@ -284,7 +284,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
                             : () => Navigator.pop(context, false),
                         child: const Text(
                           'Cancel',
-                          style: TextStyle(color: Color(0xFF64748B)),
+                          style: TextStyle(color: AppTheme.textMuted),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -351,21 +351,21 @@ class _UserFormDialogState extends State<UserFormDialog> {
   }) {
     return InputDecoration(
       hintText: hintText,
-      hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
-      prefixIcon: Icon(prefixIcon, color: const Color(0xFF64748B), size: 20),
+      hintStyle: const TextStyle(color: AppTheme.textSubtle, fontSize: 14),
+      prefixIcon: Icon(prefixIcon, color: AppTheme.textMuted, size: 20),
       suffixIcon: suffixIcon,
       suffixText: suffixText,
-      suffixStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+      suffixStyle: const TextStyle(color: AppTheme.textSubtle, fontSize: 12),
       filled: true,
       fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
+        borderSide: const BorderSide(color: AppTheme.borderMedium, width: 1.2),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
+        borderSide: const BorderSide(color: AppTheme.borderMedium, width: 1.2),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),

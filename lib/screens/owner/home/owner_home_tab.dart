@@ -275,7 +275,7 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
               style: const TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 14,
-                color: Color(0xFF64748B),
+                color: AppTheme.textMuted,
               ),
             ),
             const SizedBox(height: 20),
@@ -286,24 +286,24 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
                   label: 'Total rooms',
                   count: '$_totalRooms',
                   icon: Icons.sensor_door_outlined,
-                  bgColor: const Color(0xFFEBF3FA),
-                  borderColor: const Color(0xFFD0E1F3),
+                  bgColor: AppTheme.primaryLight,
+                  borderColor: AppTheme.borderLight,
                 ),
                 const SizedBox(width: 10),
                 _buildStatCard(
                   label: 'Occupied',
                   count: '$_occupiedRooms',
                   icon: Icons.group_outlined,
-                  bgColor: const Color(0xFFFEF9E7),
-                  borderColor: const Color(0xFFF9E8B5),
+                  bgColor: AppTheme.warningLight,
+                  borderColor: AppTheme.warningLight,
                 ),
                 const SizedBox(width: 10),
                 _buildStatCard(
                   label: 'Available',
                   count: '$_availableRooms',
                   icon: Icons.meeting_room_outlined,
-                  bgColor: const Color(0xFFE6F4EA),
-                  borderColor: const Color(0xFFC7EBD1),
+                  bgColor: AppTheme.successLight,
+                  borderColor: AppTheme.successLight,
                 ),
               ],
             ),
@@ -343,31 +343,14 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
             ),
             const SizedBox(height: 26),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Recent information',
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.foregroundColor,
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => widget.onNavigateToTab(2),
-                  child: const Text(
-                    'View all',
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.accentColor,
-                    ),
-                  ),
-                ),
-              ],
+            const Text(
+              'Recent information',
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.foregroundColor,
+              ),
             ),
             const SizedBox(height: 12),
 
@@ -417,7 +400,7 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
                 child: Center(
                   child: Text(
                     'No recent activities yet.',
-                    style: TextStyle(color: Color(0xFF64748B)),
+                    style: TextStyle(color: AppTheme.textMuted),
                   ),
                 ),
               ),
@@ -455,7 +438,7 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
                     style: const TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 12,
-                      color: Color(0xFF475569),
+                      color: AppTheme.textDark,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -496,7 +479,7 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
             padding: const EdgeInsets.symmetric(vertical: 18),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
+              border: Border.all(color: AppTheme.borderMedium, width: 1.2),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -533,7 +516,7 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.borderLight),
       ),
       child: Row(
         children: [
@@ -541,7 +524,7 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
+              color: AppTheme.iconBadgeBackground,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: AppTheme.accentColor),
@@ -565,7 +548,7 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
                   subtitle,
                   style: const TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF64748B),
+                    color: AppTheme.textMuted,
                   ),
                 ),
               ],
@@ -575,7 +558,7 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: const Color(0xFFFDE8E8),
+                color: AppTheme.destructiveLight,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
@@ -584,7 +567,7 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
                   fontFamily: 'Roboto',
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFC81E1E),
+                  color: AppTheme.destructiveColor,
                 ),
               ),
             ),
@@ -595,7 +578,7 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
             style: const TextStyle(
               fontFamily: 'Roboto',
               fontSize: 12,
-              color: Color(0xFF64748B),
+              color: AppTheme.textMuted,
             ),
           ),
         ],

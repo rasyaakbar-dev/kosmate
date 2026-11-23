@@ -120,7 +120,7 @@ class _AdminHousesTabState extends State<AdminHousesTab> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFB33A3A),
+              backgroundColor: AppTheme.destructiveColor,
             ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Delete', style: TextStyle(color: Colors.white)),
@@ -204,12 +204,12 @@ class _AdminHousesTabState extends State<AdminHousesTab> {
             decoration: InputDecoration(
               hintText: 'Search houses by name or location...',
               hintStyle: const TextStyle(
-                color: Color(0xFF94A3B8),
+                color: AppTheme.textSubtle,
                 fontSize: 14,
               ),
               prefixIcon: const Icon(
                 Icons.search,
-                color: Color(0xFF64748B),
+                color: AppTheme.textMuted,
                 size: 20,
               ),
               suffixIcon: _searchController.text.isNotEmpty
@@ -229,11 +229,11 @@ class _AdminHousesTabState extends State<AdminHousesTab> {
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                borderSide: const BorderSide(color: AppTheme.borderMedium),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                borderSide: const BorderSide(color: AppTheme.borderMedium),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -270,7 +270,7 @@ class _AdminHousesTabState extends State<AdminHousesTab> {
                                 ? Icons.home_work_outlined
                                 : Icons.apartment_outlined,
                             size: 60,
-                            color: const Color(0xFFCBD5E1),
+                            color: AppTheme.borderMedium,
                           ),
                           const SizedBox(height: 12),
                           Text(
@@ -281,7 +281,7 @@ class _AdminHousesTabState extends State<AdminHousesTab> {
                               fontFamily: 'Roboto',
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF64748B),
+                              color: AppTheme.textMuted,
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -291,7 +291,7 @@ class _AdminHousesTabState extends State<AdminHousesTab> {
                                 : 'Registered houses will appear here.',
                             style: const TextStyle(
                               fontSize: 13,
-                              color: Color(0xFF94A3B8),
+                              color: AppTheme.textSubtle,
                             ),
                             textAlign: TextAlign.center,
                           ),

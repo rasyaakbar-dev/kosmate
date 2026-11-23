@@ -107,7 +107,7 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF0F172A),
+                    color: AppTheme.textDark,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -115,7 +115,7 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                   'Description:\n${complaint.description}',
                   style: const TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF64748B),
+                    color: AppTheme.textMuted,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -222,7 +222,6 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
         title: 'Complaints',
         showBackButton: true,
         showLogo: false,
-        showHelp: false,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -251,7 +250,7 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                               decoration: BoxDecoration(
                                 color: _selectedFilterTab == 0
                                     ? AppTheme.accentColor
-                                    : const Color(0xFFF1F5F9),
+                                    : AppTheme.surfaceLight,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               alignment: Alignment.center,
@@ -262,7 +261,7 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                                   fontWeight: FontWeight.w600,
                                   color: _selectedFilterTab == 0
                                       ? Colors.white
-                                      : const Color(0xFF64748B),
+                                      : AppTheme.textMuted,
                                 ),
                               ),
                             ),
@@ -283,7 +282,7 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                               decoration: BoxDecoration(
                                 color: _selectedFilterTab == 1
                                     ? AppTheme.accentColor
-                                    : const Color(0xFFF1F5F9),
+                                    : AppTheme.surfaceLight,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               alignment: Alignment.center,
@@ -294,7 +293,7 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                                   fontWeight: FontWeight.w600,
                                   color: _selectedFilterTab == 1
                                       ? Colors.white
-                                      : const Color(0xFF64748B),
+                                      : AppTheme.textMuted,
                                 ),
                               ),
                             ),
@@ -336,7 +335,7 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                           '$totalCount complaints',
                           style: const TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF64748B),
+                            color: AppTheme.textMuted,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -346,7 +345,7 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFEE2E2),
+                            color: AppTheme.destructiveLight,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -354,7 +353,7 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFFB91C1C),
+                              color: AppTheme.destructiveColor,
                             ),
                           ),
                         ),
@@ -392,7 +391,7 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   side: const BorderSide(
-                                    color: Color(0xFFE2E8F0),
+                                    color: AppTheme.borderLight,
                                     width: 1.1,
                                   ),
                                 ),
@@ -407,7 +406,7 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                                           width: 44,
                                           height: 44,
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFFEFF6FF),
+                                            color: AppTheme.iconBadgeBackground,
                                             borderRadius: BorderRadius.circular(
                                               8,
                                             ),
@@ -432,7 +431,7 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                                                   fontFamily: 'Roboto',
                                                   fontSize: 15,
                                                   fontWeight: FontWeight.w700,
-                                                  color: Color(0xFF0F172A),
+                                                  color: AppTheme.textDark,
                                                 ),
                                               ),
                                               const SizedBox(height: 3),
@@ -440,7 +439,7 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                                                 subtitle,
                                                 style: const TextStyle(
                                                   fontSize: 12,
-                                                  color: Color(0xFF64748B),
+                                                  color: AppTheme.textMuted,
                                                 ),
                                               ),
                                             ],

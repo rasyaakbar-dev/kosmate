@@ -131,7 +131,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF0F172A),
+                    color: AppTheme.textDark,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -139,7 +139,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                   'Description:\n${complaint.description}',
                   style: const TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF64748B),
+                    color: AppTheme.textMuted,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -243,7 +243,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFB33A3A),
+              backgroundColor: AppTheme.destructiveColor,
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.pop(ctx, true),
@@ -305,46 +305,49 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     final floorLabel = _room.roomType.isNotEmpty ? _room.roomType : 'Floor 1';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.scaffoldBackground,
       appBar: KosMateAppBar(
         title: 'Room details',
         showBackButton: true,
         showLogo: false,
-        showHelp: true,
-        actionIcon: Icons.more_vert_rounded,
-        onActionPressed: () {
-          showModalBottomSheet(
-            context: context,
-            builder: (ctx) => SafeArea(
-              child: Wrap(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.edit_outlined),
-                    title: const Text('Edit Room'),
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      _editRoom();
-                    },
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                builder: (ctx) => SafeArea(
+                  child: Wrap(
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.edit_outlined),
+                        title: const Text('Edit Room'),
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          _editRoom();
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(
+                          Icons.delete_outline,
+                          color: AppTheme.destructiveColor,
+                        ),
+                        title: const Text(
+                          'Delete Room',
+                          style: TextStyle(color: AppTheme.destructiveColor),
+                        ),
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          _deleteRoom();
+                        },
+                      ),
+                    ],
                   ),
-                  ListTile(
-                    leading: const Icon(
-                      Icons.delete_outline,
-                      color: Color(0xFFB33A3A),
-                    ),
-                    title: const Text(
-                      'Delete Room',
-                      style: TextStyle(color: Color(0xFFB33A3A)),
-                    ),
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      _deleteRoom();
-                    },
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -363,7 +366,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                         width: 56,
                         height: 56,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
+                          color: AppTheme.iconBadgeBackground,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
@@ -383,7 +386,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                 fontFamily: 'Roboto',
                                 fontSize: 20,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF0F172A),
+                                color: AppTheme.textDark,
                               ),
                             ),
                             const SizedBox(height: 3),
@@ -391,7 +394,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                               '$houseName • $floorLabel',
                               style: const TextStyle(
                                 fontSize: 13,
-                                color: Color(0xFF64748B),
+                                color: AppTheme.textMuted,
                               ),
                             ),
                           ],
@@ -410,7 +413,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: const Color(0xFFE2E8F0),
+                        color: AppTheme.borderLight,
                         width: 1.2,
                       ),
                     ),
@@ -423,7 +426,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                             fontFamily: 'Roboto',
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF0F172A),
+                            color: AppTheme.textDark,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -469,10 +472,10 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEF9E7),
+                      color: AppTheme.warningLight,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: const Color(0xFFF9E8B5),
+                        color: AppTheme.borderColor.withValues(alpha: 0.3),
                         width: 1.2,
                       ),
                     ),
@@ -485,7 +488,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                             fontFamily: 'Roboto',
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF0F172A),
+                            color: AppTheme.textDark,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -494,7 +497,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            border: Border.all(color: AppTheme.borderLight),
                           ),
                           child: Row(
                             children: [
@@ -502,7 +505,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                 width: 40,
                                 height: 40,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFEFF6FF),
+                                  color: AppTheme.iconBadgeBackground,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Icon(
@@ -525,7 +528,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                       style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
-                                        color: Color(0xFF0F172A),
+                                        color: AppTheme.textDark,
                                       ),
                                     ),
                                     const SizedBox(height: 2),
@@ -535,7 +538,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                           : 'No active dues recorded',
                                       style: const TextStyle(
                                         fontSize: 12,
-                                        color: Color(0xFF64748B),
+                                        color: AppTheme.textMuted,
                                       ),
                                     ),
                                   ],
@@ -560,7 +563,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: const Color(0xFFE2E8F0),
+                        color: AppTheme.borderLight,
                         width: 1.2,
                       ),
                     ),
@@ -573,7 +576,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                             fontFamily: 'Roboto',
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF0F172A),
+                            color: AppTheme.textDark,
                           ),
                         ),
                         const SizedBox(height: 14),
@@ -583,14 +586,14 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                               Icon(
                                 Icons.check_circle_outline_rounded,
                                 size: 18,
-                                color: Color(0xFF16A34A),
+                                color: AppTheme.successColor,
                               ),
                               SizedBox(width: 8),
                               Text(
                                 'No maintenance tickets for this room',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: Color(0xFF16A34A),
+                                  color: AppTheme.successColor,
                                 ),
                               ),
                             ],
@@ -606,10 +609,10 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF8FAFC),
+                                    color: AppTheme.surfaceLight,
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
-                                      color: const Color(0xFFE2E8F0),
+                                      color: AppTheme.borderLight,
                                     ),
                                   ),
                                   child: Row(
@@ -626,7 +629,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                           style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
-                                            color: Color(0xFF0F172A),
+                                            color: AppTheme.textDark,
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
@@ -661,9 +664,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                         child: OutlinedButton(
                           onPressed: _deleteRoom,
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFFB33A3A),
+                            foregroundColor: AppTheme.destructiveColor,
                             side: const BorderSide(
-                              color: Color(0xFFB33A3A),
+                              color: AppTheme.destructiveColor,
                               width: 1.5,
                             ),
                             shape: RoundedRectangleBorder(
@@ -718,7 +721,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           width: 110,
           child: Text(
             label,
-            style: const TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+            style: const TextStyle(fontSize: 14, color: AppTheme.textMuted),
           ),
         ),
         Expanded(
@@ -727,7 +730,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
-              color: const Color(0xFF0F172A),
+              color: AppTheme.textDark,
             ),
           ),
         ),

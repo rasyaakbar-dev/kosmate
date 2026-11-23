@@ -92,7 +92,7 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFB33A3A),
+              backgroundColor: AppTheme.destructiveColor,
             ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text(
@@ -193,7 +193,7 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFEBF3FA),
+                color: AppTheme.primaryLight,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: AppTheme.borderColor.withValues(alpha: 0.4),
@@ -207,7 +207,7 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
                       const Text(
                         'Total Payment',
                         style: TextStyle(
-                          color: Color(0xFF64748B),
+                          color: AppTheme.textMuted,
                           fontSize: 14,
                         ),
                       ),
@@ -228,7 +228,7 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
                       const Text(
                         'Order ID',
                         style: TextStyle(
-                          color: Color(0xFF64748B),
+                          color: AppTheme.textMuted,
                           fontSize: 13,
                         ),
                       ),
@@ -255,7 +255,7 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: const Color(0xFFCBD5E1),
+                      color: AppTheme.borderMedium,
                       width: 1.5,
                     ),
                     boxShadow: [
@@ -324,7 +324,7 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
                 child: Text(
                   'Supports Gojek, GoPay, OVO, DANA, ShopeePay, BCA, Livin, etc.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                  style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
                 ),
               ),
             ] else ...[

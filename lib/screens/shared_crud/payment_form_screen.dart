@@ -162,7 +162,6 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
         title: isEditMode ? 'Edit Payment' : 'Issue Invoice',
         showBackButton: true,
         showLogo: false,
-        showHelp: false,
       ),
       body: _isLoadingInitial
           ? const Center(child: CircularProgressIndicator())

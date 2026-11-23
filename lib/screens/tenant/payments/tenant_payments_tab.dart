@@ -206,7 +206,7 @@ class _TenantPaymentsTabState extends State<TenantPaymentsTab> {
                           'Order ID: ${p.orderId}',
                           style: const TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF64748B),
+                            color: AppTheme.textMuted,
                           ),
                         ),
                       ],

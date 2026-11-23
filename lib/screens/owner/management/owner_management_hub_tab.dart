@@ -57,7 +57,7 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
                       decoration: BoxDecoration(
                         color: selected
                             ? AppTheme.primaryColor
-                            : const Color(0xFFF1F5F9),
+                            : AppTheme.surfaceLight,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Column(
@@ -68,7 +68,7 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
                             size: 18,
                             color: selected
                                 ? Colors.white
-                                : const Color(0xFF64748B),
+                                : AppTheme.textMuted,
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -79,7 +79,7 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
                               fontWeight: FontWeight.w600,
                               color: selected
                                   ? Colors.white
-                                  : const Color(0xFF64748B),
+                                  : AppTheme.textMuted,
                             ),
                           ),
                         ],
@@ -350,7 +350,7 @@ class _RoomRenterCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.1),
+        side: const BorderSide(color: AppTheme.borderLight, width: 1.1),
       ),
       color: Colors.white,
       child: Padding(
@@ -370,7 +370,7 @@ class _RoomRenterCard extends StatelessWidget {
                           fontFamily: 'Roboto',
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF0F172A),
+                          color: AppTheme.textDark,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -378,7 +378,7 @@ class _RoomRenterCard extends StatelessWidget {
                         houseName,
                         style: const TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF64748B),
+                          color: AppTheme.textMuted,
                         ),
                       ),
                     ],
@@ -390,7 +390,7 @@ class _RoomRenterCard extends StatelessWidget {
 
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 10),
-              child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+              child: Divider(height: 1, color: AppTheme.borderLight),
             ),
 
             Row(
@@ -398,7 +398,7 @@ class _RoomRenterCard extends StatelessWidget {
                 const Icon(
                   Icons.person_outline_rounded,
                   size: 16,
-                  color: Color(0xFF64748B),
+                  color: AppTheme.textMuted,
                 ),
                 const SizedBox(width: 6),
                 Expanded(
@@ -409,8 +409,8 @@ class _RoomRenterCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       color: isVacant
-                          ? const Color(0xFF94A3B8)
-                          : const Color(0xFF0F172A),
+                          ? AppTheme.textSubtle
+                          : AppTheme.textDark,
                       fontStyle: isVacant ? FontStyle.italic : FontStyle.normal,
                     ),
                   ),
@@ -425,7 +425,7 @@ class _RoomRenterCard extends StatelessWidget {
                 const Icon(
                   Icons.receipt_long_outlined,
                   size: 16,
-                  color: Color(0xFF64748B),
+                  color: AppTheme.textMuted,
                 ),
                 const SizedBox(width: 6),
                 Expanded(
@@ -434,7 +434,7 @@ class _RoomRenterCard extends StatelessWidget {
                           'No invoice recorded',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF94A3B8),
+                            color: AppTheme.textSubtle,
                             fontStyle: FontStyle.italic,
                           ),
                         )
@@ -445,7 +445,7 @@ class _RoomRenterCard extends StatelessWidget {
                                 '$paymentPeriod • ${Formatters.formatCurrency(payment!.amount)}',
                                 style: const TextStyle(
                                   fontSize: 13,
-                                  color: Color(0xFF0F172A),
+                                  color: AppTheme.textDark,
                                 ),
                               ),
                             ),
@@ -488,7 +488,7 @@ class _RoomRenterCard extends StatelessWidget {
                   const Icon(
                     Icons.warning_amber_rounded,
                     size: 16,
-                    color: Color(0xFFD97706),
+                    color: AppTheme.warningColor,
                   ),
                   const SizedBox(width: 6),
                   Expanded(
@@ -497,7 +497,7 @@ class _RoomRenterCard extends StatelessWidget {
                       '"${openComplaints.first.title}"',
                       style: const TextStyle(
                         fontSize: 13,
-                        color: Color(0xFFB45309),
+                        color: AppTheme.warningColor,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -673,28 +673,28 @@ class _PaymentsSegmentState extends State<_PaymentsSegment> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
-                color: const Color(0xFFEBF3FA),
+                color: AppTheme.primaryLight,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFD0E1F3)),
+                border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
                   _buildSummaryItem(
                     'Collected',
                     Formatters.formatCurrency(collectedAmt),
-                    Colors.green.shade700,
+                    AppTheme.successColor,
                   ),
                   _vDivider(),
                   _buildSummaryItem(
                     'Pending',
                     '$pendingCount invoices',
-                    const Color(0xFFB45309),
+                    AppTheme.warningColor,
                   ),
                   _vDivider(),
                   _buildSummaryItem(
                     'Overdue',
                     '$overdueCount invoices',
-                    Colors.red.shade700,
+                    AppTheme.destructiveColor,
                   ),
                 ],
               ),
@@ -732,7 +732,7 @@ class _PaymentsSegmentState extends State<_PaymentsSegment> {
                           fontWeight: FontWeight.w500,
                           color: _statusFilter == entry.key
                               ? AppTheme.accentColor
-                              : const Color(0xFF64748B),
+                              : AppTheme.textMuted,
                         ),
                       ),
                     ),
@@ -771,7 +771,7 @@ class _PaymentsSegmentState extends State<_PaymentsSegment> {
                   '${_filteredPayments.length} payments',
                   style: const TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF64748B),
+                    color: AppTheme.textMuted,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -815,7 +815,7 @@ class _PaymentsSegmentState extends State<_PaymentsSegment> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                           side: const BorderSide(
-                            color: Color(0xFFE2E8F0),
+                            color: AppTheme.borderLight,
                             width: 1.1,
                           ),
                         ),
@@ -832,7 +832,7 @@ class _PaymentsSegmentState extends State<_PaymentsSegment> {
                                   width: 44,
                                   height: 44,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFEFF6FF),
+                                    color: AppTheme.iconBadgeBackground,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Icon(
@@ -853,7 +853,7 @@ class _PaymentsSegmentState extends State<_PaymentsSegment> {
                                           fontFamily: 'Roboto',
                                           fontSize: 15,
                                           fontWeight: FontWeight.w700,
-                                          color: Color(0xFF0F172A),
+                                          color: AppTheme.textDark,
                                         ),
                                       ),
                                       const SizedBox(height: 3),
@@ -861,7 +861,7 @@ class _PaymentsSegmentState extends State<_PaymentsSegment> {
                                         subtitle,
                                         style: const TextStyle(
                                           fontSize: 12,
-                                          color: Color(0xFF64748B),
+                                          color: AppTheme.textMuted,
                                         ),
                                       ),
                                     ],
@@ -880,7 +880,7 @@ class _PaymentsSegmentState extends State<_PaymentsSegment> {
                                         fontFamily: 'Roboto',
                                         fontSize: 14,
                                         fontWeight: FontWeight.w700,
-                                        color: Color(0xFF0F172A),
+                                        color: AppTheme.textDark,
                                       ),
                                     ),
                                   ],
@@ -904,7 +904,7 @@ class _PaymentsSegmentState extends State<_PaymentsSegment> {
         children: [
           Text(
             label,
-            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+            style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
           ),
           const SizedBox(height: 4),
           Text(
@@ -925,7 +925,7 @@ class _PaymentsSegmentState extends State<_PaymentsSegment> {
     return Container(
       height: 32,
       width: 1,
-      color: const Color(0xFFCBD5E1),
+      color: AppTheme.borderMedium,
       margin: const EdgeInsets.symmetric(horizontal: 4),
     );
   }
@@ -1028,7 +1028,7 @@ class _ComplaintsSegmentState extends State<_ComplaintsSegment> {
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF0F172A),
+                    color: AppTheme.textDark,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -1036,7 +1036,7 @@ class _ComplaintsSegmentState extends State<_ComplaintsSegment> {
                   'Description:\n${complaint.description}',
                   style: const TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF64748B),
+                    color: AppTheme.textMuted,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -1190,7 +1190,7 @@ class _ComplaintsSegmentState extends State<_ComplaintsSegment> {
                   '${_filteredComplaints.length} complaints',
                   style: const TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF64748B),
+                    color: AppTheme.textMuted,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -1201,7 +1201,7 @@ class _ComplaintsSegmentState extends State<_ComplaintsSegment> {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEE2E2),
+                      color: AppTheme.destructiveLight,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -1209,7 +1209,7 @@ class _ComplaintsSegmentState extends State<_ComplaintsSegment> {
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFFB91C1C),
+                        color: AppTheme.destructiveColor,
                       ),
                     ),
                   ),
@@ -1245,7 +1245,7 @@ class _ComplaintsSegmentState extends State<_ComplaintsSegment> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                           side: const BorderSide(
-                            color: Color(0xFFE2E8F0),
+                            color: AppTheme.borderLight,
                             width: 1.1,
                           ),
                         ),
@@ -1260,7 +1260,7 @@ class _ComplaintsSegmentState extends State<_ComplaintsSegment> {
                                   width: 44,
                                   height: 44,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFEFF6FF),
+                                    color: AppTheme.iconBadgeBackground,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Icon(
@@ -1283,7 +1283,7 @@ class _ComplaintsSegmentState extends State<_ComplaintsSegment> {
                                           fontFamily: 'Roboto',
                                           fontSize: 15,
                                           fontWeight: FontWeight.w700,
-                                          color: Color(0xFF0F172A),
+                                          color: AppTheme.textDark,
                                         ),
                                       ),
                                       const SizedBox(height: 3),
@@ -1291,7 +1291,7 @@ class _ComplaintsSegmentState extends State<_ComplaintsSegment> {
                                         '$tenant • $room',
                                         style: const TextStyle(
                                           fontSize: 12,
-                                          color: Color(0xFF64748B),
+                                          color: AppTheme.textMuted,
                                         ),
                                       ),
                                     ],
@@ -1332,7 +1332,7 @@ class _ComplaintsSegmentState extends State<_ComplaintsSegment> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: selected ? AppTheme.accentColor : const Color(0xFFF1F5F9),
+            color: selected ? AppTheme.accentColor : AppTheme.surfaceLight,
             borderRadius: BorderRadius.circular(10),
           ),
           alignment: Alignment.center,
@@ -1341,7 +1341,7 @@ class _ComplaintsSegmentState extends State<_ComplaintsSegment> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: selected ? Colors.white : const Color(0xFF64748B),
+              color: selected ? Colors.white : AppTheme.textMuted,
             ),
           ),
         ),

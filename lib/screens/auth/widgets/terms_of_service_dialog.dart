@@ -49,7 +49,7 @@ class TermsOfServiceDialog extends StatelessWidget {
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Color(0xFF64748B)),
+                    icon: const Icon(Icons.close, color: AppTheme.textMuted),
                     onPressed: () => Navigator.pop(context, false),
                   ),
                 ],
@@ -60,10 +60,10 @@ class TermsOfServiceDialog extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 12,
-                  color: Color(0xFF94A3B8),
+                  color: AppTheme.textSubtle,
                 ),
               ),
-              const Divider(height: 24, thickness: 1, color: Color(0xFFE2E8F0)),
+              const Divider(height: 24, thickness: 1, color: AppTheme.borderLight),
 
               // Scrollable Terms Body
               Expanded(
@@ -120,7 +120,7 @@ class TermsOfServiceDialog extends StatelessWidget {
                 ),
               ),
 
-              const Divider(height: 24, thickness: 1, color: Color(0xFFE2E8F0)),
+              const Divider(height: 24, thickness: 1, color: AppTheme.borderLight),
 
               // Action Buttons
               Row(
@@ -132,7 +132,7 @@ class TermsOfServiceDialog extends StatelessWidget {
                       'Cancel',
                       style: TextStyle(
                         fontFamily: 'Roboto',
-                        color: Color(0xFF64748B),
+                        color: AppTheme.textMuted,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -190,7 +190,7 @@ class TermsOfServiceDialog extends StatelessWidget {
           fontFamily: 'Roboto',
           fontSize: 13,
           height: 1.5,
-          color: Color(0xFF475569),
+          color: AppTheme.textMuted,
         ),
       ),
     );

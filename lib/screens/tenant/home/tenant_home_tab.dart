@@ -242,7 +242,7 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
               style: const TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 14,
-                color: Color(0xFF64748B),
+                color: AppTheme.textMuted,
               ),
             ),
             const SizedBox(height: 20),
@@ -253,9 +253,9 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEBF3FA),
+                      color: AppTheme.primaryLight,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFD0E1F3)),
+                      border: Border.all(color: AppTheme.borderLight),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,7 +268,7 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
                               style: TextStyle(
                                 fontFamily: 'Roboto',
                                 fontSize: 14,
-                                color: Color(0xFF475569),
+                                color: AppTheme.textDark,
                               ),
                             ),
                             Icon(
@@ -297,9 +297,9 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEF9E7),
+                      color: AppTheme.warningLight,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFF9E8B5)),
+                      border: Border.all(color: AppTheme.warningLight),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -312,7 +312,7 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
                               style: TextStyle(
                                 fontFamily: 'Roboto',
                                 fontSize: 14,
-                                color: Color(0xFF475569),
+                                color: AppTheme.textDark,
                               ),
                             ),
                             Icon(
@@ -397,7 +397,7 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppTheme.borderLight),
                 ),
                 child: Row(
                   children: [
@@ -405,7 +405,7 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
+                        color: AppTheme.iconBadgeBackground,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
@@ -432,7 +432,7 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
                             '${Formatters.formatCurrency(_latestPayment!.amount)} • Due: ${Formatters.formatDate(_latestPayment!.dueDate)}',
                             style: const TextStyle(
                               fontSize: 13,
-                              color: Color(0xFF64748B),
+                              color: AppTheme.textMuted,
                             ),
                           ),
                         ],
@@ -445,8 +445,8 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
                       ),
                       decoration: BoxDecoration(
                         color: _latestPayment!.status == PaymentStatus.paid
-                            ? const Color(0xFFE6F4EA)
-                            : const Color(0xFFFEF3D6),
+                            ? AppTheme.successLight
+                            : AppTheme.warningLight,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -456,15 +456,15 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: _latestPayment!.status == PaymentStatus.paid
-                              ? const Color(0xFF137333)
-                              : Colors.orange[800],
+                              ? AppTheme.successColor
+                              : AppTheme.warningColor,
                         ),
                       ),
                     ),
                     const SizedBox(width: 4),
                     const Icon(
                       Icons.chevron_right,
-                      color: Color(0xFF94A3B8),
+                      color: AppTheme.textSubtle,
                       size: 20,
                     ),
                   ],
@@ -479,7 +479,7 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppTheme.borderLight),
                 ),
                 child: Row(
                   children: [
@@ -487,7 +487,7 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
+                        color: AppTheme.iconBadgeBackground,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
@@ -516,7 +516,7 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 13,
-                              color: Color(0xFF64748B),
+                              color: AppTheme.textMuted,
                             ),
                           ),
                         ],
@@ -532,7 +532,7 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
                 child: Center(
                   child: Text(
                     'No recent activities yet.',
-                    style: TextStyle(color: Color(0xFF64748B)),
+                    style: TextStyle(color: AppTheme.textMuted),
                   ),
                 ),
               ),
@@ -559,7 +559,7 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
             padding: const EdgeInsets.symmetric(vertical: 16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
+              border: Border.all(color: AppTheme.borderMedium, width: 1.2),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,

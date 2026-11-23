@@ -122,7 +122,7 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
         : 'Add Boarding House';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.scaffoldBackground,
       appBar: AppBar(
         title: Text(
           title,
@@ -141,7 +141,7 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: const Color(0xFFE2E8F0), height: 1),
+          child: Container(color: AppTheme.borderLight, height: 1),
         ),
       ),
       body: SingleChildScrollView(
@@ -159,8 +159,8 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
                     height: 180,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE2E8F0),
-                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                      color: AppTheme.borderLight,
+                      border: Border.all(color: AppTheme.borderMedium),
                     ),
                     child: Image.network(
                       _thumbnailUrlController.text.trim(),
@@ -172,13 +172,13 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
                             Icon(
                               Icons.broken_image_outlined,
                               size: 40,
-                              color: Color(0xFF94A3B8),
+                              color: AppTheme.textSubtle,
                             ),
                             SizedBox(height: 6),
                             Text(
                               'Unable to load image from URL',
                               style: TextStyle(
-                                color: Color(0xFF94A3B8),
+                                color: AppTheme.textSubtle,
                                 fontSize: 13,
                               ),
                             ),
@@ -265,7 +265,7 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        side: const BorderSide(color: Color(0xFFCBD5E1)),
+                        side: const BorderSide(color: AppTheme.borderMedium),
                       ),
                       onPressed: _isLoading
                           ? null
@@ -276,7 +276,7 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
                           fontFamily: 'Roboto',
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF64748B),
+                          color: AppTheme.textMuted,
                         ),
                       ),
                     ),
@@ -343,18 +343,18 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
   }) {
     return InputDecoration(
       hintText: hintText,
-      hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
-      prefixIcon: Icon(prefixIcon, color: const Color(0xFF64748B), size: 20),
+      hintStyle: const TextStyle(color: AppTheme.textSubtle, fontSize: 14),
+      prefixIcon: Icon(prefixIcon, color: AppTheme.textMuted, size: 20),
       filled: true,
       fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
+        borderSide: const BorderSide(color: AppTheme.borderMedium, width: 1.2),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
+        borderSide: const BorderSide(color: AppTheme.borderMedium, width: 1.2),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),

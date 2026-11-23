@@ -163,7 +163,6 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
         title: isEditMode ? 'Manage Ticket' : 'File Complaint Ticket',
         showBackButton: true,
         showLogo: false,
-        showHelp: false,
       ),
       body: _isLoadingInitial
           ? const Center(child: CircularProgressIndicator())

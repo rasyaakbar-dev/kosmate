@@ -29,7 +29,7 @@ class HouseCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: Color(0xFFE2E8F0)),
+        side: const BorderSide(color: AppTheme.borderLight),
       ),
       margin: const EdgeInsets.only(bottom: 14),
       child: InkWell(
@@ -49,7 +49,7 @@ class HouseCard extends StatelessWidget {
                     child: Container(
                       width: 58,
                       height: 58,
-                      color: const Color(0xFFE2E8F0),
+                      color: AppTheme.borderLight,
                       child:
                           house.thumbnailUrl != null &&
                               house.thumbnailUrl!.trim().isNotEmpty
@@ -58,12 +58,12 @@ class HouseCard extends StatelessWidget {
                               fit: BoxFit.cover,
                               errorBuilder: (_, _, _) => const Icon(
                                 Icons.home_work_outlined,
-                                color: Color(0xFF94A3B8),
+                                color: AppTheme.textSubtle,
                               ),
                             )
                           : const Icon(
                               Icons.home_work_outlined,
-                              color: Color(0xFF94A3B8),
+                              color: AppTheme.textSubtle,
                             ),
                     ),
                   ),
@@ -90,7 +90,7 @@ class HouseCard extends StatelessWidget {
                           house.houseAddress,
                           style: const TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF64748B),
+                            color: AppTheme.textMuted,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -102,7 +102,7 @@ class HouseCard extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: Color(0xFF94A3B8),
+                              color: AppTheme.textSubtle,
                             ),
                           ),
                         ],
@@ -112,7 +112,7 @@ class HouseCard extends StatelessWidget {
 
                   // Options Menu
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert, color: Color(0xFF64748B)),
+                    icon: const Icon(Icons.more_vert, color: AppTheme.textMuted),
                     onSelected: (action) {
                       if (action == 'details') {
                         onTap();
@@ -144,7 +144,7 @@ class HouseCard extends StatelessWidget {
                             Icon(
                               Icons.edit_outlined,
                               size: 18,
-                              color: Color(0xFF475569),
+                              color: AppTheme.textMuted,
                             ),
                             SizedBox(width: 8),
                             Text('Edit House'),
@@ -158,12 +158,12 @@ class HouseCard extends StatelessWidget {
                             Icon(
                               Icons.delete_outline,
                               size: 18,
-                              color: Color(0xFFB33A3A),
+                              color: AppTheme.destructiveColor,
                             ),
                             SizedBox(width: 8),
                             Text(
                               'Delete House',
-                              style: TextStyle(color: Color(0xFFB33A3A)),
+                              style: TextStyle(color: AppTheme.destructiveColor),
                             ),
                           ],
                         ),
@@ -172,7 +172,7 @@ class HouseCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const Divider(height: 18, color: Color(0xFFF1F5F9)),
+              const Divider(height: 18, color: AppTheme.surfaceLight),
 
               // Room Summary
               FutureBuilder<List<RoomModel>>(
@@ -188,14 +188,14 @@ class HouseCard extends StatelessWidget {
                         Icon(
                           Icons.info_outline,
                           size: 16,
-                          color: Color(0xFF94A3B8),
+                          color: AppTheme.textSubtle,
                         ),
                         SizedBox(width: 6),
                         Text(
                           'No rooms added to this house yet.',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF94A3B8),
+                            color: AppTheme.textSubtle,
                           ),
                         ),
                       ],
@@ -213,7 +213,7 @@ class HouseCard extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF475569),
+                          color: AppTheme.textDark,
                         ),
                       ),
                       const Text(

@@ -83,7 +83,7 @@ class _UserManagementTabState extends State<UserManagementTab> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFB33A3A),
+              backgroundColor: AppTheme.destructiveColor,
             ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Delete', style: TextStyle(color: Colors.white)),
@@ -163,12 +163,12 @@ class _UserManagementTabState extends State<UserManagementTab> {
             decoration: InputDecoration(
               hintText: 'Search by name, email, or phone...',
               hintStyle: const TextStyle(
-                color: Color(0xFF94A3B8),
+                color: AppTheme.textSubtle,
                 fontSize: 14,
               ),
               prefixIcon: const Icon(
                 Icons.search,
-                color: Color(0xFF64748B),
+                color: AppTheme.textMuted,
                 size: 20,
               ),
               suffixIcon: _searchController.text.isNotEmpty
@@ -188,11 +188,11 @@ class _UserManagementTabState extends State<UserManagementTab> {
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                borderSide: const BorderSide(color: AppTheme.borderMedium),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                borderSide: const BorderSide(color: AppTheme.borderMedium),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -255,7 +255,7 @@ class _UserManagementTabState extends State<UserManagementTab> {
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                        side: const BorderSide(color: Color(0xFFE2E8F0)),
+                        side: const BorderSide(color: AppTheme.borderLight),
                       ),
                       margin: const EdgeInsets.only(bottom: 10),
                       child: Padding(
@@ -306,7 +306,7 @@ class _UserManagementTabState extends State<UserManagementTab> {
                                     u.email,
                                     style: const TextStyle(
                                       fontSize: 13,
-                                      color: Color(0xFF64748B),
+                                      color: AppTheme.textMuted,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -317,7 +317,7 @@ class _UserManagementTabState extends State<UserManagementTab> {
                                       u.phone,
                                       style: const TextStyle(
                                         fontSize: 12,
-                                        color: Color(0xFF94A3B8),
+                                        color: AppTheme.textSubtle,
                                       ),
                                     ),
                                   ],
@@ -327,7 +327,7 @@ class _UserManagementTabState extends State<UserManagementTab> {
                             PopupMenuButton<String>(
                               icon: const Icon(
                                 Icons.more_vert,
-                                color: Color(0xFF64748B),
+                                color: AppTheme.textMuted,
                               ),
                               onSelected: (action) {
                                 if (action == 'edit') {
@@ -344,7 +344,7 @@ class _UserManagementTabState extends State<UserManagementTab> {
                                       Icon(
                                         Icons.edit_outlined,
                                         size: 18,
-                                        color: Color(0xFF475569),
+                                        color: AppTheme.textDark,
                                       ),
                                       SizedBox(width: 8),
                                       Text('Edit User / Role'),
@@ -358,13 +358,13 @@ class _UserManagementTabState extends State<UserManagementTab> {
                                       Icon(
                                         Icons.delete_outline,
                                         size: 18,
-                                        color: Color(0xFFB33A3A),
+                                        color: AppTheme.destructiveColor,
                                       ),
                                       SizedBox(width: 8),
                                       Text(
                                         'Delete User',
                                         style: TextStyle(
-                                          color: Color(0xFFB33A3A),
+                                          color: AppTheme.destructiveColor,
                                         ),
                                       ),
                                     ],
@@ -400,10 +400,10 @@ class _UserManagementTabState extends State<UserManagementTab> {
         fontFamily: 'Roboto',
         fontSize: 13,
         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-        color: isSelected ? AppTheme.accentColor : const Color(0xFF475569),
+        color: isSelected ? AppTheme.accentColor : AppTheme.textDark,
       ),
       side: BorderSide(
-        color: isSelected ? AppTheme.accentColor : const Color(0xFFCBD5E1),
+        color: isSelected ? AppTheme.accentColor : AppTheme.borderMedium,
       ),
     );
   }
@@ -415,17 +415,17 @@ class _UserManagementTabState extends State<UserManagementTab> {
 
     switch (role) {
       case UserRole.admin:
-        bg = const Color(0xFFFBEBEB);
-        fg = const Color(0xFFB33A3A);
+        bg = AppTheme.destructiveLight;
+        fg = AppTheme.destructiveColor;
         label = 'ADMIN';
         break;
       case UserRole.owner:
-        bg = const Color(0xFFFEF3D6);
+        bg = AppTheme.warningLight;
         fg = Colors.orange[900]!;
         label = 'OWNER';
         break;
       case UserRole.tenant:
-        bg = const Color(0xFFEBF3FA);
+        bg = AppTheme.primaryLight;
         fg = AppTheme.primaryColor;
         label = 'TENANT';
         break;

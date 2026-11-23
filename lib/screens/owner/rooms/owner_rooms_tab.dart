@@ -226,16 +226,16 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
         label: Text(label),
         selected: isSelected,
         onSelected: (_) => onTap(),
-        selectedColor: const Color(0xFFEFF6FF),
+        selectedColor: AppTheme.primaryLight,
         checkmarkColor: AppTheme.accentColor,
         labelStyle: TextStyle(
           fontSize: 13,
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-          color: isSelected ? AppTheme.accentColor : const Color(0xFF475569),
+          color: isSelected ? AppTheme.accentColor : AppTheme.textMuted,
         ),
         backgroundColor: Colors.white,
         side: BorderSide(
-          color: isSelected ? AppTheme.accentColor : const Color(0xFFCBD5E1),
+          color: isSelected ? AppTheme.accentColor : AppTheme.borderMedium,
           width: isSelected ? 1.5 : 1.0,
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -266,7 +266,7 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
+                          color: AppTheme.iconBadgeBackground,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Icon(
@@ -282,7 +282,7 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF0F172A),
+                          color: AppTheme.textDark,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -291,7 +291,7 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF64748B),
+                          color: AppTheme.textMuted,
                           height: 1.4,
                         ),
                       ),
@@ -328,7 +328,7 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 border: const Border(
-                  top: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
+                  top: BorderSide(color: AppTheme.borderLight, width: 1.0),
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -451,8 +451,8 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                         color: AppTheme.accentColor,
                       ),
                     ),
-                    backgroundColor: const Color(0xFFEFF6FF),
-                    side: const BorderSide(color: Color(0xFFBFDBFE)),
+                    backgroundColor: AppTheme.iconBadgeBackground,
+                    side: const BorderSide(color: AppTheme.borderColor),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -473,16 +473,16 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: AppTheme.scaffoldBackground,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppTheme.borderLight),
                 ),
                 child: Row(
                   children: [
                     const Icon(
                       Icons.location_on_outlined,
                       size: 16,
-                      color: Color(0xFF64748B),
+                      color: AppTheme.textMuted,
                     ),
                     const SizedBox(width: 6),
                     Expanded(
@@ -492,7 +492,7 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF64748B),
+                          color: AppTheme.textMuted,
                         ),
                       ),
                     ),
@@ -531,7 +531,7 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                   '$totalCount rooms',
                   style: const TextStyle(
                     fontSize: 14,
-                    color: Color(0xFF64748B),
+                    color: AppTheme.textMuted,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -541,7 +541,7 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE6F4EA),
+                    color: AppTheme.successLight,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -549,7 +549,7 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1E7E34),
+                      color: AppTheme.successColor,
                     ),
                   ),
                 ),
@@ -592,7 +592,7 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                           side: const BorderSide(
-                            color: Color(0xFFE2E8F0),
+                            color: AppTheme.borderLight,
                             width: 1.1,
                           ),
                         ),
@@ -607,7 +607,7 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                                   width: 44,
                                   height: 44,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFEFF6FF),
+                                    color: AppTheme.iconBadgeBackground,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Icon(
@@ -628,7 +628,7 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                                           fontFamily: 'Roboto',
                                           fontSize: 15,
                                           fontWeight: FontWeight.w700,
-                                          color: Color(0xFF0F172A),
+                                          color: AppTheme.textDark,
                                         ),
                                       ),
                                       const SizedBox(height: 3),
@@ -636,7 +636,7 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                                         subtitleText,
                                         style: const TextStyle(
                                           fontSize: 13,
-                                          color: Color(0xFF64748B),
+                                          color: AppTheme.textMuted,
                                         ),
                                       ),
                                     ],
@@ -658,7 +658,7 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
             decoration: BoxDecoration(
               color: Colors.white,
               border: const Border(
-                top: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
+                top: BorderSide(color: AppTheme.borderLight, width: 1.0),
               ),
               boxShadow: [
                 BoxShadow(

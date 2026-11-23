@@ -87,7 +87,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFB33A3A),
+              backgroundColor: AppTheme.destructiveColor,
             ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Delete', style: TextStyle(color: Colors.white)),
@@ -266,7 +266,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
         .length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.scaffoldBackground,
       appBar: AppBar(
         title: Text(
           _house.houseName,
@@ -294,7 +294,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
               onPressed: _handleEditHouse,
             ),
             IconButton(
-              icon: const Icon(Icons.delete_outline, color: Color(0xFFB33A3A)),
+              icon: const Icon(Icons.delete_outline, color: AppTheme.destructiveColor),
               tooltip: 'Delete House',
               onPressed: _handleDeleteHouse,
             ),
@@ -302,7 +302,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: const Color(0xFFE2E8F0), height: 1),
+          child: Container(color: AppTheme.borderLight, height: 1),
         ),
       ),
       body: _isLoading
@@ -324,7 +324,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                       child: Container(
                         height: 200,
                         width: double.infinity,
-                        color: const Color(0xFFE2E8F0),
+                        color: AppTheme.borderLight,
                         child:
                             _house.thumbnailUrl != null &&
                                 _house.thumbnailUrl!.trim().isNotEmpty
@@ -332,7 +332,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                                 _house.thumbnailUrl!.trim(),
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, _, _) =>
-                                    _buildFallbackBanner(),
+                                     _buildFallbackBanner(),
                               )
                             : _buildFallbackBanner(),
                       ),
@@ -345,7 +345,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: AppTheme.borderLight),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,7 +364,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                                   style: const TextStyle(
                                     fontFamily: 'Roboto',
                                     fontSize: 15,
-                                    color: Color(0xFF334155),
+                                    color: AppTheme.textDark,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -373,24 +373,24 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                           ),
                           if (_house.description != null &&
                               _house.description!.trim().isNotEmpty) ...[
-                            const Divider(height: 20, color: Color(0xFFF1F5F9)),
+                            const Divider(height: 20, color: AppTheme.surfaceLight),
                             Text(
                               _house.description!,
                               style: const TextStyle(
                                 fontFamily: 'Roboto',
                                 fontSize: 14,
                                 height: 1.5,
-                                color: Color(0xFF64748B),
+                                color: AppTheme.textMuted,
                               ),
                             ),
                           ],
                           if (_house.owner != null) ...[
-                            const Divider(height: 20, color: Color(0xFFF1F5F9)),
+                            const Divider(height: 20, color: AppTheme.surfaceLight),
                             Row(
                               children: [
                                 const Icon(
                                   Icons.person_pin,
-                                  color: Color(0xFF94A3B8),
+                                  color: AppTheme.textSubtle,
                                   size: 18,
                                 ),
                                 const SizedBox(width: 8),
@@ -399,7 +399,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                                   style: const TextStyle(
                                     fontFamily: 'Roboto',
                                     fontSize: 13,
-                                    color: Color(0xFF64748B),
+                                    color: AppTheme.textMuted,
                                   ),
                                 ),
                               ],
@@ -416,22 +416,22 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                         _buildStatTile(
                           label: 'Total Rooms',
                           count: _rooms.length.toString(),
-                          color: const Color(0xFFEBF3FA),
+                          color: AppTheme.primaryLight,
                           textColor: AppTheme.primaryColor,
                         ),
                         const SizedBox(width: 10),
                         _buildStatTile(
                           label: 'Occupied',
                           count: occupiedRooms.toString(),
-                          color: const Color(0xFFFBEBEB),
-                          textColor: const Color(0xFFB33A3A),
+                          color: AppTheme.destructiveLight,
+                          textColor: AppTheme.destructiveColor,
                         ),
                         const SizedBox(width: 10),
                         _buildStatTile(
                           label: 'Available',
                           count: availableRooms.toString(),
-                          color: const Color(0xFFE6F4EA),
-                          textColor: const Color(0xFF137333),
+                          color: AppTheme.successLight,
+                          textColor: AppTheme.successColor,
                         ),
                       ],
                     ),
@@ -482,7 +482,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                             const Icon(
                               Icons.meeting_room_outlined,
                               size: 48,
-                              color: Color(0xFFCBD5E1),
+                              color: AppTheme.borderMedium,
                             ),
                             const SizedBox(height: 10),
                             const Text(
@@ -491,7 +491,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                                 fontFamily: 'Roboto',
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF64748B),
+                                color: AppTheme.textMuted,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -501,7 +501,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                                   : 'Rooms will appear here once listed by the owner.',
                               style: const TextStyle(
                                 fontSize: 13,
-                                color: Color(0xFF94A3B8),
+                                color: AppTheme.textSubtle,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -525,7 +525,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: const Color(0xFFE2E8F0),
+                                color: AppTheme.borderLight,
                               ),
                             ),
                             child: Row(
@@ -535,15 +535,15 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                                   height: 44,
                                   decoration: BoxDecoration(
                                     color: isAvailable
-                                        ? const Color(0xFFE6F4EA)
-                                        : const Color(0xFFFBEBEB),
+                                        ? AppTheme.successLight
+                                        : AppTheme.destructiveLight,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
                                     Icons.bed_outlined,
                                     color: isAvailable
-                                        ? const Color(0xFF137333)
-                                        : const Color(0xFFB33A3A),
+                                        ? AppTheme.successColor
+                                        : AppTheme.destructiveColor,
                                   ),
                                 ),
                                 const SizedBox(width: 14),
@@ -579,7 +579,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                                           room.facilities!,
                                           style: const TextStyle(
                                             fontSize: 12,
-                                            color: Color(0xFF94A3B8),
+                                            color: AppTheme.textSubtle,
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
@@ -595,8 +595,8 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: isAvailable
-                                        ? const Color(0xFFE6F4EA)
-                                        : const Color(0xFFFBEBEB),
+                                        ? AppTheme.successLight
+                                        : AppTheme.destructiveLight,
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
@@ -606,8 +606,8 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
                                       color: isAvailable
-                                          ? const Color(0xFF137333)
-                                          : const Color(0xFFB33A3A),
+                                          ? AppTheme.successColor
+                                          : AppTheme.destructiveColor,
                                     ),
                                   ),
                                 ),
@@ -626,18 +626,18 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
 
   Widget _buildFallbackBanner() {
     return Container(
-      color: const Color(0xFFE2E8F0),
+      color: AppTheme.borderLight,
       child: const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.home_work_outlined, size: 48, color: Color(0xFF94A3B8)),
+            Icon(Icons.home_work_outlined, size: 48, color: AppTheme.textSubtle),
             SizedBox(height: 8),
             Text(
               'Boarding House',
               style: TextStyle(
                 fontFamily: 'Roboto',
-                color: Color(0xFF94A3B8),
+                color: AppTheme.textSubtle,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -678,7 +678,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
               style: const TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 12,
-                color: Color(0xFF475569),
+                color: AppTheme.textMuted,
               ),
             ),
           ],
