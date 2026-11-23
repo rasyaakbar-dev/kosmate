@@ -135,7 +135,10 @@ class _UserFormDialogState extends State<UserFormDialog> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close, color: AppTheme.textMuted),
+                        icon: const Icon(
+                          Icons.close,
+                          color: AppTheme.textMuted,
+                        ),
                         onPressed: _isLoading
                             ? null
                             : () => Navigator.pop(context, false),

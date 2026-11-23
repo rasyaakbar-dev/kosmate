@@ -112,7 +112,10 @@ class HouseCard extends StatelessWidget {
 
                   // Options Menu
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert, color: AppTheme.textMuted),
+                    icon: const Icon(
+                      Icons.more_vert,
+                      color: AppTheme.textMuted,
+                    ),
                     onSelected: (action) {
                       if (action == 'details') {
                         onTap();
@@ -163,7 +166,9 @@ class HouseCard extends StatelessWidget {
                             SizedBox(width: 8),
                             Text(
                               'Delete House',
-                              style: TextStyle(color: AppTheme.destructiveColor),
+                              style: TextStyle(
+                                color: AppTheme.destructiveColor,
+                              ),
                             ),
                           ],
                         ),

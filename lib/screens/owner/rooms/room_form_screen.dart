@@ -206,7 +206,9 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                             color: AppTheme.warningLight,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: AppTheme.borderColor.withValues(alpha: 0.3),
+                              color: AppTheme.borderColor.withValues(
+                                alpha: 0.3,
+                              ),
                             ),
                           ),
                           child: Column(

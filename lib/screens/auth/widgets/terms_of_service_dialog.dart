@@ -63,7 +63,11 @@ class TermsOfServiceDialog extends StatelessWidget {
                   color: AppTheme.textSubtle,
                 ),
               ),
-              const Divider(height: 24, thickness: 1, color: AppTheme.borderLight),
+              const Divider(
+                height: 24,
+                thickness: 1,
+                color: AppTheme.borderLight,
+              ),
 
               // Scrollable Terms Body
               Expanded(
@@ -120,7 +124,11 @@ class TermsOfServiceDialog extends StatelessWidget {
                 ),
               ),
 
-              const Divider(height: 24, thickness: 1, color: AppTheme.borderLight),
+              const Divider(
+                height: 24,
+                thickness: 1,
+                color: AppTheme.borderLight,
+              ),
 
               // Action Buttons
               Row(

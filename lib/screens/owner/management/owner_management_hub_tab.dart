@@ -66,9 +66,7 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
                           Icon(
                             _segmentIcons[i],
                             size: 18,
-                            color: selected
-                                ? Colors.white
-                                : AppTheme.textMuted,
+                            color: selected ? Colors.white : AppTheme.textMuted,
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -408,9 +406,7 @@ class _RoomRenterCard extends StatelessWidget {
                         : (tenantName ?? 'Renter assigned'),
                     style: TextStyle(
                       fontSize: 13,
-                      color: isVacant
-                          ? AppTheme.textSubtle
-                          : AppTheme.textDark,
+                      color: isVacant ? AppTheme.textSubtle : AppTheme.textDark,
                       fontStyle: isVacant ? FontStyle.italic : FontStyle.normal,
                     ),
                   ),
@@ -675,7 +671,9 @@ class _PaymentsSegmentState extends State<_PaymentsSegment> {
               decoration: BoxDecoration(
                 color: AppTheme.primaryLight,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: AppTheme.borderColor.withValues(alpha: 0.3),
+                ),
               ),
               child: Row(
                 children: [

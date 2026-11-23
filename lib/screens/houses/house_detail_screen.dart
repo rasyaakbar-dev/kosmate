@@ -294,7 +294,10 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
               onPressed: _handleEditHouse,
             ),
             IconButton(
-              icon: const Icon(Icons.delete_outline, color: AppTheme.destructiveColor),
+              icon: const Icon(
+                Icons.delete_outline,
+                color: AppTheme.destructiveColor,
+              ),
               tooltip: 'Delete House',
               onPressed: _handleDeleteHouse,
             ),
@@ -332,7 +335,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                                 _house.thumbnailUrl!.trim(),
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, _, _) =>
-                                     _buildFallbackBanner(),
+                                    _buildFallbackBanner(),
                               )
                             : _buildFallbackBanner(),
                       ),
@@ -373,7 +376,10 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                           ),
                           if (_house.description != null &&
                               _house.description!.trim().isNotEmpty) ...[
-                            const Divider(height: 20, color: AppTheme.surfaceLight),
+                            const Divider(
+                              height: 20,
+                              color: AppTheme.surfaceLight,
+                            ),
                             Text(
                               _house.description!,
                               style: const TextStyle(
@@ -385,7 +391,10 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                             ),
                           ],
                           if (_house.owner != null) ...[
-                            const Divider(height: 20, color: AppTheme.surfaceLight),
+                            const Divider(
+                              height: 20,
+                              color: AppTheme.surfaceLight,
+                            ),
                             Row(
                               children: [
                                 const Icon(
@@ -524,9 +533,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: AppTheme.borderLight,
-                              ),
+                              border: Border.all(color: AppTheme.borderLight),
                             ),
                             child: Row(
                               children: [
@@ -631,7 +638,11 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.home_work_outlined, size: 48, color: AppTheme.textSubtle),
+            Icon(
+              Icons.home_work_outlined,
+              size: 48,
+              color: AppTheme.textSubtle,
+            ),
             SizedBox(height: 8),
             Text(
               'Boarding House',
