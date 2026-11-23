@@ -61,6 +61,23 @@ class ComplaintService {
     }
   }
 
+  /// Fetch all complaints for a specific room
+  Future<List<ComplaintModel>> getComplaintsByRoom(int roomId) async {
+    try {
+      final response = await _client
+          .from(SupabaseConstants.complaintTable)
+          .select(
+            '*, users!complaint_user_id_fkey(*), room!complaint_room_id_fkey(*, house!room_house_id_fkey(*))',
+          )
+          .eq('room_id', roomId)
+          .order('created_at', ascending: false);
+
+      return (response as List).mapToModel(ComplaintModel.fromJson);
+    } catch (e) {
+      throw ServiceException('Failed to load room complaints.', cause: e);
+    }
+  }
+
   /// Fetch all complaints for rooms owned by an owner
   Future<List<ComplaintModel>> getComplaintsForOwner(int ownerId) async {
     try {

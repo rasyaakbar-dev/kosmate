@@ -25,3 +25,11 @@ class AuthAppException extends AppException {
   @override
   String toString() => 'AuthAppException($code): $message';
 }
+
+/// Thrown when user input or action violates business rules/policies.
+class ValidationException extends AppException {
+  const ValidationException(super.message, {super.code, super.cause});
+
+  @override
+  String toString() => 'ValidationException($code): $message';
+}

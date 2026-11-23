@@ -95,12 +95,73 @@ class BookingService {
             .from(SupabaseConstants.roomTable)
             .update({'status': RoomStatus.occupied.name})
             .eq('room_id', roomId);
+      } else if ((status == BookingStatus.cancelled ||
+              status == BookingStatus.rejected) &&
+          roomId != null) {
+        // When cancelled or rejected, release room back to available
+        await _client
+            .from(SupabaseConstants.roomTable)
+            .update({'status': RoomStatus.available.name})
+            .eq('room_id', roomId);
       }
 
       return BookingModel.fromJson(response);
     } catch (e) {
       throw ServiceException('Failed to update booking status.', cause: e);
     }
+  }
+
+  /// Check whether a tenant booking is eligible for cancellation.
+  /// Rules:
+  /// 1. Cannot cancel during the 1st month of tenancy.
+  /// 2. Cannot cancel if near end of the month (7 to 14 days before month-end).
+  ({bool allowed, String? reason}) checkCancellationEligibility(
+    BookingModel booking,
+  ) {
+    final now = DateTime.now();
+    final tenancyStart = booking.requestDate;
+
+    // Rule 1: 1st month check
+    final daysSinceStart = now.difference(tenancyStart).inDays;
+    if (daysSinceStart < 30) {
+      return (
+        allowed: false,
+        reason:
+            'Cancellation is not permitted during your 1st month of tenancy. Your tenancy commenced on ${Formatters.formatDate(tenancyStart)}.',
+      );
+    }
+
+    // Rule 2: Near end of the month (7-14 days before month-end)
+    final lastDayOfMonth = DateTime(now.year, now.month + 1, 0).day;
+    final daysRemainingInMonth = lastDayOfMonth - now.day;
+    if (daysRemainingInMonth >= 7 && daysRemainingInMonth <= 14) {
+      return (
+        allowed: false,
+        reason:
+            'Cancellation is locked 7 to 14 days before the end of the month ($daysRemainingInMonth days remaining in this month). Please plan your cancellation outside this cutoff window.',
+      );
+    }
+
+    return (allowed: true, reason: null);
+  }
+
+  /// Tenant cancels active room booking with policy enforcement
+  Future<BookingModel> cancelTenantBooking({
+    required BookingModel booking,
+  }) async {
+    final eligibility = checkCancellationEligibility(booking);
+    if (!eligibility.allowed) {
+      throw ValidationException(
+        eligibility.reason ??
+            'Cancellation is not allowed under current lease policy.',
+      );
+    }
+
+    return await updateBookingStatus(
+      bookingId: booking.bookingId,
+      status: BookingStatus.cancelled,
+      roomId: booking.roomId,
+    );
   }
 
   /// Realtime stream of bookings for a tenant

@@ -4,18 +4,13 @@ import '../../../core/constants/supabase_constants.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
-import '../../../core/widgets/kosmate_components.dart';
 import '../../../models/booking_model.dart';
 import '../../../models/complaint_model.dart';
-import '../../../models/house_model.dart';
 import '../../../models/payment_model.dart';
 import '../../../models/room_model.dart';
 import '../../../models/user_model.dart';
+import '../complaints/owner_complaints_screen.dart';
 
-// OwnerManagementHubTab — 3-segment operations hub:
-//   0: Rooms & Renters (per-room summary cards)
-//   1: Invoices & Payments (enhanced payment list)
-//   2: Complaints (inline complaint management)
 class OwnerManagementHubTab extends StatefulWidget {
   final UserModel user;
 
@@ -26,120 +21,36 @@ class OwnerManagementHubTab extends StatefulWidget {
 }
 
 class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
-  int _selectedSegment = 0;
-
-  static const _segmentLabels = ['Rooms & Renters', 'Payments', 'Complaints'];
-
-  static const _segmentIcons = [
-    Icons.people_outline_rounded,
-    Icons.receipt_long_outlined,
-    Icons.build_circle_outlined,
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          color: Colors.white,
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-          child: Row(
-            children: List.generate(_segmentLabels.length, (i) {
-              final selected = _selectedSegment == i;
-              return Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(left: i == 0 ? 0 : 6),
-                  child: GestureDetector(
-                    onTap: () => setState(() => _selectedSegment = i),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        color: selected
-                            ? AppTheme.primaryColor
-                            : AppTheme.surfaceLight,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _segmentIcons[i],
-                            size: 18,
-                            color: selected ? Colors.white : AppTheme.textMuted,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _segmentLabels[i],
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: selected
-                                  ? Colors.white
-                                  : AppTheme.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
-        ),
-
-        Expanded(
-          child: IndexedStack(
-            index: _selectedSegment,
-            children: [
-              _RoomsRentersSegment(user: widget.user),
-              _PaymentsSegment(user: widget.user),
-              _ComplaintsSegment(user: widget.user),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// SEGMENT 0: Rooms & Renters
-class _RoomsRentersSegment extends StatefulWidget {
-  final UserModel user;
-
-  const _RoomsRentersSegment({required this.user});
-
-  @override
-  State<_RoomsRentersSegment> createState() => _RoomsRentersSegmentState();
-}
-
-class _RoomsRentersSegmentState extends State<_RoomsRentersSegment> {
   final _houseService = sl.house;
   final _roomService = sl.room;
+  final _paymentService = sl.payment;
   final _complaintService = sl.complaint;
+  final _searchController = TextEditingController();
 
   bool _isLoading = true;
+  String _searchQuery = '';
 
-  List<HouseModel> _houses = [];
+  List<BookingModel> _occupiedBookings = [];
+  List<PaymentModel> _allPayments = [];
+  List<ComplaintModel> _allComplaints = [];
 
-  // roomId → data maps
-  Map<int, BookingModel> _bookingByRoom = {};
-  Map<int, PaymentModel> _paymentByRoom = {};
-  Map<int, List<ComplaintModel>> _complaintsByRoom = {};
-
-  // flat ordered list of rooms (grouped by house)
-  List<RoomModel> _rooms = [];
+  // Grouped maps for fast tenant inspector access
+  Map<int, List<ComplaintModel>> _complaintsByTenant = {};
+  Map<int, List<PaymentModel>> _paymentsByTenant = {};
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _loadManagementData();
   }
 
-  Future<void> _load() async {
-    if (!mounted) return;
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadManagementData() async {
     setState(() => _isLoading = true);
     try {
       final ownerId = widget.user.userId;
@@ -152,9 +63,8 @@ class _RoomsRentersSegmentState extends State<_RoomsRentersSegment> {
         allRooms.addAll(rooms);
       }
 
-      // Bookings — query Supabase directly for all approved bookings for
-      // rooms belonging to this owner
-      final Map<int, BookingModel> bookingMap = {};
+      // Fetch active approved bookings
+      final List<BookingModel> activeBookings = [];
       if (allRooms.isNotEmpty) {
         try {
           final roomIds = allRooms.map((r) => r.roomId).toList();
@@ -163,57 +73,96 @@ class _RoomsRentersSegmentState extends State<_RoomsRentersSegment> {
               .select('*, users!booking_user_id_fkey(*)')
               .inFilter('room_id', roomIds)
               .eq('status', BookingStatus.approved.name);
+
           for (final row in bookingRes as List) {
             final b = BookingModel.fromJson(row as Map<String, dynamic>);
-            bookingMap[b.roomId] = b;
+            // Attach house & room information
+            final matchedRoom = allRooms.where((r) => r.roomId == b.roomId);
+            if (matchedRoom.isNotEmpty) {
+              final r = matchedRoom.first;
+              final matchedHouse = houses.where((h) => h.houseId == r.houseId);
+              final houseObj = matchedHouse.isNotEmpty
+                  ? matchedHouse.first
+                  : null;
+              final fullRoom = r.copyWith(house: houseObj);
+              activeBookings.add(b.copyWith(room: fullRoom));
+            } else {
+              activeBookings.add(b);
+            }
           }
         } catch (_) {}
       }
+      _occupiedBookings = activeBookings;
 
-      // Payments
-      final Map<int, PaymentModel> paymentMap = {};
-      try {
-        final payments = await sl.payment.getPaymentsForOwner(ownerId);
-        // keep the latest (by dueDate) per room
-        for (final p in payments) {
-          final existing = paymentMap[p.roomId];
-          if (existing == null) {
-            paymentMap[p.roomId] = p;
-          } else {
-            if (p.dueDate.isAfter(existing.dueDate)) {
-              paymentMap[p.roomId] = p;
-            }
-          }
-        }
-      } catch (_) {}
+      // Fetch payments
+      final payments = await _paymentService.getPaymentsForOwner(ownerId);
+      _allPayments = payments;
+      final Map<int, List<PaymentModel>> paymentMap = {};
+      for (final p in payments) {
+        paymentMap.putIfAbsent(p.userId, () => []).add(p);
+      }
+      _paymentsByTenant = paymentMap;
 
-      // Complaints — open only
-      final Map<int, List<ComplaintModel>> complaintsMap = {};
-      try {
-        final complaints = await _complaintService.getComplaintsForOwner(
-          ownerId,
-        );
-        for (final c in complaints) {
-          if (c.status == ComplaintStatus.pending ||
-              c.status == ComplaintStatus.inProgress) {
-            complaintsMap.putIfAbsent(c.roomId, () => []).add(c);
-          }
-        }
-      } catch (_) {}
+      // Fetch complaints
+      final complaints = await _complaintService.getComplaintsForOwner(ownerId);
+      _allComplaints = complaints;
+      final Map<int, List<ComplaintModel>> complaintMap = {};
+      for (final c in complaints) {
+        complaintMap.putIfAbsent(c.userId, () => []).add(c);
+      }
+      _complaintsByTenant = complaintMap;
 
       if (mounted) {
-        setState(() {
-          _houses = houses;
-          _rooms = allRooms;
-          _bookingByRoom = bookingMap;
-          _paymentByRoom = paymentMap;
-          _complaintsByRoom = complaintsMap;
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     } catch (_) {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _openComplaintsManagement() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OwnerComplaintsScreen(owner: widget.user),
+      ),
+    ).then((_) {
+      if (mounted) _loadManagementData();
+    });
+  }
+
+  void _openPaymentsManagement() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _AllPaymentsSheet(
+        payments: _allPayments,
+        onPaymentUpdated: () {
+          _loadManagementData();
+        },
+      ),
+    );
+  }
+
+  void _openTenantInspector(BookingModel booking) {
+    final tenant = booking.user;
+    if (tenant == null) return;
+
+    final tenantComplaints = _complaintsByTenant[tenant.userId] ?? [];
+    final tenantPayments = _paymentsByTenant[tenant.userId] ?? [];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _TenantInspectorSheet(
+        booking: booking,
+        complaints: tenantComplaints,
+        payments: tenantPayments,
+        onDataChanged: _loadManagementData,
+      ),
+    );
   }
 
   @override
@@ -222,154 +171,396 @@ class _RoomsRentersSegmentState extends State<_RoomsRentersSegment> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_houses.isEmpty) {
-      return const KosMateEmptyState(
-        icon: Icons.apartment_outlined,
-        title: 'No boarding houses yet',
-        subtitle: 'Create a boarding house first from the Rooms tab.',
-        plain: true,
-      );
-    }
+    // Compute top summary badges
+    final activeComplaintsCount = _allComplaints
+        .where((c) => c.status != ComplaintStatus.resolved)
+        .length;
+    final unpaidPaymentsCount = _allPayments
+        .where(
+          (p) =>
+              p.status == PaymentStatus.pending ||
+              p.status == PaymentStatus.overdue,
+        )
+        .length;
 
-    if (_rooms.isEmpty) {
-      return const KosMateEmptyState(
-        icon: Icons.sensor_door_outlined,
-        title: 'No rooms yet',
-        subtitle: 'Add rooms to your boarding houses from the Rooms tab.',
-        plain: true,
-      );
-    }
+    // Filter occupied tenants
+    final filteredBookings = _occupiedBookings.where((b) {
+      if (_searchQuery.isEmpty) return true;
+      final q = _searchQuery.toLowerCase();
+      final nameMatch = b.user?.name.toLowerCase().contains(q) ?? false;
+      final phoneMatch = b.user?.phone.toLowerCase().contains(q) ?? false;
+      final roomMatch =
+          b.room?.roomNumber.toLowerCase().contains(q) ??
+          b.roomId.toString().contains(q);
+      final houseMatch =
+          b.room?.house?.houseName.toLowerCase().contains(q) ?? false;
+      return nameMatch || phoneMatch || roomMatch || houseMatch;
+    }).toList();
 
     return RefreshIndicator(
-      onRefresh: _load,
-      child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        itemCount: _rooms.length,
-        itemBuilder: (context, index) {
-          final room = _rooms[index];
-          final booking = _bookingByRoom[room.roomId];
-          final payment = _paymentByRoom[room.roomId];
-          final openComplaints = _complaintsByRoom[room.roomId] ?? [];
-          final houseName = room.house?.houseName ?? 'House';
-
-          return _RoomRenterCard(
-            room: room,
-            houseName: houseName,
-            booking: booking,
-            payment: payment,
-            openComplaints: openComplaints,
-            onMarkPaid:
-                payment != null && payment.status == PaymentStatus.pending
-                ? () => _markPaid(payment)
-                : null,
-          );
-        },
-      ),
-    );
-  }
-
-  Future<void> _markPaid(PaymentModel p) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Confirm Payment'),
-        content: Text(
-          'Mark invoice for ${p.user?.name ?? 'tenant'} '
-          '(${Formatters.formatCurrency(p.amount)}) as paid?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.accentColor,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Confirm as Paid'),
-          ),
-        ],
-      ),
-    );
-    if (confirm == true && mounted) {
-      try {
-        await sl.payment.updatePaymentStatus(
-          paymentId: p.paymentId,
-          status: PaymentStatus.paid,
-        );
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Payment marked as paid.'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          _load();
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text('Failed: $e')));
-        }
-      }
-    }
-  }
-}
-
-class _RoomRenterCard extends StatelessWidget {
-  final RoomModel room;
-  final String houseName;
-  final BookingModel? booking;
-  final PaymentModel? payment;
-  final List<ComplaintModel> openComplaints;
-  final VoidCallback? onMarkPaid;
-
-  const _RoomRenterCard({
-    required this.room,
-    required this.houseName,
-    required this.booking,
-    required this.payment,
-    required this.openComplaints,
-    this.onMarkPaid,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final tenantName = booking?.user?.name;
-    final isVacant = room.status == RoomStatus.available;
-    final paymentPeriod = payment != null
-        ? Formatters.formatMonthYear(payment!.dueDate)
-        : null;
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: AppTheme.borderLight, width: 1.1),
-      ),
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
+      onRefresh: _loadManagementData,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Top Cards: See Every Complaints & See Every Payments
             Row(
               children: [
+                Expanded(
+                  child: _buildOverviewCard(
+                    title: 'See every\ncomplaint',
+                    countText: '${_allComplaints.length} Total',
+                    badgeText: activeComplaintsCount > 0
+                        ? '$activeComplaintsCount Open'
+                        : 'All Resolved',
+                    badgeColor: activeComplaintsCount > 0
+                        ? AppTheme.warningLight
+                        : AppTheme.successLight,
+                    badgeTextColor: activeComplaintsCount > 0
+                        ? AppTheme.warningColor
+                        : AppTheme.successColor,
+                    icon: Icons.build_circle_outlined,
+                    onTap: _openComplaintsManagement,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildOverviewCard(
+                    title: 'See every\npayment',
+                    countText: '${_allPayments.length} Invoices',
+                    badgeText: unpaidPaymentsCount > 0
+                        ? '$unpaidPaymentsCount Unpaid'
+                        : 'Up to Date',
+                    badgeColor: unpaidPaymentsCount > 0
+                        ? AppTheme.destructiveLight
+                        : AppTheme.successLight,
+                    badgeTextColor: unpaidPaymentsCount > 0
+                        ? AppTheme.destructiveColor
+                        : AppTheme.successColor,
+                    icon: Icons.receipt_long_outlined,
+                    onTap: _openPaymentsManagement,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Section Header: Occupied Tenants
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Occupied Tenants',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.foregroundColor,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryLight,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${_occupiedBookings.length} Active',
+                    style: const TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Search Bar
+            TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search tenant name, room, or house...',
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: AppTheme.textMuted,
+                  size: 20,
+                ),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 18),
+                        onPressed: () {
+                          setState(() {
+                            _searchController.clear();
+                            _searchQuery = '';
+                          });
+                        },
+                      )
+                    : null,
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 10,
+                  horizontal: 14,
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppTheme.borderMedium),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppTheme.borderMedium),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: AppTheme.accentColor,
+                    width: 1.5,
+                  ),
+                ),
+              ),
+              onChanged: (val) => setState(() => _searchQuery = val),
+            ),
+            const SizedBox(height: 16),
+
+            // Occupied Tenants List
+            if (_occupiedBookings.isEmpty)
+              _buildEmptyTenantsState()
+            else if (filteredBookings.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: Center(
+                  child: Text(
+                    'No occupied tenants match your search.',
+                    style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
+                  ),
+                ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: filteredBookings.length,
+                itemBuilder: (context, idx) {
+                  final booking = filteredBookings[idx];
+                  final tenant = booking.user;
+                  final tenantId = tenant?.userId ?? 0;
+                  final openComplaints = (_complaintsByTenant[tenantId] ?? [])
+                      .where((c) => c.status != ComplaintStatus.resolved)
+                      .length;
+                  final hasUnpaid = (_paymentsByTenant[tenantId] ?? []).any(
+                    (p) =>
+                        p.status == PaymentStatus.pending ||
+                        p.status == PaymentStatus.overdue,
+                  );
+
+                  return _buildTenantCard(
+                    booking: booking,
+                    openComplaintsCount: openComplaints,
+                    hasUnpaidPayment: hasUnpaid,
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOverviewCard({
+    required String title,
+    required String countText,
+    required String badgeText,
+    required Color badgeColor,
+    required Color badgeTextColor,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      elevation: 0,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppTheme.borderLight, width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: AppTheme.iconBadgeBackground,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(icon, color: AppTheme.accentColor, size: 20),
+                  ),
+                  const Icon(
+                    Icons.arrow_forward_ios,
+                    size: 14,
+                    color: AppTheme.textSubtle,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.foregroundColor,
+                  height: 1.2,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                countText,
+                style: const TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 12,
+                  color: AppTheme.textMuted,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: badgeColor,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  badgeText,
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: badgeTextColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTenantCard({
+    required BookingModel booking,
+    required int openComplaintsCount,
+    required bool hasUnpaidPayment,
+  }) {
+    final tenant = booking.user;
+    final tenantName = tenant?.name ?? 'Tenant';
+    final room = booking.room;
+    final roomNumber = room?.roomNumber ?? 'Room ${booking.roomId}';
+    final houseName = room?.house?.houseName ?? 'House';
+    final phone = tenant?.phone ?? 'No phone provided';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.borderLight),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _openTenantInspector(booking),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(14.0),
+            child: Row(
+              children: [
+                // Tenant Avatar / Initials
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: AppTheme.primaryLight,
+                  child: Text(
+                    tenantName.isNotEmpty ? tenantName[0].toUpperCase() : 'T',
+                    style: const TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+
+                // Tenant Info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        room.roomNumber,
-                        style: const TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.textDark,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              tenantName,
+                              style: const TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.foregroundColor,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.surfaceLight,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              roomNumber,
+                              style: const TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -379,129 +570,117 @@ class _RoomRenterCard extends StatelessWidget {
                           color: AppTheme.textMuted,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                KosMateStatusChip.fromRoomStatus(room.status),
-              ],
-            ),
-
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 10),
-              child: Divider(height: 1, color: AppTheme.borderLight),
-            ),
-
-            Row(
-              children: [
-                const Icon(
-                  Icons.person_outline_rounded,
-                  size: 16,
-                  color: AppTheme.textMuted,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    isVacant
-                        ? 'Vacant — no active renter'
-                        : (tenantName ?? 'Renter assigned'),
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isVacant ? AppTheme.textSubtle : AppTheme.textDark,
-                      fontStyle: isVacant ? FontStyle.italic : FontStyle.normal,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 8),
-
-            Row(
-              children: [
-                const Icon(
-                  Icons.receipt_long_outlined,
-                  size: 16,
-                  color: AppTheme.textMuted,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: payment == null
-                      ? const Text(
-                          'No invoice recorded',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppTheme.textSubtle,
-                            fontStyle: FontStyle.italic,
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.phone_outlined,
+                            size: 13,
+                            color: AppTheme.textMuted,
                           ),
-                        )
-                      : Row(
-                          children: [
-                            Expanded(
+                          const SizedBox(width: 4),
+                          Text(
+                            phone,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textDark,
+                            ),
+                          ),
+                          const Spacer(),
+                          if (openComplaintsCount > 0) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.warningLight,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
                               child: Text(
-                                '$paymentPeriod • ${Formatters.formatCurrency(payment!.amount)}',
+                                '$openComplaintsCount complaint${openComplaintsCount > 1 ? "s" : ""}',
                                 style: const TextStyle(
-                                  fontSize: 13,
-                                  color: AppTheme.textDark,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.warningColor,
                                 ),
                               ),
                             ),
                             const SizedBox(width: 6),
-                            KosMateStatusChip.fromPaymentStatus(
-                              payment!.status,
+                          ],
+                          if (hasUnpaidPayment) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.destructiveLight,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'Payment Due',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.destructiveColor,
+                                ),
+                              ),
                             ),
                           ],
-                        ),
-                ),
-                if (onMarkPaid != null) ...[
-                  const SizedBox(width: 6),
-                  TextButton(
-                    onPressed: onMarkPaid,
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
+                        ],
                       ),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      foregroundColor: AppTheme.accentColor,
-                    ),
-                    child: const Text(
-                      'Mark Paid',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.chevron_right,
+                  color: AppTheme.textSubtle,
+                  size: 20,
+                ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
 
-            if (openComplaints.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.warning_amber_rounded,
-                    size: 16,
-                    color: AppTheme.warningColor,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      '${openComplaints.length} open: '
-                      '"${openComplaints.first.title}"',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.warningColor,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
+  Widget _buildEmptyTenantsState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 20),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: AppTheme.surfaceLight,
+                shape: BoxShape.circle,
               ),
-            ],
+              child: const Icon(
+                Icons.people_outline_rounded,
+                size: 44,
+                color: AppTheme.accentColor,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'No Occupied Tenants Yet',
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.foregroundColor,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'When tenants book and occupy your boarding rooms, their details, complaints, and invoices will appear here.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+            ),
           ],
         ),
       ),
@@ -509,89 +688,124 @@ class _RoomRenterCard extends StatelessWidget {
   }
 }
 
-// SEGMENT 1: Invoices & Payments
-class _PaymentsSegment extends StatefulWidget {
-  final UserModel user;
+// -------------------------------------------------------------
+// TENANT INSPECTOR BOTTOM SHEET
+// -------------------------------------------------------------
+class _TenantInspectorSheet extends StatefulWidget {
+  final BookingModel booking;
+  final List<ComplaintModel> complaints;
+  final List<PaymentModel> payments;
+  final VoidCallback onDataChanged;
 
-  const _PaymentsSegment({required this.user});
+  const _TenantInspectorSheet({
+    required this.booking,
+    required this.complaints,
+    required this.payments,
+    required this.onDataChanged,
+  });
 
   @override
-  State<_PaymentsSegment> createState() => _PaymentsSegmentState();
+  State<_TenantInspectorSheet> createState() => _TenantInspectorSheetState();
 }
 
-class _PaymentsSegmentState extends State<_PaymentsSegment> {
+class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
+  final _complaintService = sl.complaint;
   final _paymentService = sl.payment;
-  final _searchController = TextEditingController();
 
-  List<PaymentModel> _allPayments = [];
-  List<PaymentModel> _filteredPayments = [];
-  bool _isLoading = true;
-  String _searchQuery = '';
-  // 0=All, 1=Pending, 2=Paid, 3=Overdue
-  int _statusFilter = 0;
+  void _showComplaintResponseDialog(ComplaintModel complaint) {
+    final responseCtrl = TextEditingController(text: complaint.response ?? '');
+    ComplaintStatus selectedStatus = complaint.status == ComplaintStatus.pending
+        ? ComplaintStatus.inProgress
+        : complaint.status;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadPayments();
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(complaint.title),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Description:\n${complaint.description}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<ComplaintStatus>(
+                  isExpanded: true,
+                  initialValue: selectedStatus,
+                  decoration: const InputDecoration(labelText: 'Status'),
+                  items: const [
+                    DropdownMenuItem(
+                      value: ComplaintStatus.inProgress,
+                      child: Text('In Progress'),
+                    ),
+                    DropdownMenuItem(
+                      value: ComplaintStatus.resolved,
+                      child: Text('Resolved'),
+                    ),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      setDialogState(() => selectedStatus = val);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: responseCtrl,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Response / Note',
+                    hintText: 'e.g. Technician arrived and fixed.',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.accentColor,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                try {
+                  await _complaintService.respondToComplaint(
+                    complaintId: complaint.complaintId,
+                    responseText: responseCtrl.text.trim(),
+                    status: selectedStatus,
+                  );
+                  if (ctx.mounted) {
+                    Navigator.pop(ctx);
+                  }
+                  widget.onDataChanged();
+                } catch (_) {}
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadPayments() async {
-    setState(() => _isLoading = true);
-    try {
-      final payments = await _paymentService.getPaymentsForOwner(
-        widget.user.userId,
-      );
-      if (mounted) {
-        setState(() {
-          _allPayments = payments;
-          _applyFilter();
-          _isLoading = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  void _applyFilter() {
-    var list = List<PaymentModel>.from(_allPayments);
-
-    if (_statusFilter == 1) {
-      list = list.where((p) => p.status == PaymentStatus.pending).toList();
-    } else if (_statusFilter == 2) {
-      list = list.where((p) => p.status == PaymentStatus.paid).toList();
-    } else if (_statusFilter == 3) {
-      list = list.where((p) => p.status == PaymentStatus.overdue).toList();
-    }
-
-    if (_searchQuery.isNotEmpty) {
-      final q = _searchQuery.toLowerCase();
-      list = list.where((p) {
-        final tenant = p.user?.name.toLowerCase() ?? '';
-        final room = p.room?.roomNumber.toLowerCase() ?? '';
-        return tenant.contains(q) || room.contains(q);
-      }).toList();
-    }
-
-    _filteredPayments = list;
-  }
-
-  Future<void> _confirmPaymentPaid(PaymentModel p) async {
+  void _markPaymentPaid(PaymentModel payment) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Confirm Payment'),
         content: Text(
-          'Mark invoice #${p.paymentId} for '
-          '${p.user?.name ?? "tenant"} '
-          '(${Formatters.formatCurrency(p.amount)}) as paid?',
+          'Mark invoice of ${Formatters.formatCurrency(payment.amount)} as paid?',
         ),
         actions: [
           TextButton(
@@ -613,230 +827,646 @@ class _PaymentsSegmentState extends State<_PaymentsSegment> {
     if (confirm == true && mounted) {
       try {
         await _paymentService.updatePaymentStatus(
-          paymentId: p.paymentId,
+          paymentId: payment.paymentId,
           status: PaymentStatus.paid,
         );
+        widget.onDataChanged();
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Payment updated to Paid.'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          _loadPayments();
+          Navigator.of(context).pop();
         }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
-          );
-        }
-      }
+      } catch (_) {}
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    final tenant = widget.booking.user;
+    final room = widget.booking.room;
+    final house = room?.house;
 
-    // Summary counts (from _allPayments, not filtered)
-    final thisMonth = DateTime.now();
-    final collectedAmt = _allPayments
-        .where(
-          (p) =>
-              p.status == PaymentStatus.paid &&
-              p.paidDate != null &&
-              p.paidDate!.month == thisMonth.month &&
-              p.paidDate!.year == thisMonth.year,
-        )
-        .fold<double>(0, (sum, p) => sum + p.amount);
-    final pendingCount = _allPayments
-        .where((p) => p.status == PaymentStatus.pending)
-        .length;
-    final overdueCount = _allPayments
-        .where((p) => p.status == PaymentStatus.overdue)
-        .length;
-
-    return RefreshIndicator(
-      onRefresh: _loadPayments,
-      child: Column(
-        children: [
-          // Summary header card
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryLight,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppTheme.borderColor.withValues(alpha: 0.3),
-                ),
-              ),
-              child: Row(
-                children: [
-                  _buildSummaryItem(
-                    'Collected',
-                    Formatters.formatCurrency(collectedAmt),
-                    AppTheme.successColor,
-                  ),
-                  _vDivider(),
-                  _buildSummaryItem(
-                    'Pending',
-                    '$pendingCount invoices',
-                    AppTheme.warningColor,
-                  ),
-                  _vDivider(),
-                  _buildSummaryItem(
-                    'Overdue',
-                    '$overdueCount invoices',
-                    AppTheme.destructiveColor,
-                  ),
-                ],
-              ),
-            ),
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      maxChildSize: 0.95,
+      minChildSize: 0.5,
+      builder: (context, scrollCtrl) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
-
-          // Filter chips
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  for (final entry in {
-                    0: 'All',
-                    1: 'Pending',
-                    2: 'Paid',
-                    3: 'Overdue',
-                  }.entries)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: Text(entry.value),
-                        selected: _statusFilter == entry.key,
-                        onSelected: (_) {
-                          setState(() {
-                            _statusFilter = entry.key;
-                            _applyFilter();
-                          });
-                        },
-                        selectedColor: AppTheme.accentColor.withAlpha(30),
-                        checkmarkColor: AppTheme.accentColor,
-                        labelStyle: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: _statusFilter == entry.key
-                              ? AppTheme.accentColor
-                              : AppTheme.textMuted,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-
-          // Search input
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-            child: KosMateSearchBar(
-              controller: _searchController,
-              hintText: 'Search renter or room',
-              onChanged: (val) {
-                setState(() {
-                  _searchQuery = val.trim();
-                  _applyFilter();
-                });
-              },
-              onClear: () {
-                setState(() {
-                  _searchQuery = '';
-                  _applyFilter();
-                });
-              },
-            ),
-          ),
-
-          // Count subtitle
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
-            child: Row(
-              children: [
-                Text(
-                  '${_filteredPayments.length} payments',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.textMuted,
-                    fontWeight: FontWeight.w500,
+          child: Column(
+            children: [
+              // Drag handle
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 10, bottom: 8),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppTheme.borderMedium,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-              ],
-            ),
-          ),
+              ),
 
-          // Payments list
-          Expanded(
-            child: _filteredPayments.isEmpty
-                ? const KosMateEmptyState(
-                    icon: Icons.receipt_long_outlined,
-                    title: 'No payments found',
-                    subtitle: 'Payment records will show here.',
-                    plain: true,
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
-                    ),
-                    itemCount: _filteredPayments.length,
-                    itemBuilder: (context, index) {
-                      final p = _filteredPayments[index];
-                      final tenantName = p.user?.name ?? 'Tenant';
-                      final roomNumber =
-                          p.room?.roomNumber ?? 'Room ${p.roomId}';
-                      final period = Formatters.formatMonthYear(
-                        p.status == PaymentStatus.paid ? p.paidDate : p.dueDate,
-                      );
-                      final dateInfo = p.status == PaymentStatus.paid
-                          ? (p.paidDate != null
-                                ? 'Paid on ${Formatters.formatShortDate(p.paidDate)}'
-                                : 'Paid')
-                          : 'Due on ${Formatters.formatShortDate(p.dueDate)}';
-                      final subtitle = '$roomNumber • $period • $dateInfo';
-
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: const BorderSide(
-                            color: AppTheme.borderLight,
-                            width: 1.1,
+              // Sheet content
+              Expanded(
+                child: ListView(
+                  controller: scrollCtrl,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  children: [
+                    // Tenant Profile Header
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundColor: AppTheme.primaryLight,
+                          child: Text(
+                            tenant?.name.isNotEmpty == true
+                                ? tenant!.name[0].toUpperCase()
+                                : 'T',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryColor,
+                            ),
                           ),
                         ),
-                        child: InkWell(
-                          onTap: p.status == PaymentStatus.pending
-                              ? () => _confirmPaymentPaid(p)
-                              : null,
-                          borderRadius: BorderRadius.circular(12),
-                          child: Padding(
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                tenant?.name ?? 'Tenant Details',
+                                style: const TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.foregroundColor,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                tenant?.email ?? 'No email',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppTheme.textMuted,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                tenant?.phone ?? 'No phone',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppTheme.textDark,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Occupied Room Card
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceLight,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppTheme.borderLight),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'OCCUPIED ROOM',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.accentColor,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                room?.roomNumber ??
+                                    'Room ${widget.booking.roomId}',
+                                style: const TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.foregroundColor,
+                                ),
+                              ),
+                              Text(
+                                '${Formatters.formatCurrency(room?.price ?? 0)} / mo',
+                                style: const TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${house?.houseName ?? "Boarding House"} • ${room?.roomType ?? "Standard"}',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Move-in Date: ${Formatters.formatDate(widget.booking.requestDate)}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Complaints Section
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Complaints',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.foregroundColor,
+                          ),
+                        ),
+                        Text(
+                          '${widget.complaints.length} filed',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    if (widget.complaints.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Text(
+                          'No complaints reported by this tenant.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                      )
+                    else
+                      ...widget.complaints.map((c) {
+                        final isResolved = c.status == ComplaintStatus.resolved;
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppTheme.borderLight),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                isResolved
+                                    ? Icons.task_alt_outlined
+                                    : Icons.build_circle_outlined,
+                                color: isResolved
+                                    ? AppTheme.successColor
+                                    : AppTheme.warningColor,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      c.title,
+                                      style: const TextStyle(
+                                        fontFamily: 'Roboto',
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppTheme.foregroundColor,
+                                      ),
+                                    ),
+                                    Text(
+                                      c.description,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppTheme.textMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              OutlinedButton(
+                                onPressed: () =>
+                                    _showComplaintResponseDialog(c),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  side: const BorderSide(
+                                    color: AppTheme.borderMedium,
+                                  ),
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                                child: Text(
+                                  isResolved ? 'View' : 'Respond',
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    const SizedBox(height: 24),
+
+                    // Payments Section
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Payment History',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.foregroundColor,
+                          ),
+                        ),
+                        Text(
+                          '${widget.payments.length} invoices',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    if (widget.payments.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Text(
+                          'No payment invoices recorded yet.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                      )
+                    else
+                      ...widget.payments.map((p) {
+                        final isPaid = p.status == PaymentStatus.paid;
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppTheme.borderLight),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                isPaid
+                                    ? Icons.check_circle_outline
+                                    : Icons.receipt_long_outlined,
+                                color: isPaid
+                                    ? AppTheme.successColor
+                                    : AppTheme.destructiveColor,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      Formatters.formatCurrency(p.amount),
+                                      style: const TextStyle(
+                                        fontFamily: 'Roboto',
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppTheme.foregroundColor,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Due: ${Formatters.formatDate(p.dueDate)}',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppTheme.textMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (!isPaid)
+                                ElevatedButton(
+                                  onPressed: () => _markPaymentPaid(p),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.accentColor,
+                                    foregroundColor: Colors.white,
+                                    visualDensity: VisualDensity.compact,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Mark Paid',
+                                    style: TextStyle(fontSize: 11),
+                                  ),
+                                )
+                              else
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.successLight,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'PAID',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.successColor,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      }),
+                    const SizedBox(height: 30),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// -------------------------------------------------------------
+// ALL PAYMENTS SHEET (When clicking "See every payment")
+// -------------------------------------------------------------
+class _AllPaymentsSheet extends StatefulWidget {
+  final List<PaymentModel> payments;
+  final VoidCallback onPaymentUpdated;
+
+  const _AllPaymentsSheet({
+    required this.payments,
+    required this.onPaymentUpdated,
+  });
+
+  @override
+  State<_AllPaymentsSheet> createState() => _AllPaymentsSheetState();
+}
+
+class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
+  final _paymentService = sl.payment;
+  String _selectedFilter = 'All';
+  String _search = '';
+
+  void _markPaid(PaymentModel payment) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirm Payment'),
+        content: Text(
+          'Mark invoice of ${Formatters.formatCurrency(payment.amount)} as paid?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.accentColor,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Confirm as Paid'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      try {
+        await _paymentService.updatePaymentStatus(
+          paymentId: payment.paymentId,
+          status: PaymentStatus.paid,
+        );
+        widget.onPaymentUpdated();
+        if (mounted) Navigator.pop(context);
+      } catch (_) {}
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = widget.payments.where((p) {
+      if (_selectedFilter == 'Pending' && p.status != PaymentStatus.pending) {
+        return false;
+      }
+      if (_selectedFilter == 'Paid' && p.status != PaymentStatus.paid) {
+        return false;
+      }
+      if (_selectedFilter == 'Overdue' && p.status != PaymentStatus.overdue) {
+        return false;
+      }
+
+      if (_search.isNotEmpty) {
+        final q = _search.toLowerCase();
+        final name = p.user?.name.toLowerCase() ?? '';
+        final room = p.room?.roomNumber.toLowerCase() ?? '';
+        return name.contains(q) || room.contains(q);
+      }
+      return true;
+    }).toList();
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      maxChildSize: 0.95,
+      minChildSize: 0.5,
+      builder: (context, scrollCtrl) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 10, bottom: 8),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppTheme.borderMedium,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'All Invoices & Payments',
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.foregroundColor,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+              ),
+              // Filter Chips
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: ['All', 'Pending', 'Paid', 'Overdue'].map((f) {
+                    final selected = _selectedFilter == f;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6.0),
+                      child: ChoiceChip(
+                        label: Text(f),
+                        selected: selected,
+                        selectedColor: AppTheme.primaryLight,
+                        backgroundColor: Colors.white,
+                        side: BorderSide(
+                          color: selected
+                              ? AppTheme.accentColor
+                              : AppTheme.borderMedium,
+                        ),
+                        labelStyle: TextStyle(
+                          fontSize: 12,
+                          fontWeight: selected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          color: selected
+                              ? AppTheme.accentColor
+                              : AppTheme.textDark,
+                        ),
+                        onSelected: (_) => setState(() => _selectedFilter = f),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Search
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 4,
+                ),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search tenant or room...',
+                    prefixIcon: const Icon(Icons.search, size: 18),
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 12,
+                    ),
+                    filled: true,
+                    fillColor: AppTheme.surfaceLight,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onChanged: (val) => setState(() => _search = val.trim()),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // List
+              Expanded(
+                child: filtered.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No payment records found.',
+                          style: TextStyle(color: AppTheme.textMuted),
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: scrollCtrl,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 8,
+                        ),
+                        itemCount: filtered.length,
+                        itemBuilder: (ctx, idx) {
+                          final p = filtered[idx];
+                          final isPaid = p.status == PaymentStatus.paid;
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 10),
                             padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: AppTheme.borderLight),
+                            ),
                             child: Row(
                               children: [
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.iconBadgeBackground,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(
-                                    Icons.receipt_long_outlined,
-                                    color: AppTheme.accentColor,
-                                    size: 24,
+                                CircleAvatar(
+                                  radius: 18,
+                                  backgroundColor: isPaid
+                                      ? AppTheme.successLight
+                                      : AppTheme.destructiveLight,
+                                  child: Icon(
+                                    isPaid
+                                        ? Icons.check
+                                        : Icons.receipt_outlined,
+                                    size: 16,
+                                    color: isPaid
+                                        ? AppTheme.successColor
+                                        : AppTheme.destructiveColor,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -846,17 +1476,14 @@ class _PaymentsSegmentState extends State<_PaymentsSegment> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        tenantName,
+                                        p.user?.name ?? 'Tenant',
                                         style: const TextStyle(
-                                          fontFamily: 'Roboto',
-                                          fontSize: 15,
                                           fontWeight: FontWeight.w700,
-                                          color: AppTheme.textDark,
+                                          fontSize: 14,
                                         ),
                                       ),
-                                      const SizedBox(height: 3),
                                       Text(
-                                        subtitle,
+                                        'Room ${p.room?.roomNumber ?? p.roomId} • Due ${Formatters.formatDate(p.dueDate)}',
                                         style: const TextStyle(
                                           fontSize: 12,
                                           color: AppTheme.textMuted,
@@ -868,482 +1495,51 @@ class _PaymentsSegmentState extends State<_PaymentsSegment> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
-                                    KosMateStatusChip.fromPaymentStatus(
-                                      p.status,
-                                    ),
-                                    const SizedBox(height: 4),
                                     Text(
                                       Formatters.formatCurrency(p.amount),
                                       style: const TextStyle(
-                                        fontFamily: 'Roboto',
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppTheme.textDark,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
                                       ),
                                     ),
+                                    if (!isPaid) ...[
+                                      const SizedBox(height: 4),
+                                      GestureDetector(
+                                        onTap: () => _markPaid(p),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.accentColor,
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            'Mark Paid',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ],
                             ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryItem(String label, String value, Color valueColor) {
-    return Expanded(
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: valueColor,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _vDivider() {
-    return Container(
-      height: 32,
-      width: 1,
-      color: AppTheme.borderMedium,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-    );
-  }
-}
-
-// SEGMENT 2: Complaints
-class _ComplaintsSegment extends StatefulWidget {
-  final UserModel user;
-
-  const _ComplaintsSegment({required this.user});
-
-  @override
-  State<_ComplaintsSegment> createState() => _ComplaintsSegmentState();
-}
-
-class _ComplaintsSegmentState extends State<_ComplaintsSegment> {
-  final _complaintService = sl.complaint;
-  final _searchController = TextEditingController();
-
-  List<ComplaintModel> _allComplaints = [];
-  List<ComplaintModel> _filteredComplaints = [];
-  bool _isLoading = true;
-  String _searchQuery = '';
-  // 0=All, 1=Resolved
-  int _selectedFilterTab = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadComplaints();
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadComplaints() async {
-    setState(() => _isLoading = true);
-    try {
-      final complaints = await _complaintService.getComplaintsForOwner(
-        widget.user.userId,
-      );
-      if (mounted) {
-        setState(() {
-          _allComplaints = complaints;
-          _applyFilter();
-          _isLoading = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  void _applyFilter() {
-    var list = List<ComplaintModel>.from(_allComplaints);
-
-    if (_selectedFilterTab == 1) {
-      list = list.where((c) => c.status == ComplaintStatus.resolved).toList();
-    }
-
-    if (_searchQuery.isNotEmpty) {
-      final q = _searchQuery.toLowerCase();
-      list = list.where((c) {
-        final title = c.title.toLowerCase();
-        final desc = c.description.toLowerCase();
-        final tenant = c.user?.name.toLowerCase() ?? '';
-        final room = c.room?.roomNumber.toLowerCase() ?? '';
-        return title.contains(q) ||
-            desc.contains(q) ||
-            tenant.contains(q) ||
-            room.contains(q);
-      }).toList();
-    }
-
-    _filteredComplaints = list;
-  }
-
-  void _showComplaintResponseDialog(ComplaintModel complaint) {
-    final responseCtrl = TextEditingController(text: complaint.response ?? '');
-    ComplaintStatus selectedStatus = complaint.status == ComplaintStatus.pending
-        ? ComplaintStatus.inProgress
-        : complaint.status;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(complaint.title),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Tenant: ${complaint.user?.name ?? "Tenant"} '
-                  '• Room: ${complaint.room?.roomNumber ?? complaint.roomId}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textDark,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Description:\n${complaint.description}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.textMuted,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<ComplaintStatus>(
-                  isExpanded: true,
-                  initialValue: selectedStatus,
-                  decoration: const InputDecoration(labelText: 'Status'),
-                  items: const [
-                    DropdownMenuItem(
-                      value: ComplaintStatus.inProgress,
-                      child: Text(
-                        'In Progress',
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
+                          );
+                        },
                       ),
-                    ),
-                    DropdownMenuItem(
-                      value: ComplaintStatus.resolved,
-                      child: Text(
-                        'Resolved',
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ),
-                    DropdownMenuItem(
-                      value: ComplaintStatus.rejected,
-                      child: Text(
-                        'Rejected',
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) {
-                      setDialogState(() => selectedStatus = val);
-                    }
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: responseCtrl,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Response / Action taken',
-                    hintText: 'e.g., Plumber has completed the repairs.',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentColor,
-                foregroundColor: Colors.white,
               ),
-              onPressed: () async {
-                final messenger = ScaffoldMessenger.of(context);
-                try {
-                  await _complaintService.respondToComplaint(
-                    complaintId: complaint.complaintId,
-                    responseText: responseCtrl.text.trim(),
-                    status: selectedStatus,
-                  );
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  _loadComplaints();
-                  messenger.showSnackBar(
-                    const SnackBar(
-                      content: Text('Complaint updated successfully!'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                } catch (e) {
-                  messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
-                }
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    final openCount = _allComplaints
-        .where(
-          (c) =>
-              c.status == ComplaintStatus.pending ||
-              c.status == ComplaintStatus.inProgress,
-        )
-        .length;
-
-    return RefreshIndicator(
-      onRefresh: _loadComplaints,
-      child: Column(
-        children: [
-          const SizedBox(height: 10),
-
-          // Filter tabs: All / Resolved
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                _buildFilterTab(0, 'All complaints'),
-                const SizedBox(width: 10),
-                _buildFilterTab(1, 'Resolved'),
-              ],
-            ),
+            ],
           ),
-          const SizedBox(height: 10),
-
-          // Search
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: KosMateSearchBar(
-              controller: _searchController,
-              hintText: 'Search complaints',
-              onChanged: (val) {
-                setState(() {
-                  _searchQuery = val.trim();
-                  _applyFilter();
-                });
-              },
-              onClear: () {
-                setState(() {
-                  _searchQuery = '';
-                  _applyFilter();
-                });
-              },
-            ),
-          ),
-
-          // Count & open badge
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${_filteredComplaints.length} complaints',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.textMuted,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                if (openCount > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.destructiveLight,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '$openCount Open',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.destructiveColor,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-
-          // List
-          Expanded(
-            child: _filteredComplaints.isEmpty
-                ? KosMateEmptyState(
-                    icon: Icons.build_circle_outlined,
-                    title: 'No complaints found',
-                    subtitle: _selectedFilterTab == 1
-                        ? 'Resolved tickets will appear here.'
-                        : 'Tenant maintenance tickets will appear here.',
-                    plain: true,
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
-                    ),
-                    itemCount: _filteredComplaints.length,
-                    itemBuilder: (context, index) {
-                      final c = _filteredComplaints[index];
-                      final tenant = c.user?.name ?? 'Tenant';
-                      final room = c.room?.roomNumber ?? 'Room ${c.roomId}';
-
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: const BorderSide(
-                            color: AppTheme.borderLight,
-                            width: 1.1,
-                          ),
-                        ),
-                        child: InkWell(
-                          onTap: () => _showComplaintResponseDialog(c),
-                          borderRadius: BorderRadius.circular(12),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.iconBadgeBackground,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(
-                                    Icons.build_rounded,
-                                    color: AppTheme.accentColor,
-                                    size: 22,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        c.title,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontFamily: 'Roboto',
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppTheme.textDark,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 3),
-                                      Text(
-                                        '$tenant • $room',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: AppTheme.textMuted,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                KosMateStatusChip.fromComplaintStatus(c.status),
-                                const SizedBox(width: 6),
-                                const Icon(
-                                  Icons.chevron_right_rounded,
-                                  color: AppTheme.accentColor,
-                                  size: 22,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterTab(int index, String label) {
-    final selected = _selectedFilterTab == index;
-    return Expanded(
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            _selectedFilterTab = index;
-            _applyFilter();
-          });
-        },
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: selected ? AppTheme.accentColor : AppTheme.surfaceLight,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: selected ? Colors.white : AppTheme.textMuted,
-            ),
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

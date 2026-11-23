@@ -28,6 +28,7 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
   final _complaintService = sl.complaint;
 
   BookingModel? _activeBooking;
+  BookingModel? _pendingBooking;
   PaymentModel? _latestPayment;
   ComplaintModel? _latestComplaint;
   bool _isLoading = true;
@@ -52,7 +53,13 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
 
       if (mounted) {
         setState(() {
-          _activeBooking = bookings.isNotEmpty ? bookings.first : null;
+          // Identify approved active booking vs pending request
+          _activeBooking = bookings
+              .where((b) => b.status == BookingStatus.approved)
+              .firstOrNull;
+          _pendingBooking = bookings
+              .where((b) => b.status == BookingStatus.pending)
+              .firstOrNull;
           _latestPayment = payments.isNotEmpty ? payments.first : null;
           _latestComplaint = complaints.isNotEmpty ? complaints.first : null;
           _isLoading = false;
@@ -204,15 +211,34 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
 
     final hasActiveRoom =
         _activeBooking != null && _activeBooking?.room != null;
-    final roomNumber = hasActiveRoom
-        ? _activeBooking!.room!.roomNumber
-        : 'None';
-    final houseName = hasActiveRoom
-        ? (_activeBooking!.room!.house?.houseName ?? 'Boarding House')
-        : 'Explore available rooms';
-    final paymentStatus = _latestPayment != null
-        ? _latestPayment!.status.displayName
-        : 'No bills';
+    final hasPendingBooking =
+        _pendingBooking != null && _pendingBooking?.room != null;
+
+    final String roomNumber;
+    final String subtitleLabel;
+    final String paymentStatus;
+
+    if (hasActiveRoom) {
+      roomNumber = _activeBooking!.room!.roomNumber;
+      final houseName =
+          _activeBooking!.room!.house?.houseName ?? 'Boarding House';
+      subtitleLabel = 'Room $roomNumber • $houseName';
+      paymentStatus = _latestPayment != null
+          ? _latestPayment!.status.displayName
+          : 'Paid';
+    } else if (hasPendingBooking) {
+      roomNumber = 'Pending';
+      final houseName =
+          _pendingBooking!.room!.house?.houseName ?? 'Boarding House';
+      subtitleLabel =
+          'Room ${_pendingBooking!.room!.roomNumber} • $houseName (Pending)';
+      paymentStatus = 'Awaiting';
+    } else {
+      roomNumber = 'No Room';
+      subtitleLabel = 'No room assigned • Explore boarding houses';
+      paymentStatus = 'No Bills';
+    }
+
     final greetingName = widget.user.name.trim().isNotEmpty
         ? widget.user.name.trim()
         : 'User';
@@ -236,9 +262,7 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
             ),
             const SizedBox(height: 4),
             Text(
-              hasActiveRoom
-                  ? 'Room $roomNumber • $houseName'
-                  : 'No active room • $houseName',
+              subtitleLabel,
               style: const TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 14,
@@ -250,89 +274,99 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
             Row(
               children: [
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryLight,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppTheme.borderLight),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Room',
-                              style: TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 14,
-                                color: AppTheme.textDark,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () => widget.onNavigateToTab(1),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryLight,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppTheme.borderLight),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Room',
+                                style: TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 14,
+                                  color: AppTheme.textDark,
+                                ),
                               ),
-                            ),
-                            Icon(
-                              Icons.sensor_door_outlined,
-                              color: AppTheme.accentColor,
-                              size: 22,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          roomNumber,
-                          style: const TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.primaryColor,
+                              Icon(
+                                Icons.sensor_door_outlined,
+                                color: AppTheme.accentColor,
+                                size: 22,
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 12),
+                          Text(
+                            roomNumber,
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: hasActiveRoom ? 24 : 18,
+                              fontWeight: FontWeight.w700,
+                              color: hasPendingBooking
+                                  ? AppTheme.warningColor
+                                  : AppTheme.primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.warningLight,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppTheme.warningLight),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Payment',
-                              style: TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 14,
-                                color: AppTheme.textDark,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () => widget.onNavigateToTab(2),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.warningLight,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppTheme.warningLight),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Payment',
+                                style: TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 14,
+                                  color: AppTheme.textDark,
+                                ),
                               ),
-                            ),
-                            Icon(
-                              Icons.check_circle_outline_rounded,
-                              color: AppTheme.accentColor,
-                              size: 22,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          paymentStatus,
-                          style: const TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.primaryColor,
+                              Icon(
+                                Icons.check_circle_outline_rounded,
+                                color: AppTheme.accentColor,
+                                size: 22,
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 12),
+                          Text(
+                            paymentStatus,
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: hasActiveRoom ? 24 : 18,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -354,8 +388,14 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
             Row(
               children: [
                 _buildActionTile(
-                  icon: Icons.bed_outlined,
-                  label: 'My room',
+                  icon: hasActiveRoom
+                      ? Icons.bed_outlined
+                      : (hasPendingBooking
+                            ? Icons.pending_actions_outlined
+                            : Icons.search_rounded),
+                  label: hasActiveRoom
+                      ? 'My room'
+                      : (hasPendingBooking ? 'My request' : 'Find Room'),
                   onTap: () => widget.onNavigateToTab(1),
                 ),
                 const SizedBox(width: 10),
@@ -527,15 +567,70 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
                 ),
               ),
             ] else if (_latestPayment == null) ...[
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 20),
-                child: Center(
-                  child: Text(
-                    'No recent activities yet.',
-                    style: TextStyle(color: AppTheme.textMuted),
+              if (!hasActiveRoom) ...[
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryLight,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.borderLight),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.apartment_rounded,
+                          color: AppTheme.accentColor,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Find your ideal room',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                                color: AppTheme.textDark,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Browse available boarding houses and submit a booking request.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => widget.onNavigateToTab(1),
+                        child: const Text('Browse'),
+                      ),
+                    ],
                   ),
                 ),
-              ),
+              ] else ...[
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Center(
+                    child: Text(
+                      'No recent activities yet.',
+                      style: TextStyle(color: AppTheme.textMuted),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ],
         ),

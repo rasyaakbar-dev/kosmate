@@ -30,18 +30,37 @@ class StorageService {
     }
   }
 
-  /// Upload room image
-  Future<String> uploadRoomImage(
-    int roomId,
-    Uint8List bytes,
-    String extension,
-  ) async {
+  /// Upload house image
+  Future<String> uploadHouseImage(
+    int? houseId,
+    Uint8List bytes, {
+    String extension = 'jpg',
+  }) async {
+    final prefix = houseId != null ? 'house_$houseId' : 'house_new';
     final fileName =
-        'room_${roomId}_${DateTime.now().millisecondsSinceEpoch}.$extension';
+        '${prefix}_${DateTime.now().millisecondsSinceEpoch}.$extension';
     return await uploadBytes(
       bucketName: SupabaseConstants.roomImagesBucket,
       path: fileName,
       bytes: bytes,
+      mimeType: 'image/jpeg',
+    );
+  }
+
+  /// Upload room image
+  Future<String> uploadRoomImage(
+    int? roomId,
+    Uint8List bytes, {
+    String extension = 'jpg',
+  }) async {
+    final prefix = roomId != null ? 'room_$roomId' : 'room_new';
+    final fileName =
+        '${prefix}_${DateTime.now().millisecondsSinceEpoch}.$extension';
+    return await uploadBytes(
+      bucketName: SupabaseConstants.roomImagesBucket,
+      path: fileName,
+      bytes: bytes,
+      mimeType: 'image/jpeg',
     );
   }
 

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/supabase_constants.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/kosmate_components.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../models/house_model.dart';
 import '../../../models/room_model.dart';
 import '../../../models/user_model.dart';
@@ -26,20 +26,18 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
   final _searchController = TextEditingController();
 
   List<HouseModel> _houses = [];
-  List<RoomModel> _allRooms = [];
-  List<RoomModel> _filteredRooms = [];
-
-  // Map roomId to tenant name for fast display
+  Map<int, List<RoomModel>> _houseRooms = {};
   final Map<int, String> _roomTenants = {};
 
+  HouseModel? _selectedHouse;
   bool _isLoading = true;
   String _searchQuery = '';
-  int? _selectedHouseFilter;
+  String _selectedStatusFilter = 'All';
 
   @override
   void initState() {
     super.initState();
-    _loadRooms();
+    _loadData();
   }
 
   @override
@@ -48,7 +46,7 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
     super.dispose();
   }
 
-  Future<void> _loadRooms() async {
+  Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
       final houses = await _houseService.getHousesByOwner(
@@ -56,16 +54,20 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
       );
       _houses = houses;
 
-      List<RoomModel> rooms = [];
-      for (final h in houses) {
-        final houseRooms = await _roomService.getRooms(houseId: h.houseId);
-        rooms.addAll(houseRooms);
-      }
+      final Map<int, List<RoomModel>> roomMap = {};
+      List<RoomModel> allRooms = [];
 
-      // Fetch active bookings for these rooms to display tenant names
-      if (rooms.isNotEmpty) {
+      for (final h in houses) {
+        final rooms = await _roomService.getRooms(houseId: h.houseId);
+        roomMap[h.houseId] = rooms;
+        allRooms.addAll(rooms);
+      }
+      _houseRooms = roomMap;
+
+      // Fetch active bookings for all rooms to get tenant names
+      if (allRooms.isNotEmpty) {
         try {
-          final roomIds = rooms.map((r) => r.roomId).toList();
+          final roomIds = allRooms.map((r) => r.roomId).toList();
           final bookingsRes = await supabase
               .from(SupabaseConstants.bookingTable)
               .select('room_id, users!booking_user_id_fkey(name)')
@@ -83,41 +85,26 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
         } catch (_) {}
       }
 
+      // If a house was selected, update reference
+      if (_selectedHouse != null) {
+        final updatedHouse = houses.where(
+          (h) => h.houseId == _selectedHouse!.houseId,
+        );
+        if (updatedHouse.isNotEmpty) {
+          _selectedHouse = updatedHouse.first;
+        } else {
+          _selectedHouse = null;
+        }
+      }
+
       if (mounted) {
-        setState(() {
-          _allRooms = rooms;
-          _applyFilter();
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     } catch (_) {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
-  }
-
-  void _applyFilter() {
-    var list = List<RoomModel>.from(_allRooms);
-
-    if (_selectedHouseFilter != null) {
-      list = list.where((r) => r.houseId == _selectedHouseFilter).toList();
-    }
-
-    if (_searchQuery.isNotEmpty) {
-      final q = _searchQuery.toLowerCase();
-      list = list.where((r) {
-        final numberMatch = r.roomNumber.toLowerCase().contains(q);
-        final floorMatch = r.roomType.toLowerCase().contains(q);
-        final tenant = _roomTenants[r.roomId]?.toLowerCase() ?? '';
-        final tenantMatch = tenant.contains(q);
-        final houseMatch =
-            r.house?.houseName.toLowerCase().contains(q) ?? false;
-        return numberMatch || floorMatch || tenantMatch || houseMatch;
-      }).toList();
-    }
-
-    _filteredRooms = list;
   }
 
   Future<void> _openAddHouseScreen() async {
@@ -129,40 +116,10 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
     );
 
     if (created != null && mounted) {
-      await _loadRooms();
+      await _loadData();
       setState(() {
-        _selectedHouseFilter = created.houseId;
-        _applyFilter();
+        _selectedHouse = created;
       });
-
-      if (!mounted) return;
-      final wantAddRoom = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: Text('House "${created.houseName}" Created!'),
-          content: const Text(
-            'Would you like to add the first room to this boarding house now?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Later'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentColor,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Add Room Now'),
-            ),
-          ],
-        ),
-      );
-
-      if (wantAddRoom == true && mounted) {
-        _openAddRoomScreen();
-      }
     }
   }
 
@@ -176,11 +133,65 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
     );
 
     if (updated != null && mounted) {
-      _loadRooms();
+      await _loadData();
     }
   }
 
-  void _openAddRoomScreen() async {
+  Future<void> _deleteHouse(HouseModel house) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Boarding House'),
+        content: Text(
+          'Are you sure you want to delete "${house.houseName}"? All rooms in this house will also be deleted.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.destructiveColor,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        await _houseService.deleteHouse(house.houseId);
+        if (_selectedHouse?.houseId == house.houseId) {
+          _selectedHouse = null;
+        }
+        await _loadData();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Boarding house deleted.'),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete house: $e'),
+              backgroundColor: AppTheme.destructiveColor,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _openAddRoomScreen([int? targetHouseId]) async {
+    final houseId = targetHouseId ?? _selectedHouse?.houseId;
     if (_houses.isEmpty) {
       _openAddHouseScreen();
       return;
@@ -191,13 +202,13 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
       MaterialPageRoute(
         builder: (_) => RoomFormScreen(
           ownerId: widget.currentUser.userId,
-          houseId: _selectedHouseFilter ?? _houses.firstOrNull?.houseId,
+          houseId: houseId,
         ),
       ),
     );
 
     if (created != null && mounted) {
-      _loadRooms();
+      _loadData();
     }
   }
 
@@ -211,36 +222,8 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
     );
 
     if (changed == true && mounted) {
-      _loadRooms();
+      _loadData();
     }
-  }
-
-  Widget _buildHouseFilterChip({
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
-      child: FilterChip(
-        label: Text(label),
-        selected: isSelected,
-        onSelected: (_) => onTap(),
-        selectedColor: AppTheme.primaryLight,
-        checkmarkColor: AppTheme.accentColor,
-        labelStyle: TextStyle(
-          fontSize: 13,
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-          color: isSelected ? AppTheme.accentColor : AppTheme.textMuted,
-        ),
-        backgroundColor: Colors.white,
-        side: BorderSide(
-          color: isSelected ? AppTheme.accentColor : AppTheme.borderMedium,
-          width: isSelected ? 1.5 : 1.0,
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      ),
-    );
   }
 
   @override
@@ -249,448 +232,935 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // Guided Onboarding when owner has 0 boarding houses
-    if (_houses.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: _loadRooms,
-        child: Column(
-          children: [
-            Expanded(
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      child: _selectedHouse == null
+          ? _buildHouseDirectoryView()
+          : _buildHouseRoomsView(),
+    );
+  }
+
+  // -------------------------------------------------------------
+  // LEVEL 1: House Directory View
+  // -------------------------------------------------------------
+  Widget _buildHouseDirectoryView() {
+    final filteredHouses = _houses.where((h) {
+      if (_searchQuery.isEmpty) return true;
+      final q = _searchQuery.toLowerCase();
+      return h.houseName.toLowerCase().contains(q) ||
+          h.houseAddress.toLowerCase().contains(q);
+    }).toList();
+
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Boarding Houses',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.foregroundColor,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Select a house to manage its rooms',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 13,
+                      color: AppTheme.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+              ElevatedButton.icon(
+                onPressed: _openAddHouseScreen,
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Add House'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.accentColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Search Box
+          TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Search houses by name or address...',
+              prefixIcon: const Icon(
+                Icons.search,
+                color: AppTheme.textMuted,
+                size: 20,
+              ),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, size: 18),
+                      onPressed: () {
+                        setState(() {
+                          _searchController.clear();
+                          _searchQuery = '';
+                        });
+                      },
+                    )
+                  : null,
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 12,
+                horizontal: 16,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: AppTheme.borderMedium),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: AppTheme.borderMedium),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(
+                  color: AppTheme.accentColor,
+                  width: 1.5,
+                ),
+              ),
+            ),
+            onChanged: (val) => setState(() => _searchQuery = val),
+          ),
+          const SizedBox(height: 18),
+
+          // Houses List or Empty State
+          if (_houses.isEmpty)
+            _buildEmptyHousesState()
+          else if (filteredHouses.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
               child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(28.0),
+                child: Text(
+                  'No boarding houses match your search.',
+                  style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
+                ),
+              ),
+            )
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: filteredHouses.length,
+              itemBuilder: (context, idx) {
+                final house = filteredHouses[idx];
+                final rooms = _houseRooms[house.houseId] ?? [];
+                final totalCount = rooms.length;
+                final availableCount = rooms
+                    .where((r) => r.status == RoomStatus.available)
+                    .length;
+                final occupiedCount = rooms
+                    .where((r) => r.status == RoomStatus.occupied)
+                    .length;
+
+                return _buildHouseCard(
+                  house: house,
+                  totalCount: totalCount,
+                  availableCount: availableCount,
+                  occupiedCount: occupiedCount,
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHouseCard({
+    required HouseModel house,
+    required int totalCount,
+    required int availableCount,
+    required int occupiedCount,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.borderLight),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            setState(() {
+              _selectedHouse = house;
+              _searchQuery = '';
+              _searchController.clear();
+              _selectedStatusFilter = 'All';
+            });
+          },
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Thumbnail photo
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    color: AppTheme.borderLight,
+                    child:
+                        house.thumbnailUrl != null &&
+                            house.thumbnailUrl!.isNotEmpty
+                        ? Image.network(
+                            house.thumbnailUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => const Icon(
+                              Icons.home_work_outlined,
+                              size: 32,
+                              color: AppTheme.textMuted,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.home_work_outlined,
+                            size: 32,
+                            color: AppTheme.textMuted,
+                          ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+
+                // House details
+                Expanded(
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: AppTheme.iconBadgeBackground,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Icon(
-                          Icons.apartment_rounded,
-                          size: 44,
-                          color: AppTheme.accentColor,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      const Text(
-                        'Create Your First Boarding House',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.textDark,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Before you can add rooms and accept tenants, you need to set up a boarding house (e.g. Kost Melati).',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.textMuted,
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.add, size: 20),
-                        label: const Text(
-                          'Create Boarding House',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              house.houseName,
+                              style: const TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.foregroundColor,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.accentColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 14,
+                          PopupMenuButton<String>(
+                            icon: const Icon(
+                              Icons.more_vert,
+                              color: AppTheme.textMuted,
+                              size: 20,
+                            ),
+                            padding: EdgeInsets.zero,
+                            onSelected: (val) {
+                              if (val == 'edit') {
+                                _openEditHouseScreen(house);
+                              } else if (val == 'delete') {
+                                _deleteHouse(house);
+                              }
+                            },
+                            itemBuilder: (ctx) => [
+                              const PopupMenuItem(
+                                value: 'edit',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.edit_outlined,
+                                      size: 18,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text('Edit House'),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.delete_outline,
+                                      size: 18,
+                                      color: AppTheme.destructiveColor,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Delete House',
+                                      style: TextStyle(
+                                        color: AppTheme.destructiveColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 14,
+                            color: AppTheme.textMuted,
                           ),
-                        ),
-                        onPressed: _openAddHouseScreen,
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              house.houseAddress,
+                              style: const TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 12,
+                                color: AppTheme.textMuted,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Stat badges
+                      Row(
+                        children: [
+                          _buildPillBadge(
+                            label: '$totalCount Rooms',
+                            bgColor: AppTheme.surfaceLight,
+                            textColor: AppTheme.primaryColor,
+                          ),
+                          const SizedBox(width: 6),
+                          _buildPillBadge(
+                            label: '$availableCount Available',
+                            bgColor: AppTheme.successLight,
+                            textColor: AppTheme.successColor,
+                          ),
+                          const SizedBox(width: 6),
+                          _buildPillBadge(
+                            label: '$occupiedCount Occupied',
+                            bgColor: AppTheme.primaryLight,
+                            textColor: AppTheme.primaryColor,
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyHousesState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 20),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: AppTheme.surfaceLight,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.home_work_outlined,
+                size: 48,
+                color: AppTheme.accentColor,
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: const Border(
-                  top: BorderSide(color: AppTheme.borderLight, width: 1.0),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    offset: const Offset(0, -2),
-                    blurRadius: 4,
-                  ),
-                ],
+            const SizedBox(height: 16),
+            const Text(
+              'No Boarding Houses Yet',
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.foregroundColor,
               ),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.add, size: 20),
-                  label: const Text(
-                    'Create boarding house',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.accentColor,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  onPressed: _openAddHouseScreen,
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Create your first boarding house to start managing its rooms and tenants.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: _openAddHouseScreen,
+              icon: const Icon(Icons.add),
+              label: const Text('Add Boarding House'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.accentColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
             ),
           ],
         ),
-      );
-    }
+      ),
+    );
+  }
 
-    final totalCount = _filteredRooms.length;
-    final availableCount = _filteredRooms
-        .where((r) => r.status == RoomStatus.available)
-        .length;
+  // -------------------------------------------------------------
+  // LEVEL 2: House Rooms View
+  // -------------------------------------------------------------
+  Widget _buildHouseRoomsView() {
+    final house = _selectedHouse!;
+    final rooms = _houseRooms[house.houseId] ?? [];
 
-    HouseModel? currentSelectedHouse;
-    if (_selectedHouseFilter != null) {
-      for (final h in _houses) {
-        if (h.houseId == _selectedHouseFilter) {
-          currentSelectedHouse = h;
-          break;
+    final filteredRooms = rooms.where((r) {
+      if (_selectedStatusFilter != 'All') {
+        if (_selectedStatusFilter == 'Available' &&
+            r.status != RoomStatus.available) {
+          return false;
+        }
+        if (_selectedStatusFilter == 'Occupied' &&
+            r.status != RoomStatus.occupied) {
+          return false;
+        }
+        if (_selectedStatusFilter == 'Maintenance' &&
+            r.status != RoomStatus.maintenance) {
+          return false;
         }
       }
-    }
 
-    return RefreshIndicator(
-      onRefresh: _loadRooms,
+      if (_searchQuery.isNotEmpty) {
+        final q = _searchQuery.toLowerCase();
+        final numMatch = r.roomNumber.toLowerCase().contains(q);
+        final typeMatch = r.roomType.toLowerCase().contains(q);
+        final tenant = _roomTenants[r.roomId]?.toLowerCase() ?? '';
+        final tenantMatch = tenant.contains(q);
+        return numMatch || typeMatch || tenantMatch;
+      }
+      return true;
+    }).toList();
+
+    final totalCount = rooms.length;
+    final availableCount = rooms
+        .where((r) => r.status == RoomStatus.available)
+        .length;
+    final occupiedCount = rooms
+        .where((r) => r.status == RoomStatus.occupied)
+        .length;
+
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top search bar
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
-            child: KosMateSearchBar(
-              controller: _searchController,
-              hintText: 'Search room or renter',
-              onChanged: (val) {
-                setState(() {
-                  _searchQuery = val.trim();
-                  _applyFilter();
-                });
-              },
-              onClear: () {
-                setState(() {
-                  _searchQuery = '';
-                  _applyFilter();
-                });
-              },
-            ),
-          ),
-
-          // Horizontal Boarding House Switcher Bar
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Row(
-              children: [
-                _buildHouseFilterChip(
-                  label: 'All Houses (${_allRooms.length})',
-                  isSelected: _selectedHouseFilter == null,
-                  onTap: () {
-                    setState(() {
-                      _selectedHouseFilter = null;
-                      _applyFilter();
-                    });
-                  },
+          // Back button and House Title bar
+          Row(
+            children: [
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    _selectedHouse = null;
+                    _searchQuery = '';
+                    _searchController.clear();
+                  });
+                },
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: AppTheme.foregroundColor,
                 ),
-                ..._houses.map((h) {
-                  final houseRoomCount = _allRooms
-                      .where((r) => r.houseId == h.houseId)
-                      .length;
-                  return _buildHouseFilterChip(
-                    label: '${h.houseName} ($houseRoomCount)',
-                    isSelected: _selectedHouseFilter == h.houseId,
-                    onTap: () {
-                      setState(() {
-                        _selectedHouseFilter = h.houseId;
-                        _applyFilter();
-                      });
-                    },
-                  );
-                }),
-                Padding(
-                  padding: const EdgeInsets.only(left: 4.0),
-                  child: ActionChip(
-                    avatar: const Icon(
-                      Icons.add,
-                      size: 16,
-                      color: AppTheme.accentColor,
-                    ),
-                    label: const Text(
-                      'New House',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.accentColor,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      house.houseName,
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.foregroundColor,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    backgroundColor: AppTheme.iconBadgeBackground,
-                    side: const BorderSide(color: AppTheme.borderColor),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                    Text(
+                      house.houseAddress,
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 12,
+                        color: AppTheme.textMuted,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    onPressed: _openAddHouseScreen,
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: () => _openAddRoomScreen(house.houseId),
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Add Room'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.accentColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
                   ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Overview counters strip
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceLight,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildStatPill('Total', '$totalCount', AppTheme.primaryColor),
+                Container(width: 1, height: 20, color: AppTheme.borderMedium),
+                _buildStatPill(
+                  'Available',
+                  '$availableCount',
+                  AppTheme.successColor,
+                ),
+                Container(width: 1, height: 20, color: AppTheme.borderMedium),
+                _buildStatPill(
+                  'Occupied',
+                  '$occupiedCount',
+                  AppTheme.accentColor,
                 ),
               ],
             ),
           ),
+          const SizedBox(height: 14),
 
-          // House Info Strip when a specific house is selected
-          if (currentSelectedHouse != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+          // Search bar
+          TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Search room number, type, or tenant...',
+              prefixIcon: const Icon(
+                Icons.search,
+                color: AppTheme.textMuted,
+                size: 20,
+              ),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, size: 18),
+                      onPressed: () {
+                        setState(() {
+                          _searchController.clear();
+                          _searchQuery = '';
+                        });
+                      },
+                    )
+                  : null,
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 10,
+                horizontal: 14,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: AppTheme.borderMedium),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: AppTheme.borderMedium),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(
+                  color: AppTheme.accentColor,
+                  width: 1.5,
                 ),
-                decoration: BoxDecoration(
-                  color: AppTheme.scaffoldBackground,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.borderLight),
-                ),
-                child: Row(
+              ),
+            ),
+            onChanged: (val) => setState(() => _searchQuery = val),
+          ),
+          const SizedBox(height: 10),
+
+          // Status filter chips
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: ['All', 'Available', 'Occupied', 'Maintenance'].map((
+                status,
+              ) {
+                final isSelected = _selectedStatusFilter == status;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6.0),
+                  child: ChoiceChip(
+                    label: Text(status),
+                    selected: isSelected,
+                    selectedColor: AppTheme.primaryLight,
+                    backgroundColor: Colors.white,
+                    side: BorderSide(
+                      color: isSelected
+                          ? AppTheme.accentColor
+                          : AppTheme.borderMedium,
+                    ),
+                    labelStyle: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 12,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.normal,
+                      color: isSelected
+                          ? AppTheme.accentColor
+                          : AppTheme.textDark,
+                    ),
+                    onSelected: (_) {
+                      setState(() => _selectedStatusFilter = status);
+                    },
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Rooms list
+          if (rooms.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 40.0),
+                child: Column(
                   children: [
                     const Icon(
-                      Icons.location_on_outlined,
-                      size: 16,
+                      Icons.sensor_door_outlined,
+                      size: 44,
                       color: AppTheme.textMuted,
                     ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        currentSelectedHouse.houseAddress,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.textMuted,
-                        ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'No rooms in this boarding house yet.',
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.foregroundColor,
                       ),
                     ),
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      onPressed: () =>
-                          _openEditHouseScreen(currentSelectedHouse!),
-                      child: const Text(
-                        'Edit House',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.accentColor,
-                        ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Add your first room to make it available for tenants.',
+                      style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () => _openAddRoomScreen(house.houseId),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add First Room'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.accentColor,
+                        foregroundColor: Colors.white,
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-
-          // Count & availability badge row
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 6.0,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '$totalCount rooms',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.textMuted,
-                    fontWeight: FontWeight.w500,
-                  ),
+            )
+          else if (filteredRooms.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: Center(
+                child: Text(
+                  'No rooms match your filter.',
+                  style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppTheme.successLight,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '$availableCount available',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.successColor,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Rooms list
-          Expanded(
-            child: _filteredRooms.isEmpty
-                ? const KosMateEmptyState(
-                    icon: Icons.meeting_room_outlined,
-                    title: 'No rooms found',
-                    subtitle: 'Tap "+ Add room" below to create a room.',
-                    plain: true,
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 6,
-                    ),
-                    itemCount: _filteredRooms.length,
-                    itemBuilder: (context, index) {
-                      final room = _filteredRooms[index];
-                      final tenantName = _roomTenants[room.roomId];
-                      final floor = room.roomType.isNotEmpty
-                          ? room.roomType
-                          : 'Floor 1';
-                      final subtitleText = tenantName != null
-                          ? '$tenantName • $floor'
-                          : (room.status == RoomStatus.available
-                                ? 'Available • $floor'
-                                : (room.status == RoomStatus.maintenance
-                                      ? 'Maintenance • $floor'
-                                      : 'Occupied • $floor'));
-
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: const BorderSide(
-                            color: AppTheme.borderLight,
-                            width: 1.1,
-                          ),
-                        ),
-                        child: InkWell(
-                          onTap: () => _openRoomDetails(room),
-                          borderRadius: BorderRadius.circular(12),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.iconBadgeBackground,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(
-                                    Icons.meeting_room_outlined,
-                                    color: AppTheme.accentColor,
-                                    size: 24,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        room.roomNumber,
-                                        style: const TextStyle(
-                                          fontFamily: 'Roboto',
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppTheme.textDark,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 3),
-                                      Text(
-                                        subtitleText,
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          color: AppTheme.textMuted,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                KosMateStatusChip.fromRoomStatus(room.status),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
-
-          // Sticky Bottom "+ Add room" Button
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: const Border(
-                top: BorderSide(color: AppTheme.borderLight, width: 1.0),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  offset: const Offset(0, -2),
-                  blurRadius: 4,
-                ),
-              ],
+            )
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: filteredRooms.length,
+              itemBuilder: (context, idx) {
+                final room = filteredRooms[idx];
+                final tenantName = _roomTenants[room.roomId];
+                return _buildRoomTile(room: room, tenantName: tenantName);
+              },
             ),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.add, size: 20),
-                label: const Text(
-                  'Add room',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accentColor,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                onPressed: _openAddRoomScreen,
-              ),
-            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoomTile({required RoomModel room, String? tenantName}) {
+    Color badgeBg;
+    Color badgeText;
+    switch (room.status) {
+      case RoomStatus.available:
+        badgeBg = AppTheme.successLight;
+        badgeText = AppTheme.successColor;
+        break;
+      case RoomStatus.occupied:
+        badgeBg = AppTheme.primaryLight;
+        badgeText = AppTheme.primaryColor;
+        break;
+      case RoomStatus.maintenance:
+        badgeBg = AppTheme.destructiveLight;
+        badgeText = AppTheme.destructiveColor;
+        break;
+      case RoomStatus.unavailable:
+        badgeBg = AppTheme.surfaceLight;
+        badgeText = AppTheme.textMuted;
+        break;
+    }
+
+    final hasPhoto = room.imageUrls.isNotEmpty;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.borderLight),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _openRoomDetails(room),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                // Room Photo or Icon
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    color: AppTheme.surfaceLight,
+                    child: hasPhoto
+                        ? Image.network(
+                            room.imageUrls.first,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => const Icon(
+                              Icons.meeting_room_outlined,
+                              color: AppTheme.accentColor,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.meeting_room_outlined,
+                            color: AppTheme.accentColor,
+                            size: 26,
+                          ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // Room details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            room.roomNumber,
+                            style: const TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.foregroundColor,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: badgeBg,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              room.status.displayName,
+                              style: TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: badgeText,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        room.roomType,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${Formatters.formatCurrency(room.price)} / mo',
+                            style: const TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                          if (tenantName != null)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.person_outline,
+                                  size: 13,
+                                  color: AppTheme.textMuted,
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  tenantName,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textDark,
+                                  ),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.chevron_right,
+                  color: AppTheme.textSubtle,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPillBadge({
+    required String label,
+    required Color bgColor,
+    required Color textColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'Roboto',
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: textColor,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatPill(String label, String value, Color color) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 11,
+            color: AppTheme.textMuted,
+          ),
+        ),
+      ],
     );
   }
 }

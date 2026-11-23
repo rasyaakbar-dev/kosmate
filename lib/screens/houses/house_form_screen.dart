@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
@@ -21,9 +24,12 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _addressController;
   late final TextEditingController _descriptionController;
-  late final TextEditingController _thumbnailUrlController;
   final _houseService = sl.house;
+  final _storageService = sl.storage;
+  final _imagePicker = ImagePicker();
 
+  Uint8List? _selectedImageBytes;
+  String? _currentThumbnailUrl;
   bool _isLoading = false;
 
   @override
@@ -38,9 +44,7 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
     _descriptionController = TextEditingController(
       text: widget.house?.description ?? '',
     );
-    _thumbnailUrlController = TextEditingController(
-      text: widget.house?.thumbnailUrl ?? '',
-    );
+    _currentThumbnailUrl = widget.house?.thumbnailUrl;
   }
 
   @override
@@ -48,8 +52,103 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
     _nameController.dispose();
     _addressController.dispose();
     _descriptionController.dispose();
-    _thumbnailUrlController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picked = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 80,
+      );
+      if (picked != null) {
+        final bytes = await picked.readAsBytes();
+        setState(() {
+          _selectedImageBytes = bytes;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to pick image: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showImageSourceModal() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Text(
+                'Upload House Photo',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.foregroundColor,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.photo_camera_outlined,
+                color: AppTheme.primaryColor,
+              ),
+              title: const Text('Take a photo'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.photo_library_outlined,
+                color: AppTheme.primaryColor,
+              ),
+              title: const Text('Choose from gallery'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            if (_selectedImageBytes != null ||
+                (_currentThumbnailUrl != null &&
+                    _currentThumbnailUrl!.isNotEmpty)) ...[
+              ListTile(
+                leading: const Icon(
+                  Icons.delete_outline,
+                  color: AppTheme.destructiveColor,
+                ),
+                title: const Text(
+                  'Remove photo',
+                  style: TextStyle(color: AppTheme.destructiveColor),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  setState(() {
+                    _selectedImageBytes = null;
+                    _currentThumbnailUrl = null;
+                  });
+                },
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _handleSave() async {
@@ -59,6 +158,16 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
     final messenger = ScaffoldMessenger.of(context);
 
     try {
+      String? finalThumbnailUrl = _currentThumbnailUrl;
+
+      if (_selectedImageBytes != null) {
+        final uploaded = await _storageService.uploadHouseImage(
+          widget.house?.houseId,
+          _selectedImageBytes!,
+        );
+        finalThumbnailUrl = uploaded;
+      }
+
       HouseModel result;
       if (widget.isEditing) {
         final updatedHouse = widget.house!.copyWith(
@@ -67,9 +176,7 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
           description: _descriptionController.text.trim().isNotEmpty
               ? _descriptionController.text.trim()
               : null,
-          thumbnailUrl: _thumbnailUrlController.text.trim().isNotEmpty
-              ? _thumbnailUrlController.text.trim()
-              : null,
+          thumbnailUrl: finalThumbnailUrl,
         );
         result = await _houseService.updateHouse(updatedHouse);
         messenger.showSnackBar(
@@ -87,9 +194,7 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
           description: _descriptionController.text.trim().isNotEmpty
               ? _descriptionController.text.trim()
               : null,
-          thumbnailUrl: _thumbnailUrlController.text.trim().isNotEmpty
-              ? _thumbnailUrlController.text.trim()
-              : null,
+          thumbnailUrl: finalThumbnailUrl,
         );
         result = await _houseService.createHouse(newHouse);
         messenger.showSnackBar(
@@ -151,45 +256,54 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Live Thumbnail Preview Card
-              if (_thumbnailUrlController.text.trim().isNotEmpty) ...[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    height: 180,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: AppTheme.borderLight,
-                      border: Border.all(color: AppTheme.borderMedium),
-                    ),
-                    child: Image.network(
-                      _thumbnailUrlController.text.trim(),
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.broken_image_outlined,
-                              size: 40,
-                              color: AppTheme.textSubtle,
-                            ),
-                            SizedBox(height: 6),
-                            Text(
-                              'Unable to load image from URL',
-                              style: TextStyle(
-                                color: AppTheme.textSubtle,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+              // House Photo
+              _buildLabel('House Photo (Optional)'),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: _showImageSourceModal,
+                child: Container(
+                  height: 180,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppTheme.borderMedium,
+                      width: 1.2,
                     ),
                   ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: _selectedImageBytes != null
+                        ? Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Image.memory(
+                                _selectedImageBytes!,
+                                fit: BoxFit.cover,
+                              ),
+                              _buildPhotoChangeOverlay(),
+                            ],
+                          )
+                        : (_currentThumbnailUrl != null &&
+                              _currentThumbnailUrl!.isNotEmpty)
+                        ? Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Image.network(
+                                _currentThumbnailUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) =>
+                                    _buildUploadPlaceholder(),
+                              ),
+                              _buildPhotoChangeOverlay(),
+                            ],
+                          )
+                        : _buildUploadPlaceholder(),
+                  ),
                 ),
-                const SizedBox(height: 20),
-              ],
+              ),
+              const SizedBox(height: 20),
 
               // House Name
               _buildLabel('House Name *'),
@@ -237,20 +351,6 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
                 decoration: _inputDecoration(
                   hintText: 'e.g. Close to campus, 24/7 security, quiet residential area...',
                   prefixIcon: Icons.notes_outlined,
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              // Thumbnail URL
-              _buildLabel('Thumbnail Image URL (Optional)'),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _thumbnailUrlController,
-                keyboardType: TextInputType.url,
-                onChanged: (_) => setState(() {}),
-                decoration: _inputDecoration(
-                  hintText: 'https://example.com/house.jpg',
-                  prefixIcon: Icons.image_outlined,
                 ),
               ),
               const SizedBox(height: 32),
@@ -322,6 +422,58 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPhotoChangeOverlay() {
+    return Positioned(
+      bottom: 8,
+      right: 8,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.65),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.camera_alt, color: Colors.white, size: 14),
+            SizedBox(width: 4),
+            Text(
+              'Change',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUploadPlaceholder() {
+    return const Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.add_a_photo_outlined, size: 40, color: AppTheme.accentColor),
+        SizedBox(height: 8),
+        Text(
+          'Tap to upload house photo',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.primaryColor,
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          'JPEG or PNG up to 5MB',
+          style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+        ),
+      ],
     );
   }
 

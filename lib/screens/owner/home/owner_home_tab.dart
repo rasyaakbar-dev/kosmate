@@ -5,13 +5,10 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../models/booking_model.dart';
 import '../../../models/complaint_model.dart';
-import '../../../models/house_model.dart';
 import '../../../models/payment_model.dart';
 import '../../../models/room_model.dart';
 import '../../../models/user_model.dart';
-import '../../houses/house_form_screen.dart';
 import '../complaints/owner_complaints_screen.dart';
-import '../rooms/room_form_screen.dart';
 
 class OwnerHomeTab extends StatefulWidget {
   final UserModel user;
@@ -35,10 +32,10 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
   final _complaintService = sl.complaint;
 
   int _totalRooms = 0;
-  int _occupiedRooms = 0;
   int _availableRooms = 0;
+  int _unpaidOverduePaymentsCount = 0;
+  int _activeComplaintsCount = 0;
 
-  List<HouseModel> _houses = [];
   List<BookingModel> _recentBookings = [];
   List<PaymentModel> _recentPayments = [];
   List<ComplaintModel> _recentComplaints = [];
@@ -64,24 +61,34 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
       );
 
       int total = 0;
-      int occupied = 0;
       int available = 0;
 
       for (final h in houses) {
         final rooms = await _roomService.getRooms(houseId: h.houseId);
         total += rooms.length;
-        occupied += rooms.where((r) => r.status == RoomStatus.occupied).length;
         available += rooms
             .where((r) => r.status == RoomStatus.available)
             .length;
       }
 
+      final unpaidOverdue = payments
+          .where(
+            (p) =>
+                p.status == PaymentStatus.pending ||
+                p.status == PaymentStatus.overdue,
+          )
+          .length;
+
+      final activeComplaints = complaints
+          .where((c) => c.status != ComplaintStatus.resolved)
+          .length;
+
       if (mounted) {
         setState(() {
-          _houses = houses;
           _totalRooms = total;
-          _occupiedRooms = occupied;
           _availableRooms = available;
+          _unpaidOverduePaymentsCount = unpaidOverdue;
+          _activeComplaintsCount = activeComplaints;
           _recentBookings = bookings;
           _recentPayments = payments;
           _recentComplaints = complaints;
@@ -90,61 +97,6 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
       }
     } catch (_) {
       if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _openAddRoomScreen() async {
-    if (_houses.isEmpty) {
-      final createdHouse = await Navigator.push<HouseModel>(
-        context,
-        MaterialPageRoute(
-          builder: (_) => HouseFormScreen(ownerId: widget.user.userId),
-        ),
-      );
-      if (createdHouse != null && mounted) {
-        await _loadDashboardData();
-        if (!mounted) return;
-        final wantAddRoom = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text('House "${createdHouse.houseName}" Created!'),
-            content: const Text(
-              'Would you like to add the first room to this boarding house now?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Later'),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accentColor,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Add Room Now'),
-              ),
-            ],
-          ),
-        );
-        if (wantAddRoom == true && mounted) {
-          _openAddRoomScreen();
-        }
-      }
-      return;
-    }
-
-    final created = await Navigator.push<RoomModel>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => RoomFormScreen(
-          ownerId: widget.user.userId,
-          houseId: _houses.firstOrNull?.houseId,
-        ),
-      ),
-    );
-    if (created != null && mounted) {
-      _loadDashboardData();
     }
   }
 
@@ -283,27 +235,33 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
             Row(
               children: [
                 _buildStatCard(
-                  label: 'Total rooms',
-                  count: '$_totalRooms',
-                  icon: Icons.sensor_door_outlined,
-                  bgColor: AppTheme.primaryLight,
-                  borderColor: AppTheme.borderLight,
-                ),
-                const SizedBox(width: 10),
-                _buildStatCard(
-                  label: 'Occupied',
-                  count: '$_occupiedRooms',
-                  icon: Icons.group_outlined,
-                  bgColor: AppTheme.warningLight,
-                  borderColor: AppTheme.warningLight,
-                ),
-                const SizedBox(width: 10),
-                _buildStatCard(
-                  label: 'Available',
+                  label: 'Available Rooms',
                   count: '$_availableRooms',
+                  subtext: 'of $_totalRooms total',
                   icon: Icons.meeting_room_outlined,
                   bgColor: AppTheme.successLight,
                   borderColor: AppTheme.successLight,
+                  textColor: AppTheme.successColor,
+                ),
+                const SizedBox(width: 8),
+                _buildStatCard(
+                  label: 'Unpaid / Overdue',
+                  count: '$_unpaidOverduePaymentsCount',
+                  subtext: 'need attention',
+                  icon: Icons.receipt_long_outlined,
+                  bgColor: AppTheme.destructiveLight,
+                  borderColor: AppTheme.borderLight,
+                  textColor: AppTheme.destructiveColor,
+                ),
+                const SizedBox(width: 8),
+                _buildStatCard(
+                  label: 'Complaints',
+                  count: '$_activeComplaintsCount',
+                  subtext: 'in progress / open',
+                  icon: Icons.build_circle_outlined,
+                  bgColor: AppTheme.warningLight,
+                  borderColor: AppTheme.warningLight,
+                  textColor: AppTheme.warningColor,
                 ),
               ],
             ),
@@ -323,21 +281,27 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
             Row(
               children: [
                 _buildQuickActionTile(
-                  icon: Icons.add,
-                  label: 'Add room',
-                  onTap: _openAddRoomScreen,
+                  icon: Icons.meeting_room_outlined,
+                  label: 'Check\nrooms',
+                  onTap: () => widget.onNavigateToTab(1),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 _buildQuickActionTile(
-                  icon: Icons.person_add_outlined,
-                  label: 'Assign renter',
+                  icon: Icons.assignment_ind_outlined,
+                  label: 'Check\nbooking',
                   onTap: _showBookingRequestsModal,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 _buildQuickActionTile(
-                  icon: Icons.feedback_outlined,
-                  label: 'Complaints',
+                  icon: Icons.build_circle_outlined,
+                  label: 'Check\ncomplaints',
                   onTap: _openComplaintsScreen,
+                ),
+                const SizedBox(width: 8),
+                _buildQuickActionTile(
+                  icon: Icons.receipt_long_outlined,
+                  label: 'Check\npayments',
+                  onTap: () => widget.onNavigateToTab(2),
                 ),
               ],
             ),
@@ -354,73 +318,162 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
             ),
             const SizedBox(height: 12),
 
-            if (_recentPayments.isNotEmpty) ...[
-              _buildRecentCard(
-                icon: Icons.receipt_long_outlined,
-                title: 'Payment received',
-                subtitle:
-                    '${_recentPayments.first.user?.name ?? "Tenant"} • Room ${_recentPayments.first.room?.roomNumber ?? _recentPayments.first.roomId}',
-                trailingText: Formatters.formatDate(
-                  _recentPayments.first.paidDate ??
-                      _recentPayments.first.dueDate,
-                ),
-              ),
-              const SizedBox(height: 10),
-            ],
-
-            if (_recentComplaints.isNotEmpty) ...[
-              _buildRecentCard(
-                icon: Icons.build_outlined,
-                title: 'Complaint: ${_recentComplaints.first.title}',
-                subtitle:
-                    '${_recentComplaints.first.description} • Room ${_recentComplaints.first.room?.roomNumber ?? _recentComplaints.first.roomId}',
-                trailingBadge: _recentComplaints.first.status.displayName,
-                trailingText: Formatters.formatDate(
-                  _recentComplaints.first.date,
-                ),
-              ),
-              const SizedBox(height: 10),
-            ],
-
-            if (_recentBookings.isNotEmpty) ...[
-              _buildRecentCard(
-                icon: Icons.person_outline,
-                title: 'Booking request',
-                subtitle:
-                    '${_recentBookings.first.user?.name ?? "User"} • Room ${_recentBookings.first.room?.roomNumber ?? _recentBookings.first.roomId}',
-                trailingBadge: _recentBookings.first.status.displayName,
-                trailingText: Formatters.formatDate(
-                  _recentBookings.first.requestDate,
-                ),
-              ),
-            ] else if (_recentPayments.isEmpty &&
-                _recentComplaints.isEmpty) ...[
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 20),
-                child: Center(
-                  child: Text(
-                    'No recent activities yet.',
-                    style: TextStyle(color: AppTheme.textMuted),
-                  ),
-                ),
-              ),
-            ],
+            ..._buildRecentActivitiesList(),
           ],
         ),
       ),
     );
   }
 
+  List<Widget> _buildRecentActivitiesList() {
+    final List<Widget> items = [];
+
+    // Prioritize unresolved & in-progress complaints at the very top!
+    final activeComplaints = _recentComplaints
+        .where((c) => c.status != ComplaintStatus.resolved)
+        .toList();
+    final otherComplaints = _recentComplaints
+        .where((c) => c.status == ComplaintStatus.resolved)
+        .toList();
+
+    for (final c in activeComplaints) {
+      items.add(
+        _buildRecentCard(
+          icon: Icons.build_circle_outlined,
+          title: 'Complaint: ${c.title}',
+          subtitle: '${c.description} • Room ${c.room?.roomNumber ?? c.roomId}',
+          trailingBadge: c.status.displayName,
+          badgeColor: c.status == ComplaintStatus.pending
+              ? AppTheme.destructiveLight
+              : AppTheme.warningLight,
+          badgeTextColor: c.status == ComplaintStatus.pending
+              ? AppTheme.destructiveColor
+              : AppTheme.warningColor,
+          trailingText: Formatters.formatDate(c.date),
+          onTap: _openComplaintsScreen,
+        ),
+      );
+    }
+
+    // Pending/overdue payments next
+    final unpaidPayments = _recentPayments
+        .where(
+          (p) =>
+              p.status == PaymentStatus.pending ||
+              p.status == PaymentStatus.overdue,
+        )
+        .toList();
+    for (final p in unpaidPayments) {
+      items.add(
+        _buildRecentCard(
+          icon: Icons.receipt_long_outlined,
+          title:
+              'Payment ${p.status == PaymentStatus.overdue ? "Overdue" : "Pending"}: ${Formatters.formatCurrency(p.amount)}',
+          subtitle:
+              '${p.user?.name ?? "Tenant"} • Room ${p.room?.roomNumber ?? p.roomId}',
+          trailingBadge: p.status.displayName,
+          badgeColor: p.status == PaymentStatus.overdue
+              ? AppTheme.destructiveLight
+              : AppTheme.warningLight,
+          badgeTextColor: p.status == PaymentStatus.overdue
+              ? AppTheme.destructiveColor
+              : AppTheme.warningColor,
+          trailingText: Formatters.formatDate(p.dueDate),
+          onTap: () => widget.onNavigateToTab(2),
+        ),
+      );
+    }
+
+    // Pending booking requests
+    final pendingBookings = _recentBookings
+        .where((b) => b.status == BookingStatus.pending)
+        .toList();
+    for (final b in pendingBookings) {
+      items.add(
+        _buildRecentCard(
+          icon: Icons.assignment_ind_outlined,
+          title: 'Booking request',
+          subtitle:
+              '${b.user?.name ?? "User"} • Room ${b.room?.roomNumber ?? b.roomId}',
+          trailingBadge: b.status.displayName,
+          badgeColor: AppTheme.primaryLight,
+          badgeTextColor: AppTheme.accentColor,
+          trailingText: Formatters.formatDate(b.requestDate),
+          onTap: _showBookingRequestsModal,
+        ),
+      );
+    }
+
+    // Paid payments and resolved complaints if we have room
+    final paidPayments = _recentPayments
+        .where((p) => p.status == PaymentStatus.paid)
+        .toList();
+    for (final p in paidPayments) {
+      items.add(
+        _buildRecentCard(
+          icon: Icons.check_circle_outline,
+          title: 'Payment received: ${Formatters.formatCurrency(p.amount)}',
+          subtitle:
+              '${p.user?.name ?? "Tenant"} • Room ${p.room?.roomNumber ?? p.roomId}',
+          trailingBadge: p.status.displayName,
+          badgeColor: AppTheme.successLight,
+          badgeTextColor: AppTheme.successColor,
+          trailingText: Formatters.formatDate(p.paidDate ?? p.dueDate),
+          onTap: () => widget.onNavigateToTab(2),
+        ),
+      );
+    }
+
+    for (final c in otherComplaints) {
+      items.add(
+        _buildRecentCard(
+          icon: Icons.task_alt_outlined,
+          title: 'Complaint resolved: ${c.title}',
+          subtitle: '${c.description} • Room ${c.room?.roomNumber ?? c.roomId}',
+          trailingBadge: c.status.displayName,
+          badgeColor: AppTheme.successLight,
+          badgeTextColor: AppTheme.successColor,
+          trailingText: Formatters.formatDate(c.date),
+          onTap: _openComplaintsScreen,
+        ),
+      );
+    }
+
+    if (items.isEmpty) {
+      return [
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 20),
+          child: Center(
+            child: Text(
+              'No recent activities yet.',
+              style: TextStyle(color: AppTheme.textMuted),
+            ),
+          ),
+        ),
+      ];
+    }
+
+    // Strict limit of 5 items max and NO "VIEW ALL"
+    final limitedItems = items.take(5).toList();
+    return limitedItems
+        .map(
+          (w) => Padding(padding: const EdgeInsets.only(bottom: 10), child: w),
+        )
+        .toList();
+  }
+
   Widget _buildStatCard({
     required String label,
     required String count,
+    String? subtext,
     required IconData icon,
     required Color bgColor,
     required Color borderColor,
+    Color? textColor,
   }) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(12),
@@ -437,26 +490,40 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
                     label,
                     style: const TextStyle(
                       fontFamily: 'Roboto',
-                      fontSize: 12,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
                       color: AppTheme.textDark,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Icon(icon, color: AppTheme.accentColor, size: 18),
+                Icon(icon, color: textColor ?? AppTheme.accentColor, size: 16),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Text(
               count,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.primaryColor,
+                color: textColor ?? AppTheme.primaryColor,
               ),
             ),
+            if (subtext != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                subtext,
+                style: const TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 10,
+                  color: AppTheme.textMuted,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ],
         ),
       ),
@@ -476,7 +543,7 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 18),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppTheme.borderMedium, width: 1.2),
@@ -484,16 +551,18 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, color: AppTheme.accentColor, size: 28),
-                const SizedBox(height: 8),
+                Icon(icon, color: AppTheme.accentColor, size: 22),
+                const SizedBox(height: 6),
                 Text(
                   label,
                   textAlign: TextAlign.center,
+                  maxLines: 2,
                   style: const TextStyle(
                     fontFamily: 'Roboto',
-                    fontSize: 13,
+                    fontSize: 11,
                     fontWeight: FontWeight.w500,
                     color: AppTheme.foregroundColor,
+                    height: 1.2,
                   ),
                 ),
               ],
@@ -509,79 +578,102 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
     required String title,
     required String subtitle,
     String? trailingBadge,
+    Color? badgeColor,
+    Color? badgeTextColor,
     required String trailingText,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.borderLight),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppTheme.iconBadgeBackground,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: AppTheme.accentColor),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppTheme.borderLight),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.foregroundColor,
-                  ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppTheme.iconBadgeBackground,
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.textMuted,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (trailingBadge != null) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: AppTheme.destructiveLight,
-                borderRadius: BorderRadius.circular(6),
+                child: Icon(icon, color: AppTheme.accentColor, size: 20),
               ),
-              child: Text(
-                trailingBadge,
-                style: const TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.destructiveColor,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.foregroundColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          Text(
-            trailingText,
-            style: const TextStyle(
-              fontFamily: 'Roboto',
-              fontSize: 12,
-              color: AppTheme.textMuted,
-            ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (trailingBadge != null) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: badgeColor ?? AppTheme.destructiveLight,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        trailingBadge,
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: badgeTextColor ?? AppTheme.destructiveColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                  ],
+                  Text(
+                    trailingText,
+                    style: const TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 11,
+                      color: AppTheme.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

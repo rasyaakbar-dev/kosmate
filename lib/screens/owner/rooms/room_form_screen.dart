@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
@@ -29,6 +32,8 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _roomService = sl.room;
   final _houseService = sl.house;
+  final _storageService = sl.storage;
+  final _imagePicker = ImagePicker();
 
   late TextEditingController _nameController;
   late TextEditingController _rentController;
@@ -37,6 +42,8 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
   int? _selectedHouseId;
   String _selectedFloor = 'Floor 1';
   RoomStatus _selectedStatus = RoomStatus.available;
+  Uint8List? _selectedImageBytes;
+  String? _currentImageUrl;
 
   List<HouseModel> _houses = [];
   bool _isLoading = false;
@@ -61,6 +68,9 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
     _facilitiesController = TextEditingController(text: r?.facilities ?? '');
     _selectedStatus = r?.status ?? RoomStatus.available;
     _selectedHouseId = r?.houseId ?? widget.houseId;
+    _currentImageUrl = r?.imageUrls.isNotEmpty == true
+        ? r!.imageUrls.first
+        : null;
 
     if (r != null && r.roomType.isNotEmpty) {
       if (_floorOptions.contains(r.roomType)) {
@@ -77,6 +87,101 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
     _rentController.dispose();
     _facilitiesController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picked = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 80,
+      );
+      if (picked != null) {
+        final bytes = await picked.readAsBytes();
+        setState(() {
+          _selectedImageBytes = bytes;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to pick image: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showImageSourceModal() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Text(
+                'Upload Room Photo',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.foregroundColor,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.photo_camera_outlined,
+                color: AppTheme.primaryColor,
+              ),
+              title: const Text('Take a photo'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.photo_library_outlined,
+                color: AppTheme.primaryColor,
+              ),
+              title: const Text('Choose from gallery'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            if (_selectedImageBytes != null ||
+                (_currentImageUrl != null && _currentImageUrl!.isNotEmpty)) ...[
+              ListTile(
+                leading: const Icon(
+                  Icons.delete_outline,
+                  color: AppTheme.destructiveColor,
+                ),
+                title: const Text(
+                  'Remove photo',
+                  style: TextStyle(color: AppTheme.destructiveColor),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  setState(() {
+                    _selectedImageBytes = null;
+                    _currentImageUrl = null;
+                  });
+                },
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _loadHouses() async {
@@ -126,6 +231,18 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
 
     try {
       final rentValue = double.tryParse(_rentController.text.trim()) ?? 0.0;
+
+      List<String> roomImages = [];
+      if (_selectedImageBytes != null) {
+        final uploaded = await _storageService.uploadRoomImage(
+          widget.room?.roomId,
+          _selectedImageBytes!,
+        );
+        roomImages.add(uploaded);
+      } else if (_currentImageUrl != null && _currentImageUrl!.isNotEmpty) {
+        roomImages.add(_currentImageUrl!);
+      }
+
       final roomData = RoomModel(
         roomId: widget.room?.roomId ?? 0,
         houseId: _selectedHouseId!,
@@ -135,6 +252,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
         facilities: _facilitiesController.text.trim().isNotEmpty
             ? _facilitiesController.text.trim()
             : null,
+        imageUrls: roomImages,
         status: _selectedStatus,
       );
 
@@ -458,6 +576,62 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                           prefixIcon: Icons.playlist_add_check_outlined,
                         ),
                       ),
+                      const SizedBox(height: 18),
+
+                      // Room Photo
+                      const Text(
+                        'Room Photo (Optional)',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textDark,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: _showImageSourceModal,
+                        child: Container(
+                          height: 160,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppTheme.borderMedium,
+                              width: 1.2,
+                            ),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: _selectedImageBytes != null
+                                ? Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      Image.memory(
+                                        _selectedImageBytes!,
+                                        fit: BoxFit.cover,
+                                      ),
+                                      _buildPhotoChangeOverlay(),
+                                    ],
+                                  )
+                                : (_currentImageUrl != null &&
+                                      _currentImageUrl!.isNotEmpty)
+                                ? Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      Image.network(
+                                        _currentImageUrl!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, _, _) =>
+                                            _buildUploadPlaceholder(),
+                                      ),
+                                      _buildPhotoChangeOverlay(),
+                                    ],
+                                  )
+                                : _buildUploadPlaceholder(),
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 32),
 
                       // Buttons Row: Cancel and Save room
@@ -557,6 +731,58 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
         borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: AppTheme.accentColor, width: 1.5),
       ),
+    );
+  }
+
+  Widget _buildPhotoChangeOverlay() {
+    return Positioned(
+      bottom: 8,
+      right: 8,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.65),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.camera_alt, color: Colors.white, size: 14),
+            SizedBox(width: 4),
+            Text(
+              'Change',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUploadPlaceholder() {
+    return const Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.add_a_photo_outlined, size: 36, color: AppTheme.accentColor),
+        SizedBox(height: 8),
+        Text(
+          'Tap to upload room photo',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.primaryColor,
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          'JPEG or PNG up to 5MB',
+          style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+        ),
+      ],
     );
   }
 }
