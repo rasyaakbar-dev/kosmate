@@ -388,241 +388,245 @@ class _HouseRoomsPickerScreenState extends State<HouseRoomsPickerScreen> {
         showBackButton: true,
         showLogo: false,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // House Card Header
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppTheme.borderLight),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          width: 64,
-                          height: 64,
-                          color: AppTheme.borderLight,
-                          child:
-                              widget.house.thumbnailUrl != null &&
-                                  widget.house.thumbnailUrl!.trim().isNotEmpty
-                              ? Image.network(
-                                  widget.house.thumbnailUrl!.trim(),
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) => const Icon(
+      body: RefreshIndicator(
+        onRefresh: () async => _loadRooms(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // House Card Header
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppTheme.borderLight),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            width: 64,
+                            height: 64,
+                            color: AppTheme.borderLight,
+                            child:
+                                widget.house.thumbnailUrl != null &&
+                                    widget.house.thumbnailUrl!.trim().isNotEmpty
+                                ? Image.network(
+                                    widget.house.thumbnailUrl!.trim(),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, _, _) => const Icon(
+                                      Icons.home_work_outlined,
+                                      color: AppTheme.textSubtle,
+                                    ),
+                                  )
+                                : const Icon(
                                     Icons.home_work_outlined,
                                     color: AppTheme.textSubtle,
                                   ),
-                                )
-                              : const Icon(
-                                  Icons.home_work_outlined,
-                                  color: AppTheme.textSubtle,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.house.houseName,
+                                style: const TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.foregroundColor,
                                 ),
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.house.houseName,
-                              style: const TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.foregroundColor,
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              widget.house.houseAddress,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: AppTheme.textMuted,
+                              const SizedBox(height: 4),
+                              Text(
+                                widget.house.houseAddress,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppTheme.textMuted,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (widget.house.description != null &&
-                      widget.house.description!.trim().isNotEmpty) ...[
-                    const Divider(height: 20, color: AppTheme.surfaceLight),
-                    Text(
-                      widget.house.description!,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.textMuted,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Available Rooms Header
-            const Text(
-              'Available Rooms',
-              style: TextStyle(
-                fontFamily: 'Roboto',
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.foregroundColor,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Rooms List
-            FutureBuilder<List<RoomModel>>(
-              future: _roomsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32),
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                }
-
-                final rooms = snapshot.data ?? [];
-                if (rooms.isEmpty) {
-                  return Container(
-                    padding: const EdgeInsets.all(28),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.borderLight),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Column(
-                      children: [
-                        Icon(
-                          Icons.meeting_room_outlined,
-                          size: 40,
-                          color: AppTheme.borderMedium,
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'No available rooms in this boarding house right now.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppTheme.textMuted,
+                            ],
                           ),
                         ),
                       ],
                     ),
-                  );
-                }
+                    if (widget.house.description != null &&
+                        widget.house.description!.trim().isNotEmpty) ...[
+                      const Divider(height: 20, color: AppTheme.surfaceLight),
+                      Text(
+                        widget.house.description!,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.textMuted,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
 
-                return ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: rooms.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    final r = rooms[index];
+              // Available Rooms Header
+              const Text(
+                'Available Rooms',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.foregroundColor,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Rooms List
+              FutureBuilder<List<RoomModel>>(
+                future: _roomsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(32),
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  }
+
+                  final rooms = snapshot.data ?? [];
+                  if (rooms.isEmpty) {
                     return Container(
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(28),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: AppTheme.borderLight),
                       ),
-                      child: Row(
+                      alignment: Alignment.center,
+                      child: const Column(
                         children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryLight,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              Icons.meeting_room_outlined,
-                              color: AppTheme.accentColor,
-                              size: 26,
-                            ),
+                          Icon(
+                            Icons.meeting_room_outlined,
+                            size: 40,
+                            color: AppTheme.borderMedium,
                           ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Room ${r.roomNumber}',
-                                  style: const TextStyle(
-                                    fontFamily: 'Roboto',
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppTheme.foregroundColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  r.roomType,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: AppTheme.textMuted,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '${Formatters.formatCurrency(r.price)} / mo',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.primaryColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          ElevatedButton(
-                            onPressed: () => _showBookingRequestDialog(r),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.accentColor,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 10,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: const Text(
-                              'Book',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                              ),
+                          SizedBox(height: 8),
+                          Text(
+                            'No available rooms in this boarding house right now.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppTheme.textMuted,
                             ),
                           ),
                         ],
                       ),
                     );
-                  },
-                );
-              },
-            ),
-          ],
+                  }
+
+                  return ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: rooms.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    itemBuilder: (context, index) {
+                      final r = rooms[index];
+                      return Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppTheme.borderLight),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryLight,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(
+                                Icons.meeting_room_outlined,
+                                color: AppTheme.accentColor,
+                                size: 26,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Room ${r.roomNumber}',
+                                    style: const TextStyle(
+                                      fontFamily: 'Roboto',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppTheme.foregroundColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    r.roomType,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: AppTheme.textMuted,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${Formatters.formatCurrency(r.price)} / mo',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => _showBookingRequestDialog(r),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.accentColor,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 10,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text(
+                                'Book',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

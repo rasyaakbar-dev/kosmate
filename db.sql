@@ -389,6 +389,10 @@ CREATE POLICY "Authenticated users can delete avatars" ON storage.objects
   FOR DELETE TO authenticated
   USING (bucket_id = 'avatars');
 
+CREATE POLICY "Public can view avatars" ON storage.objects
+  FOR SELECT
+  USING (bucket_id = 'avatars');
+
 
 -- ============================================================================
 -- 8. MIDTRANS E-WALLET MIGRATION (Idempotent for existing databases)

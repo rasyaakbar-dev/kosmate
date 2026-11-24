@@ -101,21 +101,42 @@ class StorageService {
     String extension = 'jpg',
   }) async {
     final fileName = 'user_$userId.$extension';
-    final url = await uploadBytes(
-      bucketName: SupabaseConstants.avatarsBucket,
-      path: fileName,
-      bytes: bytes,
-      mimeType: 'image/jpeg',
-    );
-    return '$url?t=${DateTime.now().millisecondsSinceEpoch}';
+    try {
+      final url = await uploadBytes(
+        bucketName: SupabaseConstants.avatarsBucket,
+        path: fileName,
+        bytes: bytes,
+        mimeType: 'image/jpeg',
+      );
+      return '$url?t=${DateTime.now().millisecondsSinceEpoch}';
+    } catch (e) {
+      // If avatars bucket fails (e.g., not configured), try room-images fallback
+      try {
+        final fallbackUrl = await uploadBytes(
+          bucketName: SupabaseConstants.roomImagesBucket,
+          path: 'avatars/$fileName',
+          bytes: bytes,
+          mimeType: 'image/jpeg',
+        );
+        return '$fallbackUrl?t=${DateTime.now().millisecondsSinceEpoch}';
+      } catch (_) {
+        // Re-throw original exception so user gets the accurate bucket error
+        rethrow;
+      }
+    }
   }
 
   /// Delete user profile picture from storage
   Future<void> deleteAvatar(int userId, {String extension = 'jpg'}) async {
+    final fileName = 'user_$userId.$extension';
     try {
-      final fileName = 'user_$userId.$extension';
       await _client.storage.from(SupabaseConstants.avatarsBucket).remove([
         fileName,
+      ]);
+    } catch (_) {}
+    try {
+      await _client.storage.from(SupabaseConstants.roomImagesBucket).remove([
+        'avatars/$fileName',
       ]);
     } catch (_) {}
   }

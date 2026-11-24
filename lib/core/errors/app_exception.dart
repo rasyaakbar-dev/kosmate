@@ -7,7 +7,12 @@ class AppException implements Exception {
   const AppException(this.message, {this.code, this.cause});
 
   @override
-  String toString() => 'AppException($code): $message';
+  String toString() {
+    if (cause != null) {
+      return '$message: $cause';
+    }
+    return message;
+  }
 }
 
 /// Thrown by service methods when a backend/database operation fails.

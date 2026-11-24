@@ -354,363 +354,368 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20.0,
-                vertical: 20.0,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Top Summary Card
-                  Row(
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: AppTheme.iconBadgeBackground,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.meeting_room_outlined,
-                          color: AppTheme.accentColor,
-                          size: 30,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _room.roomNumber,
-                              style: const TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.textDark,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              '$houseName • $floorLabel',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: AppTheme.textMuted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      KosMateStatusChip.fromRoomStatus(_room.status),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Information Card
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: AppTheme.borderLight,
-                        width: 1.2,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+          : RefreshIndicator(
+              onRefresh: _loadRoomDetails,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20.0,
+                  vertical: 20.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Top Summary Card
+                    Row(
                       children: [
-                        const Text(
-                          'Information',
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textDark,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        _buildInfoRow(
-                          'Renter',
-                          _activeBooking?.user?.name ??
-                              (_room.status == RoomStatus.occupied
-                                  ? 'Occupied (Unassigned)'
-                                  : '-'),
-                          isBold: true,
-                        ),
-                        const SizedBox(height: 14),
-                        _buildInfoRow(
-                          'Monthly rent',
-                          Formatters.formatCurrency(_room.price),
-                          isBold: true,
-                        ),
-                        const SizedBox(height: 14),
-                        _buildInfoRow(
-                          'Check-in',
-                          _activeBooking != null
-                              ? Formatters.formatDate(
-                                  _activeBooking!.requestDate,
-                                )
-                              : '-',
-                          isBold: true,
-                        ),
-                        const SizedBox(height: 14),
-                        _buildInfoRow(
-                          'Facilities',
-                          _room.facilities?.isNotEmpty == true
-                              ? _room.facilities!
-                              : 'Standard facilities',
-                          isBold: true,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Current Status Box
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.warningLight,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: AppTheme.borderColor.withValues(alpha: 0.3),
-                        width: 1.2,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Current status',
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textDark,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
                         Container(
-                          padding: const EdgeInsets.all(12),
+                          width: 56,
+                          height: 56,
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: AppTheme.borderLight),
+                            color: AppTheme.iconBadgeBackground,
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Row(
+                          child: const Icon(
+                            Icons.meeting_room_outlined,
+                            color: AppTheme.accentColor,
+                            size: 30,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: AppTheme.iconBadgeBackground,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Icon(
-                                  Icons.receipt_long_outlined,
-                                  color: AppTheme.accentColor,
-                                  size: 22,
+                              Text(
+                                _room.roomNumber,
+                                style: const TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.textDark,
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      _currentPayment != null
-                                          ? Formatters.formatMonthYear(
-                                              _currentPayment!.dueDate,
-                                            )
-                                          : 'Current Billing',
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppTheme.textDark,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      _currentPayment != null
-                                          ? 'Due ${Formatters.formatShortDate(_currentPayment!.dueDate)}'
-                                          : 'No active dues recorded',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppTheme.textMuted,
-                                      ),
-                                    ),
-                                  ],
+                              const SizedBox(height: 3),
+                              Text(
+                                '$houseName • $floorLabel',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppTheme.textMuted,
                                 ),
-                              ),
-                              KosMateStatusChip.fromPaymentStatus(
-                                _currentPayment?.status ?? PaymentStatus.paid,
                               ),
                             ],
                           ),
                         ),
+                        KosMateStatusChip.fromRoomStatus(_room.status),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 24),
 
-                  // Maintenance & Complaints section
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: AppTheme.borderLight,
-                        width: 1.2,
+                    // Information Card
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: AppTheme.borderLight,
+                          width: 1.2,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Information',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildInfoRow(
+                            'Renter',
+                            _activeBooking?.user?.name ??
+                                (_room.status == RoomStatus.occupied
+                                    ? 'Occupied (Unassigned)'
+                                    : '-'),
+                            isBold: true,
+                          ),
+                          const SizedBox(height: 14),
+                          _buildInfoRow(
+                            'Monthly rent',
+                            Formatters.formatCurrency(_room.price),
+                            isBold: true,
+                          ),
+                          const SizedBox(height: 14),
+                          _buildInfoRow(
+                            'Check-in',
+                            _activeBooking != null
+                                ? Formatters.formatDate(
+                                    _activeBooking!.requestDate,
+                                  )
+                                : '-',
+                            isBold: true,
+                          ),
+                          const SizedBox(height: 14),
+                          _buildInfoRow(
+                            'Facilities',
+                            _room.facilities?.isNotEmpty == true
+                                ? _room.facilities!
+                                : 'Standard facilities',
+                            isBold: true,
+                          ),
+                        ],
                       ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Maintenance & Complaints',
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textDark,
-                          ),
+                    const SizedBox(height: 20),
+
+                    // Current Status Box
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.warningLight,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: AppTheme.borderColor.withValues(alpha: 0.3),
+                          width: 1.2,
                         ),
-                        const SizedBox(height: 14),
-                        if (_roomComplaints.isEmpty)
-                          const Row(
-                            children: [
-                              Icon(
-                                Icons.check_circle_outline_rounded,
-                                size: 18,
-                                color: AppTheme.successColor,
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'No maintenance tickets for this room',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: AppTheme.successColor,
-                                ),
-                              ),
-                            ],
-                          )
-                        else
-                          ...List.generate(_roomComplaints.length, (i) {
-                            final c = _roomComplaints[i];
-                            return Padding(
-                              padding: EdgeInsets.only(top: i == 0 ? 0 : 10),
-                              child: InkWell(
-                                onTap: () => _showComplaintResponseDialog(c),
-                                borderRadius: BorderRadius.circular(10),
-                                child: Container(
-                                  padding: const EdgeInsets.all(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Current status',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: AppTheme.borderLight),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 40,
                                   decoration: BoxDecoration(
-                                    color: AppTheme.surfaceLight,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: AppTheme.borderLight,
-                                    ),
+                                    color: AppTheme.iconBadgeBackground,
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: Row(
+                                  child: const Icon(
+                                    Icons.receipt_long_outlined,
+                                    color: AppTheme.accentColor,
+                                    size: 22,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      const Icon(
-                                        Icons.build_outlined,
-                                        size: 18,
-                                        color: AppTheme.accentColor,
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Text(
-                                          c.title,
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppTheme.textDark,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                      Text(
+                                        _currentPayment != null
+                                            ? Formatters.formatMonthYear(
+                                                _currentPayment!.dueDate,
+                                              )
+                                            : 'Current Billing',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppTheme.textDark,
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
-                                      KosMateStatusChip.fromComplaintStatus(
-                                        c.status,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      const Icon(
-                                        Icons.chevron_right_rounded,
-                                        size: 18,
-                                        color: AppTheme.accentColor,
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        _currentPayment != null
+                                            ? 'Due ${Formatters.formatShortDate(_currentPayment!.dueDate)}'
+                                            : 'No active dues recorded',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: AppTheme.textMuted,
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
+                                KosMateStatusChip.fromPaymentStatus(
+                                  _currentPayment?.status ?? PaymentStatus.paid,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Maintenance & Complaints section
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: AppTheme.borderLight,
+                          width: 1.2,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Maintenance & Complaints',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          if (_roomComplaints.isEmpty)
+                            const Row(
+                              children: [
+                                Icon(
+                                  Icons.check_circle_outline_rounded,
+                                  size: 18,
+                                  color: AppTheme.successColor,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'No maintenance tickets for this room',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppTheme.successColor,
+                                  ),
+                                ),
+                              ],
+                            )
+                          else
+                            ...List.generate(_roomComplaints.length, (i) {
+                              final c = _roomComplaints[i];
+                              return Padding(
+                                padding: EdgeInsets.only(top: i == 0 ? 0 : 10),
+                                child: InkWell(
+                                  onTap: () => _showComplaintResponseDialog(c),
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.surfaceLight,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: AppTheme.borderLight,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.build_outlined,
+                                          size: 18,
+                                          color: AppTheme.accentColor,
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            c.title,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppTheme.textDark,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        KosMateStatusChip.fromComplaintStatus(
+                                          c.status,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const Icon(
+                                          Icons.chevron_right_rounded,
+                                          size: 18,
+                                          color: AppTheme.accentColor,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 36),
+
+                    // Action Buttons: Delete and Edit room
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: _deleteRoom,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppTheme.destructiveColor,
+                              side: const BorderSide(
+                                color: AppTheme.destructiveColor,
+                                width: 1.5,
                               ),
-                            );
-                          }),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            child: const Text(
+                              'Delete',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _editRoom,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.accentColor,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            child: const Text(
+                              'Edit room',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                  ),
-
-                  const SizedBox(height: 36),
-
-                  // Action Buttons: Delete and Edit room
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _deleteRoom,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppTheme.destructiveColor,
-                            side: const BorderSide(
-                              color: AppTheme.destructiveColor,
-                              width: 1.5,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          child: const Text(
-                            'Delete',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _editRoom,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.accentColor,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          child: const Text(
-                            'Edit room',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
     );

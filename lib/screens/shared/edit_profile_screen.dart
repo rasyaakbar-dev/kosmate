@@ -185,10 +185,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         Navigator.pop(context, updatedUser);
       }
     } catch (e) {
+      String errorMessage = e.toString();
+      if (errorMessage.toLowerCase().contains('bucket not found') ||
+          errorMessage.toLowerCase().contains('nosuchbucket')) {
+        errorMessage = 'Storage bucket "avatars" is missing in Supabase. Please run the SQL schema or create the "avatars" bucket (Public) in Supabase Storage.';
+      }
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Failed to update profile: $e'),
+          content: Text(errorMessage),
           backgroundColor: Colors.redAccent,
+          duration: const Duration(seconds: 5),
         ),
       );
     } finally {

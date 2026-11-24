@@ -27,6 +27,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _currentUser = widget.user;
   }
 
+  Future<void> _loadProfile() async {
+    try {
+      final fresh = await _authService.getCurrentUserProfile();
+      if (fresh != null && mounted) {
+        setState(() => _currentUser = fresh);
+      }
+    } catch (_) {}
+  }
+
   Future<void> _openEditProfileScreen() async {
     final updated = await Navigator.push<UserModel>(
       context,
@@ -95,100 +104,104 @@ class _ProfileScreenState extends State<ProfileScreen> {
         : 'user';
     final phone = _currentUser.phone.isNotEmpty ? _currentUser.phone : '-';
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Circular Avatar
-          CircleAvatar(
-            radius: 48,
-            backgroundColor: AppTheme.primaryLight,
-            backgroundImage:
-                _currentUser.avatarUrl != null &&
-                    _currentUser.avatarUrl!.isNotEmpty
-                ? NetworkImage(_currentUser.avatarUrl!)
-                : null,
-            child:
-                _currentUser.avatarUrl == null ||
-                    _currentUser.avatarUrl!.isEmpty
-                ? const Icon(
-                    Icons.person_outline_rounded,
-                    size: 52,
-                    color: AppTheme.accentColor,
-                  )
-                : null,
-          ),
-          const SizedBox(height: 16),
-
-          // User Name
-          Text(
-            _currentUser.name,
-            style: const TextStyle(
-              fontFamily: 'Roboto',
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.foregroundColor,
+    return RefreshIndicator(
+      onRefresh: _loadProfile,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Circular Avatar
+            CircleAvatar(
+              radius: 48,
+              backgroundColor: AppTheme.primaryLight,
+              backgroundImage:
+                  _currentUser.avatarUrl != null &&
+                      _currentUser.avatarUrl!.isNotEmpty
+                  ? NetworkImage(_currentUser.avatarUrl!)
+                  : null,
+              child:
+                  _currentUser.avatarUrl == null ||
+                      _currentUser.avatarUrl!.isEmpty
+                  ? const Icon(
+                      Icons.person_outline_rounded,
+                      size: 52,
+                      color: AppTheme.accentColor,
+                    )
+                  : null,
             ),
-          ),
-          const SizedBox(height: 4),
+            const SizedBox(height: 16),
 
-          // Role Subtitle
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontFamily: 'Roboto',
-              fontSize: 14,
-              color: AppTheme.textMuted,
+            // User Name
+            Text(
+              _currentUser.name,
+              style: const TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.foregroundColor,
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
+            const SizedBox(height: 4),
 
-          // User Information Card (figma/Profile.png)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.borderMedium, width: 1.2),
+            // Role Subtitle
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 14,
+                color: AppTheme.textMuted,
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'User information',
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.foregroundColor,
+            const SizedBox(height: 24),
+
+            // User Information Card (figma/Profile.png)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppTheme.borderMedium, width: 1.2),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'User information',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.foregroundColor,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                _buildInfoRow(label: 'Username', value: username),
-                const SizedBox(height: 14),
-                _buildInfoRow(label: 'E-mail', value: _currentUser.email),
-                const SizedBox(height: 14),
-                _buildInfoRow(label: 'Phone', value: phone),
-              ],
+                  const SizedBox(height: 16),
+                  _buildInfoRow(label: 'Username', value: username),
+                  const SizedBox(height: 14),
+                  _buildInfoRow(label: 'E-mail', value: _currentUser.email),
+                  const SizedBox(height: 14),
+                  _buildInfoRow(label: 'Phone', value: phone),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
+            const SizedBox(height: 24),
 
-          // Actions
-          KosMateButton.outlined(
-            label: 'Edit profile',
-            icon: Icons.edit_outlined,
-            onPressed: _openEditProfileScreen,
-          ),
-          const SizedBox(height: 12),
-          KosMateButton.destructive(
-            label: 'Logout',
-            icon: Icons.exit_to_app_rounded,
-            onPressed: _handleLogout,
-          ),
-        ],
+            // Actions
+            KosMateButton.outlined(
+              label: 'Edit profile',
+              icon: Icons.edit_outlined,
+              onPressed: _openEditProfileScreen,
+            ),
+            const SizedBox(height: 12),
+            KosMateButton.destructive(
+              label: 'Logout',
+              icon: Icons.exit_to_app_rounded,
+              onPressed: _handleLogout,
+            ),
+          ],
+        ),
       ),
     );
   }

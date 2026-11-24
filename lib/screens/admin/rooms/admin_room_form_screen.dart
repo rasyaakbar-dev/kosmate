@@ -390,8 +390,9 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
                         );
                       }).toList(),
                       onChanged: (val) {
-                        if (val != null)
+                        if (val != null) {
                           setState(() => _selectedRoomType = val);
+                        }
                       },
                     ),
                     const SizedBox(height: 16),

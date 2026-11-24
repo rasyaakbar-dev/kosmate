@@ -181,42 +181,55 @@ class _TenantPaymentsTabState extends State<TenantPaymentsTab> {
     if (_payments.isEmpty) {
       return RefreshIndicator(
         onRefresh: _loadData,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: AppTheme.iconBadgeBackground,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(
-                  Icons.receipt_long_outlined,
-                  size: 38,
-                  color: AppTheme.accentColor,
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight - 64,
+                minWidth: constraints.maxWidth - 40,
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: AppTheme.iconBadgeBackground,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Icon(
+                        Icons.receipt_long_outlined,
+                        size: 38,
+                        color: AppTheme.accentColor,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'No invoices yet',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.foregroundColor,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'When your room billing or rent invoices are issued, they will appear here.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              const Text(
-                'No invoices yet',
-                style: TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.foregroundColor,
-                ),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'When your room billing or rent invoices are issued, they will appear here.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
-              ),
-            ],
+            ),
           ),
         ),
       );

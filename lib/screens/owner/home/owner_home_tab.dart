@@ -143,27 +143,84 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
                                 'Room ${b.room?.roomNumber ?? b.roomId}',
                               ),
                               subtitle: Text(
-                                'Tenant: ${b.user?.name ?? "User"}\nMove-in: ${Formatters.formatDate(b.requestDate)}',
+                                'Tenant: ${b.user?.name ?? "User"}\nMove-in: ${Formatters.formatDate(b.requestDate)}${b.room?.price != null ? " • ${Formatters.formatCurrency(b.room!.price)}/mo" : ""}',
                               ),
-                              trailing: ElevatedButton(
-                                onPressed: b.status == BookingStatus.pending
-                                    ? () async {
-                                        await _bookingService
-                                            .updateBookingStatus(
-                                              bookingId: b.bookingId,
-                                              status: BookingStatus.approved,
-                                              roomId: b.roomId,
-                                            );
-                                        if (ctx.mounted) Navigator.pop(ctx);
-                                        _loadDashboardData();
-                                      }
-                                    : null,
-                                child: Text(
-                                  b.status == BookingStatus.pending
-                                      ? 'Approve'
-                                      : b.status.displayName,
-                                ),
-                              ),
+                              trailing: b.status == BookingStatus.pending
+                                  ? Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        OutlinedButton(
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor:
+                                                AppTheme.destructiveColor,
+                                            side: const BorderSide(
+                                              color: AppTheme.destructiveColor,
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 4,
+                                            ),
+                                          ),
+                                          onPressed: () async {
+                                            await _bookingService
+                                                .updateBookingStatus(
+                                                  bookingId: b.bookingId,
+                                                  status:
+                                                      BookingStatus.rejected,
+                                                  roomId: b.roomId,
+                                                );
+                                            if (ctx.mounted) Navigator.pop(ctx);
+                                            _loadDashboardData();
+                                          },
+                                          child: const Text('Reject'),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                AppTheme.accentColor,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 4,
+                                            ),
+                                          ),
+                                          onPressed: () async {
+                                            await _bookingService
+                                                .updateBookingStatus(
+                                                  bookingId: b.bookingId,
+                                                  status:
+                                                      BookingStatus.approved,
+                                                  roomId: b.roomId,
+                                                );
+
+                                            final roomPrice =
+                                                b.room?.price ?? 0.0;
+                                            if (roomPrice > 0) {
+                                              try {
+                                                await _paymentService
+                                                    .createPayment(
+                                                      userId: b.userId,
+                                                      roomId: b.roomId,
+                                                      amount: roomPrice,
+                                                      dueDate: b.requestDate
+                                                          .add(
+                                                            const Duration(
+                                                              days: 7,
+                                                            ),
+                                                          ),
+                                                    );
+                                              } catch (_) {}
+                                            }
+
+                                            if (ctx.mounted) Navigator.pop(ctx);
+                                            _loadDashboardData();
+                                          },
+                                          child: const Text('Approve'),
+                                        ),
+                                      ],
+                                    )
+                                  : Chip(label: Text(b.status.displayName)),
                             ),
                           );
                         },

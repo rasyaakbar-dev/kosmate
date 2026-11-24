@@ -25,12 +25,14 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
   final _roomService = sl.room;
   final _paymentService = sl.payment;
   final _complaintService = sl.complaint;
+  final _bookingService = sl.booking;
   final _searchController = TextEditingController();
 
   bool _isLoading = true;
   String _searchQuery = '';
 
   List<BookingModel> _occupiedBookings = [];
+  List<BookingModel> _pendingBookings = [];
   List<PaymentModel> _allPayments = [];
   List<ComplaintModel> _allComplaints = [];
 
@@ -63,8 +65,9 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
         allRooms.addAll(rooms);
       }
 
-      // Fetch active approved bookings
+      // Fetch active approved bookings and pending booking requests
       final List<BookingModel> activeBookings = [];
+      final List<BookingModel> pendingBookings = [];
       if (allRooms.isNotEmpty) {
         try {
           final roomIds = allRooms.map((r) => r.roomId).toList();
@@ -72,12 +75,13 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
               .from(SupabaseConstants.bookingTable)
               .select('*, users!booking_user_id_fkey(*)')
               .inFilter('room_id', roomIds)
-              .eq('status', BookingStatus.approved.name);
+              .order('created_at', ascending: false);
 
           for (final row in bookingRes as List) {
             final b = BookingModel.fromJson(row as Map<String, dynamic>);
             // Attach house & room information
             final matchedRoom = allRooms.where((r) => r.roomId == b.roomId);
+            BookingModel fullBooking = b;
             if (matchedRoom.isNotEmpty) {
               final r = matchedRoom.first;
               final matchedHouse = houses.where((h) => h.houseId == r.houseId);
@@ -85,14 +89,19 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
                   ? matchedHouse.first
                   : null;
               final fullRoom = r.copyWith(house: houseObj);
-              activeBookings.add(b.copyWith(room: fullRoom));
-            } else {
-              activeBookings.add(b);
+              fullBooking = b.copyWith(room: fullRoom);
+            }
+
+            if (b.status == BookingStatus.approved) {
+              activeBookings.add(fullBooking);
+            } else if (b.status == BookingStatus.pending) {
+              pendingBookings.add(fullBooking);
             }
           }
         } catch (_) {}
       }
       _occupiedBookings = activeBookings;
+      _pendingBookings = pendingBookings;
 
       // Fetch payments
       final payments = await _paymentService.getPaymentsForOwner(ownerId);
@@ -120,6 +129,289 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
     }
   }
 
+  Future<void> _approveBooking(BookingModel booking) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await _bookingService.updateBookingStatus(
+        bookingId: booking.bookingId,
+        status: BookingStatus.approved,
+        roomId: booking.roomId,
+      );
+
+      final roomPrice = booking.room?.price ?? 0.0;
+      if (roomPrice > 0) {
+        try {
+          await _paymentService.createPayment(
+            userId: booking.userId,
+            roomId: booking.roomId,
+            amount: roomPrice,
+            dueDate: booking.requestDate.add(const Duration(days: 7)),
+          );
+        } catch (_) {}
+      }
+
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Booking approved! Initial invoice created.'),
+          backgroundColor: AppTheme.successColor,
+        ),
+      );
+      _loadManagementData();
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Failed to approve booking: $e'),
+          backgroundColor: AppTheme.destructiveColor,
+        ),
+      );
+    }
+  }
+
+  Future<void> _rejectBooking(BookingModel booking) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reject Booking Request'),
+        content: Text(
+          'Are you sure you want to reject booking request for Room ${booking.room?.roomNumber ?? booking.roomId} by ${booking.user?.name ?? "tenant"}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.destructiveColor,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Reject'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      final messenger = ScaffoldMessenger.of(context);
+      try {
+        await _bookingService.updateBookingStatus(
+          bookingId: booking.bookingId,
+          status: BookingStatus.rejected,
+          roomId: booking.roomId,
+        );
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Booking request rejected.'),
+            backgroundColor: AppTheme.warningColor,
+          ),
+        );
+        _loadManagementData();
+      } catch (e) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Failed to reject booking: $e'),
+            backgroundColor: AppTheme.destructiveColor,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showIssueInvoiceDialog({BookingModel? preselectedBooking}) {
+    if (_occupiedBookings.isEmpty && preselectedBooking == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No active tenants available to issue an invoice to.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    BookingModel selectedBooking =
+        preselectedBooking ?? _occupiedBookings.first;
+    final amountController = TextEditingController(
+      text: selectedBooking.room?.price.toInt().toString() ?? '',
+    );
+    DateTime dueDate = DateTime.now().add(const Duration(days: 7));
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Issue Invoice to Tenant',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Select Tenant / Room',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<BookingModel>(
+                    isExpanded: true,
+                    initialValue: selectedBooking,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                    ),
+                    items: _occupiedBookings.map((b) {
+                      final name = b.user?.name ?? 'Tenant';
+                      final room = b.room?.roomNumber ?? 'Room ${b.roomId}';
+                      return DropdownMenuItem(
+                        value: b,
+                        child: Text(
+                          '$name • $room',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setDialogState(() {
+                          selectedBooking = val;
+                          amountController.text =
+                              val.room?.price.toInt().toString() ?? '';
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  const Text(
+                    'Invoice Amount (Rp) *',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: amountController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      prefixText: 'Rp ',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                    ),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Please enter an amount';
+                      }
+                      if (double.tryParse(v.trim()) == null ||
+                          double.parse(v.trim()) <= 0) {
+                        return 'Enter a valid amount';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  const Text(
+                    'Payment Due Date *',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 6),
+                  InkWell(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: dueDate,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (picked != null) {
+                        setDialogState(() => dueDate = picked);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppTheme.borderMedium),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(Formatters.formatDate(dueDate)),
+                          const Icon(
+                            Icons.calendar_today_outlined,
+                            size: 18,
+                            color: AppTheme.accentColor,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.accentColor,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                if (!formKey.currentState!.validate()) return;
+                Navigator.pop(ctx);
+                final messenger = ScaffoldMessenger.of(context);
+                try {
+                  final amount = double.parse(amountController.text.trim());
+                  await _paymentService.createPayment(
+                    userId: selectedBooking.userId,
+                    roomId: selectedBooking.roomId,
+                    amount: amount,
+                    dueDate: dueDate,
+                  );
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Invoice issued successfully!'),
+                      backgroundColor: AppTheme.successColor,
+                    ),
+                  );
+                  _loadManagementData();
+                } catch (e) {
+                  messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
+                }
+              },
+              child: const Text('Issue Invoice'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _openComplaintsManagement() {
     Navigator.push(
       context,
@@ -141,6 +433,10 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
         onPaymentUpdated: () {
           _loadManagementData();
         },
+        onIssueInvoice: () {
+          Navigator.pop(ctx);
+          _showIssueInvoiceDialog();
+        },
       ),
     );
   }
@@ -161,6 +457,10 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
         complaints: tenantComplaints,
         payments: tenantPayments,
         onDataChanged: _loadManagementData,
+        onIssueInvoice: () {
+          Navigator.pop(ctx);
+          _showIssueInvoiceDialog(preselectedBooking: booking);
+        },
       ),
     );
   }
@@ -246,6 +546,12 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
               ],
             ),
             const SizedBox(height: 24),
+
+            // Pending Booking Requests Section (if any pending requests exist)
+            if (_pendingBookings.isNotEmpty) ...[
+              _buildPendingBookingsSection(),
+              const SizedBox(height: 24),
+            ],
 
             // Section Header: Occupied Tenants
             Row(
@@ -374,6 +680,208 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPendingBookingsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Pending Booking Requests',
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.foregroundColor,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppTheme.warningLight,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${_pendingBookings.length} Action Needed',
+                style: const TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.warningColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ..._pendingBookings.map((b) => _buildPendingBookingCard(b)),
+      ],
+    );
+  }
+
+  Widget _buildPendingBookingCard(BookingModel b) {
+    final tenant = b.user;
+    final room = b.room;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.warningLight, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: AppTheme.warningLight,
+                backgroundImage:
+                    tenant?.avatarUrl != null && tenant!.avatarUrl!.isNotEmpty
+                    ? NetworkImage(tenant.avatarUrl!)
+                    : null,
+                child: tenant?.avatarUrl == null || tenant!.avatarUrl!.isEmpty
+                    ? Text(
+                        tenant?.name.isNotEmpty == true
+                            ? tenant!.name[0].toUpperCase()
+                            : 'T',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.warningColor,
+                        ),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tenant?.name ?? 'Tenant Request',
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.foregroundColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${room?.house?.houseName ?? "Boarding House"} • ${room?.roomNumber ?? "Room ${b.roomId}"}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (room?.price != null)
+                Text(
+                  '${Formatters.formatCurrency(room!.price)}/mo',
+                  style: const TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceLight,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.calendar_today_outlined,
+                  size: 14,
+                  color: AppTheme.accentColor,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Desired Move-in: ${Formatters.formatDate(b.requestDate)}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (b.notes != null && b.notes!.trim().isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '• Note: ${b.notes!.trim()}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textMuted,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              OutlinedButton(
+                onPressed: () => _rejectBooking(b),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.destructiveColor,
+                  side: const BorderSide(color: AppTheme.destructiveColor),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text('Reject'),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton.icon(
+                onPressed: () => _approveBooking(b),
+                icon: const Icon(Icons.check, size: 16),
+                label: const Text('Approve & Invoice'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.accentColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -700,12 +1208,14 @@ class _TenantInspectorSheet extends StatefulWidget {
   final List<ComplaintModel> complaints;
   final List<PaymentModel> payments;
   final VoidCallback onDataChanged;
+  final VoidCallback? onIssueInvoice;
 
   const _TenantInspectorSheet({
     required this.booking,
     required this.complaints,
     required this.payments,
     required this.onDataChanged,
+    this.onIssueInvoice,
   });
 
   @override
@@ -1124,12 +1634,28 @@ class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
                             color: AppTheme.foregroundColor,
                           ),
                         ),
-                        Text(
-                          '${widget.payments.length} invoices',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.textMuted,
-                          ),
+                        Row(
+                          children: [
+                            if (widget.onIssueInvoice != null) ...[
+                              TextButton.icon(
+                                onPressed: widget.onIssueInvoice,
+                                icon: const Icon(Icons.add, size: 16),
+                                label: const Text('Issue Invoice'),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: AppTheme.accentColor,
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                            ],
+                            Text(
+                              '${widget.payments.length} invoices',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.textMuted,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -1249,10 +1775,12 @@ class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
 class _AllPaymentsSheet extends StatefulWidget {
   final List<PaymentModel> payments;
   final VoidCallback onPaymentUpdated;
+  final VoidCallback? onIssueInvoice;
 
   const _AllPaymentsSheet({
     required this.payments,
     required this.onPaymentUpdated,
+    this.onIssueInvoice,
   });
 
   @override
@@ -1360,14 +1888,38 @@ class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
                         color: AppTheme.foregroundColor,
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.close,
-                        color: AppTheme.foregroundColor,
-                      ),
-                      onPressed: () => Navigator.pop(context),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                    Row(
+                      children: [
+                        if (widget.onIssueInvoice != null) ...[
+                          ElevatedButton.icon(
+                            onPressed: widget.onIssueInvoice,
+                            icon: const Icon(Icons.add, size: 16),
+                            label: const Text('Issue Invoice'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.accentColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        IconButton(
+                          icon: const Icon(
+                            Icons.close,
+                            color: AppTheme.foregroundColor,
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
                     ),
                   ],
                 ),
