@@ -121,7 +121,6 @@ class _UserFormDialogState extends State<UserFormDialog> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -147,7 +146,6 @@ class _UserFormDialogState extends State<UserFormDialog> {
                   ),
                   const Divider(height: 20, color: AppTheme.borderLight),
 
-                  // Full Name
                   _buildLabel('Full Name *'),
                   const SizedBox(height: 6),
                   TextFormField(
@@ -165,7 +163,6 @@ class _UserFormDialogState extends State<UserFormDialog> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Email
                   _buildLabel('Email Address *'),
                   const SizedBox(height: 6),
                   TextFormField(
@@ -222,7 +219,6 @@ class _UserFormDialogState extends State<UserFormDialog> {
                     const SizedBox(height: 16),
                   ],
 
-                  // Phone Number
                   _buildLabel('Phone Number'),
                   const SizedBox(height: 6),
                   TextFormField(
@@ -235,7 +231,6 @@ class _UserFormDialogState extends State<UserFormDialog> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Role Selection
                   _buildLabel('Account Role *'),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<UserRole>(
@@ -277,7 +272,6 @@ class _UserFormDialogState extends State<UserFormDialog> {
                   ),
                   const SizedBox(height: 28),
 
-                  // Action Buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [

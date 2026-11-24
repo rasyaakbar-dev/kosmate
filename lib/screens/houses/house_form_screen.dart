@@ -256,7 +256,6 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // House Photo
               _buildLabel('House Photo (Optional)'),
               const SizedBox(height: 8),
               GestureDetector(
@@ -305,7 +304,6 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
               ),
               const SizedBox(height: 20),
 
-              // House Name
               _buildLabel('House Name *'),
               const SizedBox(height: 6),
               TextFormField(
@@ -323,7 +321,6 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
               ),
               const SizedBox(height: 18),
 
-              // Address
               _buildLabel('House Address *'),
               const SizedBox(height: 6),
               TextFormField(
@@ -342,7 +339,6 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
               ),
               const SizedBox(height: 18),
 
-              // Description
               _buildLabel('Description (Optional)'),
               const SizedBox(height: 6),
               TextFormField(
@@ -355,7 +351,6 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
               ),
               const SizedBox(height: 32),
 
-              // Action Buttons
               Row(
                 children: [
                   Expanded(

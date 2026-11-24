@@ -362,7 +362,6 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // House Image Banner
                     ClipRRect(
                       borderRadius: BorderRadius.circular(14),
                       child: Container(
@@ -383,7 +382,6 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // House Details Card
                     Container(
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
@@ -460,7 +458,6 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Rooms Summary Statistics
                     Row(
                       children: [
                         _buildStatTile(
@@ -487,7 +484,6 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                     ),
                     const SizedBox(height: 26),
 
-                    // Rooms Section Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -522,7 +518,6 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Rooms List
                     if (_rooms.isEmpty)
                       Container(
                         padding: const EdgeInsets.all(32),

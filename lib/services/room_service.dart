@@ -8,7 +8,6 @@ import '../models/room_model.dart';
 class RoomService {
   final SupabaseClient _client = supabase;
 
-  /// Fetch rooms with optional house and status filtering
   Future<List<RoomModel>> getRooms({int? houseId, RoomStatus? status}) async {
     try {
       var query = _client
@@ -31,7 +30,6 @@ class RoomService {
     }
   }
 
-  /// Fetch single room by ID
   Future<RoomModel?> getRoomById(int roomId) async {
     try {
       final response = await _client
@@ -49,7 +47,6 @@ class RoomService {
     }
   }
 
-  /// Create a new room
   Future<RoomModel> createRoom(RoomModel room) async {
     try {
       final response = await _client
@@ -66,7 +63,6 @@ class RoomService {
     }
   }
 
-  /// Update an existing room
   Future<RoomModel> updateRoom(RoomModel room) async {
     try {
       final response = await _client
@@ -96,7 +92,6 @@ class RoomService {
     }
   }
 
-  /// Delete a room
   Future<void> deleteRoom(int roomId) async {
     try {
       await _client

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/supabase_constants.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
+import '../../../core/widgets/private_storage_image.dart';
 import '../../../models/booking_model.dart';
 import '../../../models/complaint_model.dart';
 import '../../../models/house_model.dart';
@@ -98,6 +100,7 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
 
   void _showComplaintStatusDialog(ComplaintModel complaint) {
     ComplaintStatus selected = complaint.status;
+    final attachmentPath = complaint.attachmentPath;
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -112,6 +115,14 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
                 style: const TextStyle(fontSize: 14, color: AppTheme.textDark),
               ),
               const SizedBox(height: 16),
+              if (attachmentPath != null && attachmentPath.isNotEmpty) ...[
+                PrivateStorageImage(
+                  bucketName: SupabaseConstants.complaintAttachmentsBucket,
+                  path: attachmentPath,
+                  height: 180,
+                ),
+                const SizedBox(height: 16),
+              ],
               const Text(
                 'Update Status',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
@@ -177,7 +188,6 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Profile Header Card
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -285,7 +295,6 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Section 1: Assigned Room & Boarding House (or Properties)
                     if (_user.role == UserRole.owner) ...[
                       _buildSectionHeader(
                         title: 'Owned Boarding Houses',
@@ -315,7 +324,6 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
                     ],
                     const SizedBox(height: 22),
 
-                    // Section 2: Payments & Invoices
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -341,7 +349,6 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
                       ..._payments.map((p) => _buildPaymentTile(p)),
                     const SizedBox(height: 22),
 
-                    // Section 3: Complaints
                     _buildSectionHeader(
                       title: 'Complaints',
                       count: '${_complaints.length}',

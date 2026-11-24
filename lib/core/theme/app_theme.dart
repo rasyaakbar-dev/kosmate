@@ -1,29 +1,24 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Brand & Accent Colors
   static const Color primaryColor = Color(0xFF0B1F3A);
   static const Color accentColor = Color(0xFF4A6FA5);
   static const Color primaryLight = Color(0xFFEBF3FA);
   static const Color iconBadgeBackground = Color(0xFFEFF6FF);
 
-  // Background & Surface
   static const Color backgroundColor = Color(0xFFFFFFFF);
   static const Color scaffoldBackground = Color(0xFFF8FAFC);
   static const Color surfaceLight = Color(0xFFF1F5F9);
 
-  // Text Colors
   static const Color foregroundColor = Color(0xFF000000);
   static const Color textDark = Color(0xFF0F172A);
   static const Color textMuted = Color(0xFF64748B);
   static const Color textSubtle = Color(0xFF94A3B8);
 
-  // Border & Divider Colors
   static const Color borderColor = Color(0xFF739BD0);
   static const Color borderLight = Color(0xFFE2E8F0);
   static const Color borderMedium = Color(0xFFCBD5E1);
 
-  // Status & Feedback Colors
   static const Color destructiveColor = Color(0xFFDC2626);
   static const Color destructiveLight = Color(0xFFFEE2E2);
   static const Color successColor = Color(0xFF16A34A);
@@ -31,7 +26,6 @@ class AppTheme {
   static const Color warningColor = Color(0xFFD97706);
   static const Color warningLight = Color(0xFFFEF9E7);
 
-  // Typography Styles
   static const TextStyle headingLarge = TextStyle(
     fontFamily: 'Roboto',
     fontWeight: FontWeight.w700,

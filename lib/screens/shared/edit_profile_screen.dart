@@ -463,7 +463,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Avatar Preview with interactive camera badge
               Center(
                 child: Column(
                   children: [
@@ -524,7 +523,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Section: Personal Information
               const Text(
                 'Personal Information',
                 style: TextStyle(
@@ -571,7 +569,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: 28),
 
-              // Section: Account Details
               const Text(
                 'Account Details',
                 style: TextStyle(
@@ -592,7 +589,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: 14),
 
-              // Read-only Email Card
               _buildReadOnlyCard(
                 label: 'Email Address',
                 value: widget.user.email,
@@ -601,7 +597,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: 12),
 
-              // Read-only Role Card
               _buildReadOnlyCard(
                 label: 'Account Role',
                 value: widget.user.role.name.toUpperCase(),
@@ -610,7 +605,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Interactive: Change Password Tile
               Material(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
@@ -672,7 +666,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: 12),
 
-              // Interactive: Delete Account Tile
               Material(
                 color: AppTheme.destructiveLight,
                 borderRadius: BorderRadius.circular(12),
@@ -734,7 +727,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: 36),
 
-              // Action Buttons: Cancel (Red) & Save
               Row(
                 children: [
                   Expanded(

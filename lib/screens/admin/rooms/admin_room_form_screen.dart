@@ -259,7 +259,6 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Room Number
                     const Text(
                       'Room number *',
                       style: TextStyle(
@@ -301,7 +300,6 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Boarding House Dropdown
                     const Text(
                       'Boarding house *',
                       style: TextStyle(
@@ -351,7 +349,6 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Room Type Dropdown
                     const Text(
                       'Room type *',
                       style: TextStyle(
@@ -397,7 +394,6 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Price
                     const Text(
                       'Price / month (Rp) *',
                       style: TextStyle(
@@ -440,7 +436,6 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Facilities
                     const Text(
                       'Facilities',
                       style: TextStyle(
@@ -480,7 +475,6 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Status Dropdown
                     const Text(
                       'Status *',
                       style: TextStyle(
@@ -524,7 +518,6 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Image URL
                     const Text(
                       'Photo URL (Optional)',
                       style: TextStyle(
@@ -588,7 +581,6 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
 
                     const SizedBox(height: 28),
 
-                    // Action Buttons
                     Row(
                       children: [
                         Expanded(

@@ -125,7 +125,6 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header title
                     const Text(
                       'All Invoices & Payments',
                       style: TextStyle(
@@ -146,7 +145,6 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Summary Counters Strip
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
@@ -200,7 +198,6 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    // Search Field
                     TextField(
                       controller: _searchController,
                       decoration: InputDecoration(
@@ -249,7 +246,6 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> {
                     ),
                     const SizedBox(height: 10),
 
-                    // Filter Chips
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
@@ -291,7 +287,6 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    // Payments List
                     if (filtered.isEmpty)
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 40),

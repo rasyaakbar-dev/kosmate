@@ -369,7 +369,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
                 const SizedBox(height: 18),
-                // Remember Me & Login Button
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -454,7 +453,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
                 const SizedBox(height: 14),
-                // Register now & Forgot password links
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -502,7 +500,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
                 const SizedBox(height: 28),
-                // Divider: Or
                 const Row(
                   children: [
                     Expanded(child: Divider(color: AppTheme.borderMedium)),

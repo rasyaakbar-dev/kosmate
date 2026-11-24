@@ -41,7 +41,7 @@ class PaymentModel {
   final DateTime dueDate;
   final PaymentStatus status;
   final DateTime? paidDate;
-  final String? receiptUrl;
+  final String? receiptPath;
   final String? orderId;
   final String? transactionId;
   final String? paymentType;
@@ -59,7 +59,7 @@ class PaymentModel {
     required this.dueDate,
     required this.status,
     this.paidDate,
-    this.receiptUrl,
+    this.receiptPath,
     this.orderId,
     this.transactionId,
     this.paymentType,
@@ -95,7 +95,7 @@ class PaymentModel {
       paidDate: json['paid_date'] != null
           ? DateTime.tryParse(json['paid_date'].toString())
           : null,
-      receiptUrl: json['receipt_url'] as String?,
+      receiptPath: json['receipt_url'] as String?,
       orderId: json['order_id'] as String?,
       transactionId: json['transaction_id'] as String?,
       paymentType: json['payment_type'] as String?,
@@ -121,7 +121,7 @@ class PaymentModel {
       'due_date': Formatters.toDateString(dueDate),
       'status': status.name,
       'paid_date': paidDate != null ? Formatters.toDateString(paidDate!) : null,
-      'receipt_url': receiptUrl,
+      'receipt_url': receiptPath,
       'order_id': orderId,
       'transaction_id': transactionId,
       'payment_type': paymentType,
@@ -142,7 +142,7 @@ class PaymentModel {
     DateTime? dueDate,
     PaymentStatus? status,
     DateTime? paidDate,
-    String? receiptUrl,
+    String? receiptPath,
     String? orderId,
     String? transactionId,
     String? paymentType,
@@ -160,7 +160,7 @@ class PaymentModel {
       dueDate: dueDate ?? this.dueDate,
       status: status ?? this.status,
       paidDate: paidDate ?? this.paidDate,
-      receiptUrl: receiptUrl ?? this.receiptUrl,
+      receiptPath: receiptPath ?? this.receiptPath,
       orderId: orderId ?? this.orderId,
       transactionId: transactionId ?? this.transactionId,
       paymentType: paymentType ?? this.paymentType,

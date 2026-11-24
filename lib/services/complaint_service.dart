@@ -9,7 +9,6 @@ import '../models/complaint_model.dart';
 class ComplaintService {
   final SupabaseClient _client = supabase;
 
-  /// Submit a new tenant complaint / ticket
   Future<ComplaintModel> createComplaint({
     required int userId,
     required int roomId,
@@ -17,7 +16,7 @@ class ComplaintService {
     required String title,
     required String description,
     required ComplaintPriority priority,
-    String? attachmentUrl,
+    String? attachmentPath,
   }) async {
     try {
       final response = await _client
@@ -31,7 +30,7 @@ class ComplaintService {
             'priority': priority.name,
             'date': Formatters.toDateString(DateTime.now()),
             'status': ComplaintStatus.pending.name,
-            'attachment_url': attachmentUrl,
+            'attachment_url': attachmentPath,
           })
           .select(
             '*, users!complaint_user_id_fkey(*), room!complaint_room_id_fkey(*, house!room_house_id_fkey(*))',
@@ -44,7 +43,6 @@ class ComplaintService {
     }
   }
 
-  /// Fetch all complaints submitted by a tenant
   Future<List<ComplaintModel>> getComplaintsByUser(int userId) async {
     try {
       final response = await _client
@@ -61,7 +59,6 @@ class ComplaintService {
     }
   }
 
-  /// Fetch all complaints for a specific room
   Future<List<ComplaintModel>> getComplaintsByRoom(int roomId) async {
     try {
       final response = await _client
@@ -78,7 +75,6 @@ class ComplaintService {
     }
   }
 
-  /// Fetch all complaints for rooms owned by an owner
   Future<List<ComplaintModel>> getComplaintsForOwner(int ownerId) async {
     try {
       final response = await _client
@@ -95,7 +91,6 @@ class ComplaintService {
     }
   }
 
-  /// Update status and optionally response of a complaint ticket
   Future<ComplaintModel> updateComplaintStatus({
     required int complaintId,
     required ComplaintStatus status,
@@ -121,7 +116,6 @@ class ComplaintService {
     }
   }
 
-  /// Owner responds to a complaint ticket
   Future<ComplaintModel> respondToComplaint({
     required int complaintId,
     required String responseText,
@@ -143,7 +137,6 @@ class ComplaintService {
     }
   }
 
-  /// Realtime stream of complaints for a user
   Stream<List<ComplaintModel>> streamComplaintsByUser(int userId) {
     return _client
         .from(SupabaseConstants.complaintTable)

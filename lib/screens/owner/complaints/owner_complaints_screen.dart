@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/supabase_constants.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
 import '../../../core/widgets/kosmate_components.dart';
+import '../../../core/widgets/private_storage_image.dart';
 import '../../../models/complaint_model.dart';
 import '../../../models/user_model.dart';
 
@@ -63,12 +65,10 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
   void _applyFilter() {
     var list = List<ComplaintModel>.from(_allComplaints);
 
-    // Segmented tab filter
     if (_selectedFilterTab == 1) {
       list = list.where((c) => c.status == ComplaintStatus.resolved).toList();
     }
 
-    // Search query
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
       list = list.where((c) {
@@ -88,6 +88,7 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
 
   void _showComplaintResponseDialog(ComplaintModel complaint) {
     final responseCtrl = TextEditingController(text: complaint.response ?? '');
+    final attachmentPath = complaint.attachmentPath;
     ComplaintStatus selectedStatus = complaint.status == ComplaintStatus.pending
         ? ComplaintStatus.inProgress
         : complaint.status;
@@ -119,6 +120,19 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                if (attachmentPath != null && attachmentPath.isNotEmpty) ...[
+                  const Text(
+                    'Attachment',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  PrivateStorageImage(
+                    bucketName: SupabaseConstants.complaintAttachmentsBucket,
+                    path: attachmentPath,
+                    height: 180,
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 DropdownButtonFormField<ComplaintStatus>(
                   isExpanded: true,
                   initialValue: selectedStatus,
@@ -231,7 +245,6 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                 children: [
                   const SizedBox(height: 12),
 
-                  // Segmented Tabs: "All complaints" vs "Resolved"
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Row(
@@ -304,7 +317,6 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Search input
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: KosMateSearchBar(
@@ -325,7 +337,6 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                     ),
                   ),
 
-                  // Count & Open badge row
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                     child: Row(
@@ -361,7 +372,6 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                     ),
                   ),
 
-                  // Complaints List
                   Expanded(
                     child: _filteredComplaints.isEmpty
                         ? KosMateEmptyState(

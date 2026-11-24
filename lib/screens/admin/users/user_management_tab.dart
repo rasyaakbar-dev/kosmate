@@ -125,7 +125,6 @@ class _UserManagementTabState extends State<UserManagementTab> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Top Header: Title & Add User Button
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
           child: Row(
@@ -161,7 +160,6 @@ class _UserManagementTabState extends State<UserManagementTab> {
           ),
         ),
 
-        // Search Bar
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: TextField(
@@ -217,7 +215,6 @@ class _UserManagementTabState extends State<UserManagementTab> {
         ),
         const SizedBox(height: 10),
 
-        // Role Filter Chips
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -235,7 +232,6 @@ class _UserManagementTabState extends State<UserManagementTab> {
         ),
         const SizedBox(height: 10),
 
-        // Users List
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async => _loadUsers(),

@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
 import '../../../core/widgets/kosmate_components.dart';
+import '../../../core/widgets/private_storage_image.dart';
 import '../../../models/booking_model.dart';
 import '../../../models/complaint_model.dart';
 import '../../../models/payment_model.dart';
@@ -112,6 +113,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
   void _showComplaintResponseDialog(ComplaintModel complaint) {
     final responseCtrl = TextEditingController(text: complaint.response ?? '');
+    final attachmentPath = complaint.attachmentPath;
     ComplaintStatus selectedStatus = complaint.status == ComplaintStatus.pending
         ? ComplaintStatus.inProgress
         : complaint.status;
@@ -143,6 +145,14 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                if (attachmentPath != null && attachmentPath.isNotEmpty) ...[
+                  PrivateStorageImage(
+                    bucketName: SupabaseConstants.complaintAttachmentsBucket,
+                    path: attachmentPath,
+                    height: 180,
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 DropdownButtonFormField<ComplaintStatus>(
                   isExpanded: true,
                   initialValue: selectedStatus,
@@ -365,7 +375,6 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Top Summary Card
                     Row(
                       children: [
                         Container(
@@ -411,7 +420,6 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Information Card
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(18),
@@ -473,7 +481,6 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Current Status Box
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),

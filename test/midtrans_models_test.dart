@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kosmate/models/midtrans_models.dart';
 import 'package:kosmate/models/payment_model.dart';
-import 'package:kosmate/services/midtrans_service.dart';
 
 void main() {
   group('Midtrans Core API Models & Parsing', () {
@@ -56,6 +56,19 @@ void main() {
         'https://simulator.sandbox.midtrans.com/gopay/ui/checkout?referenceid=Y0xwjoQ9uy',
       );
       expect(response.actions.length, 4);
+    });
+
+    test('MidtransChargeResponse ignores malformed actions', () {
+      final response = MidtransChargeResponse.fromJson({
+        'actions': [
+          'invalid',
+          3,
+          {'name': 'generate-qr-code', 'url': 'qr'},
+        ],
+      });
+
+      expect(response.actions, hasLength(1));
+      expect(response.qrCodeUrl, 'qr');
     });
 
     test(

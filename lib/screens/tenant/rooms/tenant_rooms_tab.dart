@@ -110,7 +110,6 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
       return;
     }
 
-    // Confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -233,7 +232,6 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Room Header
             Row(
               children: [
                 Container(
@@ -297,7 +295,6 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
             ),
             const SizedBox(height: 20),
 
-            // Room Information Card
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
@@ -338,7 +335,6 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
             ),
             const SizedBox(height: 20),
 
-            // Facilities Section
             const Text(
               'Facilities',
               style: TextStyle(
@@ -352,7 +348,6 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
             _buildFacilitiesGrid(room.facilities ?? ''),
             const SizedBox(height: 20),
 
-            // House Rules Section
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -392,7 +387,6 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
             ),
             const SizedBox(height: 28),
 
-            // Maintenance & Complaints Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -425,7 +419,6 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
             ),
             const SizedBox(height: 10),
 
-            // Complaints Filter Tabs
             Row(
               children: [
                 Expanded(
@@ -485,7 +478,6 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
             ),
             const SizedBox(height: 12),
 
-            // Complaints list
             if (filteredComplaints.isEmpty)
               Container(
                 padding: const EdgeInsets.all(20),
@@ -576,7 +568,6 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
               ),
             const SizedBox(height: 36),
 
-            // Cancel Room Booking Button
             Center(
               child: OutlinedButton.icon(
                 icon: const Icon(
@@ -704,7 +695,6 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Pending Request Sticky Banner
             if (_pendingBooking != null) ...[
               Container(
                 padding: const EdgeInsets.all(14),
@@ -765,7 +755,6 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
               const SizedBox(height: 16),
             ],
 
-            // Search Bar
             TextField(
               decoration: InputDecoration(
                 hintText: 'Search boarding houses by name or address...',

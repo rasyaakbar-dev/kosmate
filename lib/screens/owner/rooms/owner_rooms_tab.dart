@@ -240,9 +240,6 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
     );
   }
 
-  // -------------------------------------------------------------
-  // LEVEL 1: House Directory View
-  // -------------------------------------------------------------
   Widget _buildHouseDirectoryView() {
     final filteredHouses = _houses.where((h) {
       if (_searchQuery.isEmpty) return true;
@@ -257,7 +254,6 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -305,7 +301,6 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
           ),
           const SizedBox(height: 16),
 
-          // Search Box
           TextField(
             controller: _searchController,
             decoration: InputDecoration(
@@ -356,7 +351,6 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
           ),
           const SizedBox(height: 18),
 
-          // Houses List or Empty State
           if (_houses.isEmpty)
             _buildEmptyHousesState()
           else if (filteredHouses.isEmpty)
@@ -435,7 +429,6 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Thumbnail photo
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Container(
@@ -463,7 +456,6 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                 ),
                 const SizedBox(width: 14),
 
-                // House details
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -561,7 +553,6 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                       ),
                       const SizedBox(height: 10),
 
-                      // Stat badges
                       Row(
                         children: [
                           _buildPillBadge(
@@ -651,9 +642,6 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
     );
   }
 
-  // -------------------------------------------------------------
-  // LEVEL 2: House Rooms View
-  // -------------------------------------------------------------
   Widget _buildHouseRoomsView() {
     final house = _selectedHouse!;
     final rooms = _houseRooms[house.houseId] ?? [];
@@ -699,7 +687,6 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Back button and House Title bar
           Row(
             children: [
               IconButton(
@@ -768,7 +755,6 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
           ),
           const SizedBox(height: 14),
 
-          // Overview counters strip
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
@@ -796,7 +782,6 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
           ),
           const SizedBox(height: 14),
 
-          // Search bar
           TextField(
             controller: _searchController,
             decoration: InputDecoration(
@@ -847,7 +832,6 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
           ),
           const SizedBox(height: 10),
 
-          // Status filter chips
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -889,7 +873,6 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
           ),
           const SizedBox(height: 14),
 
-          // Rooms list
           if (rooms.isEmpty)
             Center(
               child: Padding(
@@ -1003,7 +986,6 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
             padding: const EdgeInsets.all(12.0),
             child: Row(
               children: [
-                // Room Photo or Icon
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
@@ -1028,7 +1010,6 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                 ),
                 const SizedBox(width: 12),
 
-                // Room details
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

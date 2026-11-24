@@ -9,7 +9,6 @@ import '../models/booking_model.dart';
 class BookingService {
   final SupabaseClient _client = supabase;
 
-  /// Submit a room booking request
   Future<BookingModel> createBooking({
     required int userId,
     required int roomId,
@@ -37,7 +36,6 @@ class BookingService {
     }
   }
 
-  /// Get all bookings requested by a specific tenant
   Future<List<BookingModel>> getBookingsByUser(int userId) async {
     try {
       final response = await _client
@@ -54,7 +52,6 @@ class BookingService {
     }
   }
 
-  /// Get all bookings for rooms belonging to houses owned by a specific owner
   Future<List<BookingModel>> getBookingsForOwner(int ownerId) async {
     try {
       final response = await _client
@@ -71,8 +68,6 @@ class BookingService {
     }
   }
 
-  /// Update booking status (e.g. approve, reject, cancel)
-  /// If approved, optionally transitions room status to occupied
   Future<BookingModel> updateBookingStatus({
     required int bookingId,
     required BookingStatus status,
@@ -132,7 +127,6 @@ class BookingService {
     return (allowed: true, reason: null);
   }
 
-  /// Tenant cancels active room booking with policy enforcement
   Future<BookingModel> cancelTenantBooking({
     required BookingModel booking,
   }) async {
@@ -151,7 +145,6 @@ class BookingService {
     );
   }
 
-  /// Realtime stream of bookings for a tenant
   Stream<List<BookingModel>> streamBookingsByUser(int userId) {
     return _client
         .from(SupabaseConstants.bookingTable)

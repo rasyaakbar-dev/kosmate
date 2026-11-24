@@ -10,12 +10,9 @@ class UserService {
   final SupabaseClient _client = supabase;
   final AuthService _authService;
 
-  /// Optional [AuthService] can be injected (e.g. for testing or DI).
-  /// Defaults to creating an [AuthService] instance if omitted.
   UserService([AuthService? authService])
     : _authService = authService ?? AuthService();
 
-  /// Fetch all users with optional role and search query filtering
   Future<List<UserModel>> getAllUsers({
     UserRole? roleFilter,
     String? searchQuery,
@@ -41,7 +38,6 @@ class UserService {
     }
   }
 
-  /// Fetch single user by user ID
   Future<UserModel?> getUserById(int userId) async {
     try {
       final response = await _client
@@ -57,7 +53,6 @@ class UserService {
     }
   }
 
-  /// Create a new user (via Supabase Auth sign up)
   Future<void> createUser({
     required String name,
     required String email,
@@ -80,7 +75,6 @@ class UserService {
     }
   }
 
-  /// Update an existing user's profile details
   Future<UserModel> updateUser({
     required int userId,
     required String name,
@@ -111,7 +105,6 @@ class UserService {
     }
   }
 
-  /// Quick update for user role
   Future<UserModel> updateUserRole({
     required int userId,
     required UserRole newRole,
@@ -130,7 +123,6 @@ class UserService {
     }
   }
 
-  /// Delete a user by ID
   Future<void> deleteUser(int userId) async {
     try {
       await _client

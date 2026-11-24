@@ -5,6 +5,7 @@ import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
+import '../../../core/widgets/private_storage_image.dart';
 import '../../../models/payment_model.dart';
 import '../../../models/room_model.dart';
 import '../../../models/user_model.dart';
@@ -25,7 +26,6 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
   final _paymentService = sl.payment;
 
   late final TextEditingController _amountController;
-  late final TextEditingController _receiptUrlController;
 
   int? _selectedUserId;
   int? _selectedRoomId;
@@ -45,7 +45,6 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
     _amountController = TextEditingController(
       text: p != null ? p.amount.toStringAsFixed(0) : '',
     );
-    _receiptUrlController = TextEditingController(text: p?.receiptUrl ?? '');
     _selectedUserId = p?.userId;
     _selectedRoomId = p?.roomId;
     if (p != null) {
@@ -59,7 +58,6 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
   @override
   void dispose() {
     _amountController.dispose();
-    _receiptUrlController.dispose();
     super.dispose();
   }
 
@@ -127,9 +125,6 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
           status: _selectedStatus,
           paidDate: _selectedStatus == PaymentStatus.paid
               ? (_paidDate ?? DateTime.now())
-              : null,
-          receiptUrl: _receiptUrlController.text.trim().isNotEmpty
-              ? _receiptUrlController.text.trim()
               : null,
         );
         messenger.showSnackBar(
@@ -219,6 +214,8 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final receiptPath = widget.payment?.receiptPath;
+
     return Scaffold(
       appBar: KosMateAppBar(
         title: widget.isEditing ? 'Edit Payment' : 'Create Payment',
@@ -253,7 +250,6 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Tenant Dropdown
                     const Text(
                       'Tenant / User',
                       style: TextStyle(
@@ -300,7 +296,6 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Room Dropdown
                     const Text(
                       'Room',
                       style: TextStyle(
@@ -360,7 +355,6 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Amount
                     const Text(
                       'Amount (Rp)',
                       style: TextStyle(
@@ -403,7 +397,6 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Due Date Picker
                     const Text(
                       'Due Date',
                       style: TextStyle(
@@ -457,7 +450,6 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Status Dropdown
                     const Text(
                       'Payment Status',
                       style: TextStyle(
@@ -503,43 +495,24 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Receipt URL / Proof
-                    const Text(
-                      'Receipt / Proof URL (Optional)',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textDark,
+                    if (receiptPath != null && receiptPath.isNotEmpty) ...[
+                      const Text(
+                        'Private payment receipt',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textDark,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    TextFormField(
-                      controller: _receiptUrlController,
-                      decoration: InputDecoration(
-                        hintText: 'https://...',
-                        prefixIcon: const Icon(
-                          Icons.link,
-                          color: AppTheme.textMuted,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppTheme.borderMedium,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppTheme.borderMedium,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
+                      const SizedBox(height: 6),
+                      PrivateStorageImage(
+                        bucketName: SupabaseConstants.paymentReceiptsBucket,
+                        path: receiptPath,
                       ),
-                    ),
+                      const SizedBox(height: 16),
+                    ],
                     const SizedBox(height: 28),
 
-                    // Action Buttons: Cancel & Save
                     Row(
                       children: [
                         Expanded(

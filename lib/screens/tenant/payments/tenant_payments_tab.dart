@@ -94,7 +94,6 @@ class _TenantPaymentsTabState extends State<TenantPaymentsTab> {
     try {
       final chargedPayment = await _paymentService.initiateMidtransPayment(
         payment: payment,
-        tenant: widget.user,
       );
       if (mounted) Navigator.pop(context);
       if (!mounted) return;
@@ -120,7 +119,6 @@ class _TenantPaymentsTabState extends State<TenantPaymentsTab> {
     final messenger = ScaffoldMessenger.of(context);
     Uint8List? selectedImageBytes;
     String? selectedImageExt;
-    final receiptController = TextEditingController();
     bool isSubmitting = false;
 
     showDialog(
@@ -260,13 +258,6 @@ class _TenantPaymentsTabState extends State<TenantPaymentsTab> {
                     ),
                     const SizedBox(height: 12),
                   ],
-                  TextField(
-                    controller: receiptController,
-                    decoration: const InputDecoration(
-                      labelText: 'Reference / URL (optional if image uploaded)',
-                      hintText: 'https://...',
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -283,12 +274,11 @@ class _TenantPaymentsTabState extends State<TenantPaymentsTab> {
                 onPressed: isSubmitting
                     ? null
                     : () async {
-                        final textUrl = receiptController.text.trim();
-                        if (selectedImageBytes == null && textUrl.isEmpty) {
+                        if (selectedImageBytes == null) {
                           ScaffoldMessenger.of(ctx).showSnackBar(
                             const SnackBar(
                               content: Text(
-                                'Please attach a receipt image or enter a URL.',
+                                'Please attach a receipt image.',
                               ),
                               backgroundColor: AppTheme.warningColor,
                             ),
@@ -298,18 +288,16 @@ class _TenantPaymentsTabState extends State<TenantPaymentsTab> {
 
                         setDialogState(() => isSubmitting = true);
                         try {
-                          String finalUrl = textUrl;
-                          if (selectedImageBytes != null) {
-                            finalUrl = await sl.storage.uploadPaymentReceipt(
-                              payment.paymentId,
-                              selectedImageBytes!,
-                              selectedImageExt ?? 'jpg',
-                            );
-                          }
+                          final receiptPath = await sl.storage
+                              .uploadPaymentReceipt(
+                                payment.paymentId,
+                                selectedImageBytes!,
+                                selectedImageExt ?? 'jpg',
+                              );
 
                           await _paymentService.submitReceipt(
                             paymentId: payment.paymentId,
-                            receiptUrl: finalUrl,
+                            receiptPath: receiptPath,
                           );
 
                           if (ctx.mounted) Navigator.pop(ctx);
@@ -414,7 +402,6 @@ class _TenantPaymentsTabState extends State<TenantPaymentsTab> {
       );
     }
 
-    // Latest active / pending payment (or first payment)
     final activePayment = _payments.first;
     final paymentHistory = _payments.length > 1
         ? _payments.sublist(1)
@@ -436,7 +423,6 @@ class _TenantPaymentsTabState extends State<TenantPaymentsTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. TOP ACTIVE BILL CARD (FIGMA figma/tenant/Payments.png)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(18),
@@ -488,7 +474,6 @@ class _TenantPaymentsTabState extends State<TenantPaymentsTab> {
                     ),
                   ),
 
-                  // QR CODE FOR QRIS SECTION (USER SPECIFIED)
                   if (activePayment.status == PaymentStatus.pending) ...[
                     const Divider(height: 24),
                     _buildQrisSection(activePayment),
@@ -498,7 +483,6 @@ class _TenantPaymentsTabState extends State<TenantPaymentsTab> {
             ),
             const SizedBox(height: 16),
 
-            // 2. BILL INFORMATION CARD
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -528,7 +512,6 @@ class _TenantPaymentsTabState extends State<TenantPaymentsTab> {
             ),
             const SizedBox(height: 14),
 
-            // 3. NOTICE BANNERS (FIGMA MATCHING)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -580,7 +563,6 @@ class _TenantPaymentsTabState extends State<TenantPaymentsTab> {
               const SizedBox(height: 16),
             ],
 
-            // 4. PAYMENT HISTORY SECTION
             const Text(
               'Payment history',
               style: TextStyle(

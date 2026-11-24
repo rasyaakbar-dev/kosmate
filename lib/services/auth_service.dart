@@ -11,7 +11,6 @@ class AuthService {
 
   Stream<AuthState> get authStateChanges => _client.auth.onAuthStateChange;
 
-  /// Sign up a new user and store profile metadata
   Future<AuthResponse> signUp({
     required String email,
     required String password,
@@ -58,7 +57,6 @@ class AuthService {
     }
   }
 
-  /// Sign in with email and password
   Future<AuthResponse> signIn({
     required String email,
     required String password,
@@ -75,7 +73,6 @@ class AuthService {
     }
   }
 
-  /// Sign out
   Future<void> signOut() async {
     try {
       await _client.auth.signOut();
@@ -86,7 +83,6 @@ class AuthService {
     }
   }
 
-  /// Get the current logged-in user's profile from public.users
   Future<UserModel?> getCurrentUserProfile() async {
     try {
       final user = currentUser;
@@ -107,7 +103,6 @@ class AuthService {
     }
   }
 
-  /// Update the current user's profile
   Future<UserModel> updateProfile({
     required int userId,
     required String name,
@@ -139,7 +134,6 @@ class AuthService {
     }
   }
 
-  /// Send a password reset email
   Future<void> resetPasswordForEmail(String email) async {
     try {
       await _client.auth.resetPasswordForEmail(email.trim());
@@ -150,7 +144,6 @@ class AuthService {
     }
   }
 
-  /// Update the current user's password
   Future<UserResponse> updatePassword(String newPassword) async {
     try {
       return await _client.auth.updateUser(
@@ -163,7 +156,6 @@ class AuthService {
     }
   }
 
-  /// Delete the user account and sign out
   Future<void> deleteAccount(int userId) async {
     try {
       await _client

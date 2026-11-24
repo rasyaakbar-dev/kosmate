@@ -1,0 +1,4 @@
+project_id = "kosmate"
+
+[functions.midtrans-payment]
+verify_jwt = true

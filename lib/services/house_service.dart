@@ -8,7 +8,6 @@ import '../models/house_model.dart';
 class HouseService {
   final SupabaseClient _client = supabase;
 
-  /// Fetch all boarding houses with owner information
   Future<List<HouseModel>> getAllHouses() async {
     try {
       final response = await _client
@@ -22,7 +21,6 @@ class HouseService {
     }
   }
 
-  /// Fetch houses owned by a specific owner
   Future<List<HouseModel>> getHousesByOwner(int ownerId) async {
     try {
       final response = await _client
@@ -37,7 +35,6 @@ class HouseService {
     }
   }
 
-  /// Fetch single house by ID
   Future<HouseModel?> getHouseById(int houseId) async {
     try {
       final response = await _client
@@ -53,7 +50,6 @@ class HouseService {
     }
   }
 
-  /// Create a new boarding house
   Future<HouseModel> createHouse(HouseModel house) async {
     try {
       final response = await _client
@@ -68,7 +64,6 @@ class HouseService {
     }
   }
 
-  /// Update an existing house
   Future<HouseModel> updateHouse(HouseModel house) async {
     try {
       final response = await _client
@@ -84,7 +79,6 @@ class HouseService {
     }
   }
 
-  /// Delete a house
   Future<void> deleteHouse(int houseId) async {
     try {
       await _client

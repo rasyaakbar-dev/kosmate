@@ -320,7 +320,6 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Avatar Section
               Center(
                 child: Column(
                   children: [
@@ -409,7 +408,6 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
               ),
               const SizedBox(height: 18),
 
-              // Full Name
               const Text(
                 'Full Name *',
                 style: TextStyle(
@@ -448,7 +446,6 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Email
               const Text(
                 'Email Address *',
                 style: TextStyle(
@@ -494,7 +491,6 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Phone Number
               const Text(
                 'Phone Number',
                 style: TextStyle(
@@ -527,7 +523,6 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Password
               if (!widget.isEditing) ...[
                 const Text(
                   'Initial Password *',
@@ -583,7 +578,6 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
                 const SizedBox(height: 16),
               ],
 
-              // Role Selection
               const Text(
                 'Account Role *',
                 style: TextStyle(
@@ -604,7 +598,6 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
               ),
               const SizedBox(height: 28),
 
-              // Action Buttons
               Row(
                 children: [
                   Expanded(

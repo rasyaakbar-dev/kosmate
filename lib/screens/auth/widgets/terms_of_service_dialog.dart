@@ -25,7 +25,6 @@ class TermsOfServiceDialog extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -69,7 +68,6 @@ class TermsOfServiceDialog extends StatelessWidget {
                 color: AppTheme.borderLight,
               ),
 
-              // Scrollable Terms Body
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
@@ -130,7 +128,6 @@ class TermsOfServiceDialog extends StatelessWidget {
                 color: AppTheme.borderLight,
               ),
 
-              // Action Buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [

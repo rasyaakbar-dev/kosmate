@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
@@ -49,6 +52,8 @@ class _TenantAddComplaintDialogState extends State<TenantAddComplaintDialog> {
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
 
+  Uint8List? _attachmentBytes;
+  String? _attachmentExtension;
   ComplaintCategory _selectedCategory = ComplaintCategory.maintenance;
   ComplaintPriority _selectedPriority = ComplaintPriority.medium;
   bool _isSubmitting = false;
@@ -68,6 +73,14 @@ class _TenantAddComplaintDialogState extends State<TenantAddComplaintDialog> {
     final nav = Navigator.of(context);
 
     try {
+      String? attachmentPath;
+      if (_attachmentBytes != null) {
+        attachmentPath = await sl.storage.uploadComplaintAttachment(
+          widget.userId,
+          _attachmentBytes!,
+          _attachmentExtension ?? 'jpg',
+        );
+      }
       await _complaintService.createComplaint(
         userId: widget.userId,
         roomId: widget.roomId,
@@ -75,6 +88,7 @@ class _TenantAddComplaintDialogState extends State<TenantAddComplaintDialog> {
         title: _titleController.text.trim(),
         description: _descController.text.trim(),
         priority: _selectedPriority,
+        attachmentPath: attachmentPath,
       );
 
       widget.onSubmitted();
@@ -88,6 +102,30 @@ class _TenantAddComplaintDialogState extends State<TenantAddComplaintDialog> {
     } catch (e) {
       setState(() => _isSubmitting = false);
       messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
+  Future<void> _pickAttachment(ImageSource source) async {
+    try {
+      final image = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 85,
+      );
+      if (image == null || !mounted) return;
+      final bytes = await image.readAsBytes();
+      if (!mounted) return;
+
+      setState(() {
+        _attachmentBytes = bytes;
+        _attachmentExtension = image.name.split('.').last.toLowerCase();
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to select image: $e')));
     }
   }
 
@@ -129,7 +167,6 @@ class _TenantAddComplaintDialogState extends State<TenantAddComplaintDialog> {
               ),
               const SizedBox(height: 20),
 
-              // Category
               _buildFieldLabel('Category'),
               const SizedBox(height: 6),
               DropdownButtonFormField<ComplaintCategory>(
@@ -155,7 +192,6 @@ class _TenantAddComplaintDialogState extends State<TenantAddComplaintDialog> {
               ),
               const SizedBox(height: 16),
 
-              // Title
               _buildFieldLabel('Title'),
               const SizedBox(height: 6),
               TextFormField(
@@ -170,7 +206,6 @@ class _TenantAddComplaintDialogState extends State<TenantAddComplaintDialog> {
               ),
               const SizedBox(height: 16),
 
-              // Description
               _buildFieldLabel('Description'),
               const SizedBox(height: 6),
               TextFormField(
@@ -186,7 +221,57 @@ class _TenantAddComplaintDialogState extends State<TenantAddComplaintDialog> {
               ),
               const SizedBox(height: 16),
 
-              // Priority
+              _buildFieldLabel('Attachment (optional)'),
+              const SizedBox(height: 6),
+              if (_attachmentBytes case final bytes?) ...[
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.memory(
+                        bytes,
+                        height: 160,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: IconButton.filled(
+                        onPressed: () => setState(() {
+                          _attachmentBytes = null;
+                          _attachmentExtension = null;
+                        }),
+                        icon: const Icon(Icons.close),
+                        tooltip: 'Remove attachment',
+                      ),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _pickAttachment(ImageSource.camera),
+                        icon: const Icon(Icons.camera_alt_outlined, size: 18),
+                        label: const Text('Camera'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _pickAttachment(ImageSource.gallery),
+                        icon: const Icon(Icons.photo_library_outlined, size: 18),
+                        label: const Text('Gallery'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 16),
+
               _buildFieldLabel('Priority'),
               const SizedBox(height: 6),
               DropdownButtonFormField<ComplaintPriority>(
@@ -212,7 +297,6 @@ class _TenantAddComplaintDialogState extends State<TenantAddComplaintDialog> {
               ),
               const SizedBox(height: 16),
 
-              // Review Notice
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -230,7 +314,6 @@ class _TenantAddComplaintDialogState extends State<TenantAddComplaintDialog> {
               ),
               const SizedBox(height: 20),
 
-              // Action Buttons
               Row(
                 children: [
                   Expanded(

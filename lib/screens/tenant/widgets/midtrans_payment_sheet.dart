@@ -155,7 +155,6 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
           controller: scrollCtrl,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           children: [
-            // Drag handle
             Center(
               child: Container(
                 width: 40,
@@ -168,7 +167,6 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
             ),
             const SizedBox(height: 16),
 
-            // Header title & close
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -192,7 +190,6 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
             ),
             const SizedBox(height: 12),
 
-            // Invoice summary card
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -249,7 +246,6 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
             ),
             const SizedBox(height: 20),
 
-            // QR Code Section
             if (qrUrl != null && qrUrl.isNotEmpty) ...[
               Center(
                 child: Container(
@@ -338,7 +334,6 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
 
             const SizedBox(height: 24),
 
-            // Deeplink Option (if on mobile or testing simulator)
             if (_currentPayment.deeplinkUrl != null) ...[
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
@@ -365,7 +360,6 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
               const SizedBox(height: 12),
             ],
 
-            // Action: Check Status
             KosMateButton.primary(
               label: 'I Have Paid (Check Status)',
               icon: Icons.refresh_rounded,
@@ -374,7 +368,6 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
             ),
             const SizedBox(height: 10),
 
-            // Cancel action
             TextButton.icon(
               icon: const Icon(
                 Icons.cancel_outlined,

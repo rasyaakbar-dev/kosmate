@@ -22,7 +22,7 @@ KosMate is a comprehensive, multi-tenant boarding house management platform desi
 
 - **Room Discovery & Booking**: Explore available rooms with photo galleries, facilities, and rent prices; submit move-in booking requests.
 - **Digital Payments (Midtrans Gateway)**: Pay monthly dues seamlessly via GoPay and QRIS with automated transaction verification.
-- **Manual Transfer Receipt Upload**: Alternative payment method with photo/URL receipt submission for owner approval.
+- **Manual Transfer Receipt Upload**: Alternative payment method with a private photo upload for owner approval.
 - **Maintenance & Complaints**: File maintenance tickets with category, priority, description, and photo attachments.
 
 ### 🛡️ System Administrator
@@ -69,6 +69,7 @@ lib/
 │   ├── house_model.dart
 │   ├── payment_model.dart
 │   ├── room_model.dart
+│   ├── midtrans_models.dart
 │   └── user_model.dart
 ├── screens/
 │   ├── admin/                # Administrator screens (Dashboard, Users, Houses)
@@ -77,7 +78,9 @@ lib/
 │   ├── owner/                # Owner screens (Home Dashboard, Rooms, Management Hub)
 │   ├── tenant/               # Tenant screens (Home, Room Explorer, Payments)
 │   ├── shared/               # Shared screens (AuthGate, Profile, Splash, Edit Profile)
-│   └── shared_crud/          # Standalone CRUD form screens (Booking, Payment, Complaint)
+│   ├── bookings/             # Shared booking workflows
+│   ├── complaints/           # Shared complaint workflows
+│   └── payments/             # Shared payment workflows
 └── services/                 # Business logic and Supabase client interaction
     ├── auth_service.dart
     ├── booking_service.dart
@@ -89,6 +92,10 @@ lib/
     ├── storage_service.dart
     └── user_service.dart
 ```
+
+Supabase configuration is in `supabase/`: versioned SQL migrations and the
+authenticated `midtrans-payment` Edge Function. Keep the Midtrans server key in
+Supabase Function secrets; it must never be embedded in the Flutter app.
 
 ---
 
@@ -141,21 +148,37 @@ erDiagram
    flutter pub get
    ```
 
-3. **Configure Environment Constants:**
-   Update your Supabase credentials in `lib/core/constants/supabase_constants.dart`:
+3. **Configure Supabase:**
+   Set your Supabase project URL and publishable key in
+   `lib/core/constants/supabase_constants.dart`.
 
    ```dart
    static const String supabaseUrl = 'https://YOUR_SUPABASE_PROJECT.supabase.co';
    static const String supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
    ```
 
-4. **Run Code Analysis:**
+4. **Apply the database migrations:**
+   For a new project, link the Supabase CLI to your project and run
+   `supabase db push`. For an existing project created from the old root
+   `db.sql`, first verify that its schema matches the initial migration, mark
+   `20261124000000` as applied with
+   `supabase migration repair --status applied 20261124000000`, then run
+   `supabase db push` to apply the authorization hardening migration.
+
+5. **Configure and deploy payments:**
+   Rotate any Midtrans server key previously used by the app. Set the new key
+   as a Supabase secret with `supabase secrets set MIDTRANS_SERVER_KEY=...`,
+   then deploy with `supabase functions deploy midtrans-payment`. The function
+   uses the sandbox by default; set `MIDTRANS_BASE_URL` to
+   `https://api.midtrans.com/v2` for production.
+
+6. **Run Code Analysis:**
 
    ```bash
    flutter analyze
    ```
 
-5. **Run the Application:**
+7. **Run the Application:**
 
    ```bash
    flutter run
@@ -167,7 +190,7 @@ erDiagram
 
 1. Owner/System issues a payment invoice for a room.
 2. Tenant opens the **Payment** tab and selects **"Pay with GoPay / QRIS"**.
-3. KosMate backend invokes Midtrans Core API to generate a dynamic QRIS / GoPay deeplink.
+3. The authenticated Supabase Edge Function invokes Midtrans Core API to generate a dynamic QRIS / GoPay deeplink.
 4. Tenant scans the QR code or pays via GoPay.
 5. On settlement, invoice status transitions to `Paid` automatically.
 

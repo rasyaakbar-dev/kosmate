@@ -371,7 +371,6 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
   List<Widget> _buildRecentActivitiesList() {
     final List<Widget> items = [];
 
-    // Prioritize unresolved & in-progress complaints at the very top!
     final activeComplaints = _recentComplaints
         .where((c) => c.status != ComplaintStatus.resolved)
         .toList();
@@ -379,6 +378,7 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
         .where((c) => c.status == ComplaintStatus.resolved)
         .toList();
 
+    // Unresolved complaints have the highest activity priority.
     for (final c in activeComplaints) {
       items.add(
         _buildRecentCard(
@@ -398,7 +398,7 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
       );
     }
 
-    // Pending/overdue payments next
+    // Pending and overdue invoices follow unresolved complaints.
     final unpaidPayments = _recentPayments
         .where(
           (p) =>
@@ -427,7 +427,7 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
       );
     }
 
-    // Pending booking requests
+    // Booking requests follow unpaid invoices.
     final pendingBookings = _recentBookings
         .where((b) => b.status == BookingStatus.pending)
         .toList();
@@ -447,7 +447,7 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
       );
     }
 
-    // Paid payments and resolved complaints if we have room
+    // Resolved activity is shown after all outstanding work.
     final paidPayments = _recentPayments
         .where((p) => p.status == PaymentStatus.paid)
         .toList();
@@ -496,7 +496,7 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
       ];
     }
 
-    // Strict limit of 5 items max and NO "VIEW ALL"
+    // Keep the dashboard activity list compact.
     final limitedItems = items.take(5).toList();
     return limitedItems
         .map(

@@ -43,7 +43,6 @@ class HouseCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Thumbnail
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
@@ -69,7 +68,6 @@ class HouseCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
 
-                  // House info
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,7 +108,6 @@ class HouseCard extends StatelessWidget {
                     ),
                   ),
 
-                  // Options Menu
                   PopupMenuButton<String>(
                     icon: const Icon(
                       Icons.more_vert,
@@ -179,7 +176,6 @@ class HouseCard extends StatelessWidget {
               ),
               const Divider(height: 18, color: AppTheme.surfaceLight),
 
-              // Room Summary
               FutureBuilder<List<RoomModel>>(
                 future: roomService.getRooms(houseId: house.houseId),
                 builder: (context, roomSnap) {

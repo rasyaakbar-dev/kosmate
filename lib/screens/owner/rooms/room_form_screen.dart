@@ -427,7 +427,6 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                         const SizedBox(height: 18),
                       ],
 
-                      // Room Name
                       const Text(
                         'Room name',
                         style: TextStyle(
@@ -452,7 +451,6 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                       ),
                       const SizedBox(height: 18),
 
-                      // Floor
                       const Text(
                         'Floor',
                         style: TextStyle(
@@ -490,7 +488,6 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                       ),
                       const SizedBox(height: 18),
 
-                      // Monthly Rent
                       const Text(
                         'Monthly rent',
                         style: TextStyle(
@@ -520,7 +517,6 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                       ),
                       const SizedBox(height: 18),
 
-                      // Status
                       const Text(
                         'Status',
                         style: TextStyle(
@@ -558,7 +554,6 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                       ),
                       const SizedBox(height: 18),
 
-                      // Facilities
                       const Text(
                         'Facilities',
                         style: TextStyle(
@@ -578,7 +573,6 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                       ),
                       const SizedBox(height: 18),
 
-                      // Room Photo
                       const Text(
                         'Room Photo (Optional)',
                         style: TextStyle(
@@ -634,7 +628,6 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                       ),
                       const SizedBox(height: 32),
 
-                      // Buttons Row: Cancel and Save room
                       Row(
                         children: [
                           Expanded(

@@ -387,7 +387,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                // Role Selector Button that triggers Role Selection Modal / Screen
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -518,7 +517,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                // Terms and Services Checkbox
                 Row(
                   children: [
                     SizedBox(
@@ -568,7 +566,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ],
                 ),
                 const SizedBox(height: 28),
-                // Bottom row: Already have account? & Register button
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

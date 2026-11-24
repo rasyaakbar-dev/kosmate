@@ -110,7 +110,7 @@ class ComplaintModel {
   final ComplaintPriority priority;
   final DateTime date;
   final String? response;
-  final String? attachmentUrl;
+  final String? attachmentPath;
   final ComplaintStatus status;
   final DateTime? createdAt;
   final UserModel? user;
@@ -126,7 +126,7 @@ class ComplaintModel {
     required this.priority,
     required this.date,
     this.response,
-    this.attachmentUrl,
+    this.attachmentPath,
     required this.status,
     this.createdAt,
     this.user,
@@ -150,7 +150,7 @@ class ComplaintModel {
           ? DateTime.tryParse(json['date'].toString()) ?? DateTime.now()
           : DateTime.now(),
       response: json['response'] as String?,
-      attachmentUrl: json['attachment_url'] as String?,
+      attachmentPath: json['attachment_url'] as String?,
       status: ComplaintStatus.fromString(
         json['status'] as String? ?? 'pending',
       ),
@@ -176,7 +176,7 @@ class ComplaintModel {
       'priority': priority.name,
       'date': Formatters.toDateString(date),
       'response': response,
-      'attachment_url': attachmentUrl,
+      'attachment_url': attachmentPath,
       'status': status.dbValue,
     };
     if (includeId) {
@@ -195,7 +195,7 @@ class ComplaintModel {
     ComplaintPriority? priority,
     DateTime? date,
     String? response,
-    String? attachmentUrl,
+    String? attachmentPath,
     ComplaintStatus? status,
     DateTime? createdAt,
     UserModel? user,
@@ -211,7 +211,7 @@ class ComplaintModel {
       priority: priority ?? this.priority,
       date: date ?? this.date,
       response: response ?? this.response,
-      attachmentUrl: attachmentUrl ?? this.attachmentUrl,
+      attachmentPath: attachmentPath ?? this.attachmentPath,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       user: user ?? this.user,

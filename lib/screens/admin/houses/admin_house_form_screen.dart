@@ -229,7 +229,6 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // House Name
                     const Text(
                       'House name *',
                       style: TextStyle(
@@ -319,7 +318,6 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Address
                     const Text(
                       'Address *',
                       style: TextStyle(
@@ -365,7 +363,6 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Description
                     const Text(
                       'Description',
                       style: TextStyle(
@@ -469,7 +466,6 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
 
                     const SizedBox(height: 28),
 
-                    // Action Buttons
                     Row(
                       children: [
                         Expanded(

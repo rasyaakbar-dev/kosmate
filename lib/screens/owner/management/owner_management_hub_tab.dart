@@ -4,6 +4,7 @@ import '../../../core/constants/supabase_constants.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/private_storage_image.dart';
 import '../../../models/booking_model.dart';
 import '../../../models/complaint_model.dart';
 import '../../../models/payment_model.dart';
@@ -589,7 +590,6 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
             ),
             const SizedBox(height: 12),
 
-            // Search Bar
             TextField(
               controller: _searchController,
               decoration: InputDecoration(
@@ -640,7 +640,6 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
             ),
             const SizedBox(height: 16),
 
-            // Occupied Tenants List
             if (_occupiedBookings.isEmpty)
               _buildEmptyTenantsState()
             else if (filteredBookings.isEmpty)
@@ -1032,7 +1031,6 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
                 ),
                 const SizedBox(width: 14),
 
-                // Tenant Info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1200,9 +1198,6 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
   }
 }
 
-// -------------------------------------------------------------
-// TENANT INSPECTOR BOTTOM SHEET
-// -------------------------------------------------------------
 class _TenantInspectorSheet extends StatefulWidget {
   final BookingModel booking;
   final List<ComplaintModel> complaints;
@@ -1228,6 +1223,7 @@ class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
 
   void _showComplaintResponseDialog(ComplaintModel complaint) {
     final responseCtrl = TextEditingController(text: complaint.response ?? '');
+    final attachmentPath = complaint.attachmentPath;
     ComplaintStatus selectedStatus = complaint.status == ComplaintStatus.pending
         ? ComplaintStatus.inProgress
         : complaint.status;
@@ -1250,6 +1246,14 @@ class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                if (attachmentPath != null && attachmentPath.isNotEmpty) ...[
+                  PrivateStorageImage(
+                    bucketName: SupabaseConstants.complaintAttachmentsBucket,
+                    path: attachmentPath,
+                    height: 180,
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 DropdownButtonFormField<ComplaintStatus>(
                   isExpanded: true,
                   initialValue: selectedStatus,
@@ -1314,12 +1318,28 @@ class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
   }
 
   void _markPaymentPaid(PaymentModel payment) async {
+    final receiptPath = payment.receiptPath;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Confirm Payment'),
-        content: Text(
-          'Mark invoice of ${Formatters.formatCurrency(payment.amount)} as paid?',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (receiptPath != null && receiptPath.isNotEmpty) ...[
+              PrivateStorageImage(
+                bucketName: SupabaseConstants.paymentReceiptsBucket,
+                path: receiptPath,
+                height: 180,
+              ),
+              const SizedBox(height: 12),
+            ] else
+              const Text('No receipt has been uploaded.'),
+            Text(
+              'Mark invoice of ${Formatters.formatCurrency(payment.amount)} as paid?',
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -1370,7 +1390,6 @@ class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
           ),
           child: Column(
             children: [
-              // Drag handle
               Center(
                 child: Container(
                   margin: const EdgeInsets.only(top: 10, bottom: 8),
@@ -1383,7 +1402,6 @@ class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
                 ),
               ),
 
-              // Sheet content
               Expanded(
                 child: ListView(
                   controller: scrollCtrl,
@@ -1392,7 +1410,6 @@ class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
                     vertical: 10,
                   ),
                   children: [
-                    // Tenant Profile Header
                     Row(
                       children: [
                         CircleAvatar(
@@ -1447,7 +1464,6 @@ class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Occupied Room Card
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -1514,7 +1530,6 @@ class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Complaints Section
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -1621,7 +1636,6 @@ class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
                       }),
                     const SizedBox(height: 24),
 
-                    // Payments Section
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -1769,9 +1783,6 @@ class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
   }
 }
 
-// -------------------------------------------------------------
-// ALL PAYMENTS SHEET (When clicking "See every payment")
-// -------------------------------------------------------------
 class _AllPaymentsSheet extends StatefulWidget {
   final List<PaymentModel> payments;
   final VoidCallback onPaymentUpdated;
@@ -1793,12 +1804,28 @@ class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
   String _search = '';
 
   void _markPaid(PaymentModel payment) async {
+    final receiptPath = payment.receiptPath;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Confirm Payment'),
-        content: Text(
-          'Mark invoice of ${Formatters.formatCurrency(payment.amount)} as paid?',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (receiptPath != null && receiptPath.isNotEmpty) ...[
+              PrivateStorageImage(
+                bucketName: SupabaseConstants.paymentReceiptsBucket,
+                path: receiptPath,
+                height: 180,
+              ),
+              const SizedBox(height: 12),
+            ] else
+              const Text('No receipt has been uploaded.'),
+            Text(
+              'Mark invoice of ${Formatters.formatCurrency(payment.amount)} as paid?',
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -1924,7 +1951,6 @@ class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
                   ],
                 ),
               ),
-              // Filter Chips
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -1961,7 +1987,6 @@ class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
                 ),
               ),
               const SizedBox(height: 8),
-              // Search
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
@@ -1990,7 +2015,6 @@ class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
                 ),
               ),
               const SizedBox(height: 8),
-              // List
               Expanded(
                 child: filtered.isEmpty
                     ? const Center(

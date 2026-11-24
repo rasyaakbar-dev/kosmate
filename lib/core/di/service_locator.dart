@@ -39,10 +39,10 @@ class ServiceLocator {
     house = HouseService();
     room = RoomService();
     booking = BookingService();
-    payment = PaymentService();
+    midtrans = MidtransService();
+    payment = PaymentService(midtrans);
     complaint = ComplaintService();
     storage = StorageService();
-    midtrans = MidtransService();
   }
 }
 

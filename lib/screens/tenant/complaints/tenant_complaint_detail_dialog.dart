@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/supabase_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/kosmate_components.dart';
+import '../../../core/widgets/private_storage_image.dart';
 import '../../../models/complaint_model.dart';
 
 class TenantComplaintDetailDialog extends StatelessWidget {
@@ -26,6 +28,7 @@ class TenantComplaintDetailDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final isOpen = complaint.status == ComplaintStatus.pending;
     final isResolved = complaint.status == ComplaintStatus.resolved;
+    final attachmentPath = complaint.attachmentPath;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -186,7 +189,24 @@ class TenantComplaintDetailDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Owner response Card
+            if (attachmentPath != null && attachmentPath.isNotEmpty) ...[
+              const Text(
+                'Attachment',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.foregroundColor,
+                ),
+              ),
+              const SizedBox(height: 8),
+              PrivateStorageImage(
+                bucketName: SupabaseConstants.complaintAttachmentsBucket,
+                path: attachmentPath,
+                height: 180,
+              ),
+              const SizedBox(height: 16),
+            ],
+
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -249,7 +269,6 @@ class TenantComplaintDetailDialog extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Back button
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(

@@ -31,7 +31,6 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
 
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _attachmentUrlController = TextEditingController();
 
   int? _selectedUserId;
   int? _selectedRoomId;
@@ -54,8 +53,6 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
     if (widget.existingComplaint != null) {
       _titleController.text = widget.existingComplaint!.title;
       _descriptionController.text = widget.existingComplaint!.description;
-      _attachmentUrlController.text =
-          widget.existingComplaint!.attachmentUrl ?? '';
       _selectedCategory = widget.existingComplaint!.category;
       _selectedPriority = widget.existingComplaint!.priority;
       _selectedStatus = widget.existingComplaint!.status;
@@ -67,7 +64,6 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
-    _attachmentUrlController.dispose();
     super.dispose();
   }
 
@@ -133,9 +129,6 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim(),
           priority: _selectedPriority,
-          attachmentUrl: _attachmentUrlController.text.trim().isEmpty
-              ? null
-              : _attachmentUrlController.text.trim(),
         );
         messenger.showSnackBar(
           const SnackBar(
@@ -363,16 +356,6 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
                       ),
                       const SizedBox(height: 16),
                     ],
-
-                    TextFormField(
-                      controller: _attachmentUrlController,
-                      decoration: const InputDecoration(
-                        labelText: 'Attachment / Photo URL (optional)',
-                        hintText: 'https://...',
-                        prefixIcon: Icon(Icons.attachment_outlined),
-                      ),
-                    ),
-                    const SizedBox(height: 28),
 
                     KosMateButton.primary(
                       label: _isSaving

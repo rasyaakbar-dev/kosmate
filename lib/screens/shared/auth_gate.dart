@@ -35,7 +35,6 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   void _initAuthListener() {
-    // Initial check
     final session = supabase.auth.currentSession;
     if (session == null) {
       _cachedUser = null;
@@ -46,7 +45,6 @@ class _AuthGateState extends State<AuthGate> {
       _loadUserProfile();
     }
 
-    // Subscribe to auth state changes
     _authSubscription = _authService.authStateChanges.listen((data) {
       final event = data.event;
       final session = data.session;
@@ -60,7 +58,6 @@ class _AuthGateState extends State<AuthGate> {
           });
         }
       } else if (session.user.id != _currentUserId) {
-        // User changed
         _currentUserId = session.user.id;
         _cachedUser = null;
         _loadUserProfile();
@@ -148,7 +145,6 @@ class _AuthGateState extends State<AuthGate> {
       );
     }
 
-    // Route to appropriate screen based on role
     switch (user.role) {
       case UserRole.admin:
         return AdminMainScreen(user: user);

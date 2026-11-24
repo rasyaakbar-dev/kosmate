@@ -98,7 +98,6 @@ class _HouseRoomsPickerScreenState extends State<HouseRoomsPickerScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Room summary card
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
@@ -150,7 +149,6 @@ class _HouseRoomsPickerScreenState extends State<HouseRoomsPickerScreen> {
                 ),
                 const SizedBox(height: 18),
 
-                // Desired move-in date
                 const Text(
                   'Desired Move-in Date *',
                   style: TextStyle(
@@ -204,7 +202,6 @@ class _HouseRoomsPickerScreenState extends State<HouseRoomsPickerScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Notes for owner
                 const Text(
                   'Notes for Owner (Optional)',
                   style: TextStyle(
@@ -250,7 +247,6 @@ class _HouseRoomsPickerScreenState extends State<HouseRoomsPickerScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Policy notice
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -281,7 +277,6 @@ class _HouseRoomsPickerScreenState extends State<HouseRoomsPickerScreen> {
                 ),
                 const SizedBox(height: 22),
 
-                // Actions
                 Row(
                   children: [
                     Expanded(
@@ -396,7 +391,6 @@ class _HouseRoomsPickerScreenState extends State<HouseRoomsPickerScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // House Card Header
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -477,7 +471,6 @@ class _HouseRoomsPickerScreenState extends State<HouseRoomsPickerScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Available Rooms Header
               const Text(
                 'Available Rooms',
                 style: TextStyle(
@@ -489,7 +482,6 @@ class _HouseRoomsPickerScreenState extends State<HouseRoomsPickerScreen> {
               ),
               const SizedBox(height: 12),
 
-              // Rooms List
               FutureBuilder<List<RoomModel>>(
                 future: _roomsFuture,
                 builder: (context, snapshot) {

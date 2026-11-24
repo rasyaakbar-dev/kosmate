@@ -331,7 +331,6 @@ class KosMateEmptyState extends StatelessWidget {
       );
     }
 
-    // Card variant
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
