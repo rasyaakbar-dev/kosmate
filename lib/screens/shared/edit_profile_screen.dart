@@ -231,7 +231,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   obscureText: obscureNew,
                   decoration: InputDecoration(
                     labelText: 'New Password',
-                    prefixIcon: const Icon(Icons.vpn_key_outlined),
+                    prefixIcon: const Icon(
+                      Icons.vpn_key_outlined,
+                      color: AppTheme.textMuted,
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         obscureNew
@@ -259,7 +262,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   obscureText: obscureConfirm,
                   decoration: InputDecoration(
                     labelText: 'Confirm New Password',
-                    prefixIcon: const Icon(Icons.lock_clock_outlined),
+                    prefixIcon: const Icon(
+                      Icons.lock_clock_outlined,
+                      color: AppTheme.textMuted,
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         obscureConfirm

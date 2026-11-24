@@ -235,33 +235,36 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
             Row(
               children: [
                 _buildStatCard(
-                  label: 'Available Rooms',
+                  label: 'Available',
                   count: '$_availableRooms',
                   subtext: 'of $_totalRooms total',
                   icon: Icons.meeting_room_outlined,
-                  bgColor: AppTheme.successLight,
-                  borderColor: AppTheme.successLight,
-                  textColor: AppTheme.successColor,
+                  bgColor: AppTheme.primaryLight,
+                  borderColor: AppTheme.borderLight,
+                  textColor: AppTheme.primaryColor,
+                  onTap: () => widget.onNavigateToTab(1),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 _buildStatCard(
-                  label: 'Unpaid / Overdue',
+                  label: 'Unpaid bills',
                   count: '$_unpaidOverduePaymentsCount',
                   subtext: 'need attention',
                   icon: Icons.receipt_long_outlined,
-                  bgColor: AppTheme.destructiveLight,
-                  borderColor: AppTheme.borderLight,
-                  textColor: AppTheme.destructiveColor,
-                ),
-                const SizedBox(width: 8),
-                _buildStatCard(
-                  label: 'Complaints',
-                  count: '$_activeComplaintsCount',
-                  subtext: 'in progress / open',
-                  icon: Icons.build_circle_outlined,
                   bgColor: AppTheme.warningLight,
                   borderColor: AppTheme.warningLight,
                   textColor: AppTheme.warningColor,
+                  onTap: () => widget.onNavigateToTab(2),
+                ),
+                const SizedBox(width: 10),
+                _buildStatCard(
+                  label: 'Complaints',
+                  count: '$_activeComplaintsCount',
+                  subtext: 'active / open',
+                  icon: Icons.build_circle_outlined,
+                  bgColor: AppTheme.surfaceLight,
+                  borderColor: AppTheme.borderLight,
+                  textColor: AppTheme.foregroundColor,
+                  onTap: _openComplaintsScreen,
                 ),
               ],
             ),
@@ -282,25 +285,25 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
               children: [
                 _buildQuickActionTile(
                   icon: Icons.meeting_room_outlined,
-                  label: 'Check\nrooms',
+                  label: 'Rooms',
                   onTap: () => widget.onNavigateToTab(1),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 _buildQuickActionTile(
                   icon: Icons.assignment_ind_outlined,
-                  label: 'Check\nbooking',
+                  label: 'Bookings',
                   onTap: _showBookingRequestsModal,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 _buildQuickActionTile(
                   icon: Icons.build_circle_outlined,
-                  label: 'Check\ncomplaints',
+                  label: 'Complaints',
                   onTap: _openComplaintsScreen,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 _buildQuickActionTile(
                   icon: Icons.receipt_long_outlined,
-                  label: 'Check\npayments',
+                  label: 'Payments',
                   onTap: () => widget.onNavigateToTab(2),
                 ),
               ],
@@ -470,61 +473,69 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
     required Color bgColor,
     required Color borderColor,
     Color? textColor,
+    VoidCallback? onTap,
   }) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: borderColor),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    label,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: const TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textDark,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Icon(icon, color: AppTheme.accentColor, size: 20),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  count,
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: textColor ?? AppTheme.primaryColor,
+                  ),
+                ),
+                if (subtext != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtext,
                     style: const TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textDark,
+                      color: AppTheme.textMuted,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                Icon(icon, color: textColor ?? AppTheme.accentColor, size: 16),
+                ],
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              count,
-              style: TextStyle(
-                fontFamily: 'Roboto',
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: textColor ?? AppTheme.primaryColor,
-              ),
-            ),
-            if (subtext != null) ...[
-              const SizedBox(height: 2),
-              Text(
-                subtext,
-                style: const TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 10,
-                  color: AppTheme.textMuted,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );
@@ -543,26 +554,26 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.borderMedium, width: 1.2),
+              border: Border.all(color: AppTheme.borderLight, width: 1.2),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, color: AppTheme.accentColor, size: 22),
-                const SizedBox(height: 6),
+                Icon(icon, color: AppTheme.accentColor, size: 24),
+                const SizedBox(height: 8),
                 Text(
                   label,
                   textAlign: TextAlign.center,
-                  maxLines: 2,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontFamily: 'Roboto',
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: AppTheme.foregroundColor,
-                    height: 1.2,
                   ),
                 ),
               ],

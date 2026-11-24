@@ -295,7 +295,11 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
                 ),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear, size: 18),
+                        icon: const Icon(
+                          Icons.clear,
+                          size: 18,
+                          color: AppTheme.textMuted,
+                        ),
                         onPressed: () {
                           setState(() {
                             _searchController.clear();
@@ -1357,7 +1361,10 @@ class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close),
+                      icon: const Icon(
+                        Icons.close,
+                        color: AppTheme.foregroundColor,
+                      ),
                       onPressed: () => Navigator.pop(context),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
@@ -1409,7 +1416,11 @@ class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
                 child: TextField(
                   decoration: InputDecoration(
                     hintText: 'Search tenant or room...',
-                    prefixIcon: const Icon(Icons.search, size: 18),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      size: 18,
+                      color: AppTheme.textMuted,
+                    ),
                     contentPadding: const EdgeInsets.symmetric(
                       vertical: 8,
                       horizontal: 12,

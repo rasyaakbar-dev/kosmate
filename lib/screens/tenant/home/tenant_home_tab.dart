@@ -389,32 +389,26 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
               children: [
                 _buildActionTile(
                   icon: hasActiveRoom
-                      ? Icons.bed_outlined
+                      ? Icons.meeting_room_outlined
                       : (hasPendingBooking
                             ? Icons.pending_actions_outlined
                             : Icons.search_rounded),
                   label: hasActiveRoom
-                      ? 'My room'
+                      ? 'Room info'
                       : (hasPendingBooking ? 'My request' : 'Find Room'),
                   onTap: () => widget.onNavigateToTab(1),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 _buildActionTile(
                   icon: Icons.mail_outline_rounded,
                   label: 'Payment',
                   onTap: () => widget.onNavigateToTab(2),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 _buildActionTile(
                   icon: Icons.feedback_outlined,
                   label: 'Complaint',
                   onTap: _showNewComplaintDialog,
-                ),
-                const SizedBox(width: 10),
-                _buildActionTile(
-                  icon: Icons.search_rounded,
-                  label: 'Find Room',
-                  onTap: () => widget.onNavigateToTab(1),
                 ),
               ],
             ),

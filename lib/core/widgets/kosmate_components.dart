@@ -255,7 +255,11 @@ class KosMateSearchBar extends StatelessWidget {
           ),
           suffixIcon: controller.text.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.clear, size: 18),
+                  icon: const Icon(
+                    Icons.clear,
+                    size: 18,
+                    color: AppTheme.textMuted,
+                  ),
                   onPressed: () {
                     controller.clear();
                     onClear?.call();

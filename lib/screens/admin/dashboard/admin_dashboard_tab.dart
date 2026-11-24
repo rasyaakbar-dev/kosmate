@@ -6,8 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../models/house_model.dart';
 import '../../../models/user_model.dart';
-import '../../houses/house_form_screen.dart';
-import '../users/user_form_dialog.dart';
+import '../payments/admin_payments_screen.dart';
 
 class AdminDashboardTab extends StatefulWidget {
   final UserModel user;
@@ -61,23 +60,13 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
     }
   }
 
-  Future<void> _openAddUserDialog() async {
-    final created = await UserFormDialog.show(context);
-    if (created == true && mounted) {
-      _loadAdminData();
-    }
-  }
-
-  Future<void> _openAddHouseScreen() async {
-    final created = await Navigator.push<HouseModel>(
+  void _openPaymentsScreen() {
+    Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => HouseFormScreen(ownerId: widget.user.userId),
-      ),
-    );
-    if (created != null && mounted) {
-      _loadAdminData();
-    }
+      MaterialPageRoute(builder: (_) => const AdminPaymentsScreen()),
+    ).then((_) {
+      if (mounted) _loadAdminData();
+    });
   }
 
   @override
@@ -221,21 +210,21 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
             Row(
               children: [
                 _buildQuickActionTile(
-                  icon: Icons.person_add_outlined,
-                  label: 'Add user',
-                  onTap: _openAddUserDialog,
+                  icon: Icons.group_outlined,
+                  label: 'Users',
+                  onTap: () => widget.onNavigateToTab(1),
                 ),
                 const SizedBox(width: 12),
                 _buildQuickActionTile(
                   icon: Icons.apartment_outlined,
-                  label: 'Add house',
-                  onTap: _openAddHouseScreen,
+                  label: 'Houses',
+                  onTap: () => widget.onNavigateToTab(2),
                 ),
                 const SizedBox(width: 12),
                 _buildQuickActionTile(
-                  icon: Icons.verified_user_outlined,
-                  label: 'Manage roles',
-                  onTap: () => widget.onNavigateToTab(1),
+                  icon: Icons.receipt_long_outlined,
+                  label: 'Payments',
+                  onTap: _openPaymentsScreen,
                 ),
               ],
             ),

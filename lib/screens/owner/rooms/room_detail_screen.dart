@@ -320,7 +320,10 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                   child: Wrap(
                     children: [
                       ListTile(
-                        leading: const Icon(Icons.edit_outlined),
+                        leading: const Icon(
+                          Icons.edit_outlined,
+                          color: AppTheme.primaryColor,
+                        ),
                         title: const Text('Edit Room'),
                         onTap: () {
                           Navigator.pop(ctx);

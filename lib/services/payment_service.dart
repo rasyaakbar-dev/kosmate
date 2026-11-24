@@ -49,6 +49,75 @@ class PaymentService {
     }
   }
 
+  /// Fetch all payments platform-wide (Admin)
+  Future<List<PaymentModel>> getAllPayments() async {
+    try {
+      final response = await _client
+          .from(SupabaseConstants.paymentTable)
+          .select(
+            '*, users!payment_user_id_fkey(*), room!payment_room_id_fkey(*, house!room_house_id_fkey(*))',
+          )
+          .order('due_date', ascending: false);
+
+      return (response as List).mapToModel(PaymentModel.fromJson);
+    } catch (e) {
+      throw ServiceException('Failed to load all payments.', cause: e);
+    }
+  }
+
+  /// Full update payment for Admin
+  Future<PaymentModel> updatePayment({
+    required int paymentId,
+    required int userId,
+    required int roomId,
+    required double amount,
+    required DateTime dueDate,
+    required PaymentStatus status,
+    DateTime? paidDate,
+    String? receiptUrl,
+  }) async {
+    try {
+      final updateData = <String, dynamic>{
+        'user_id': userId,
+        'room_id': roomId,
+        'amount': amount,
+        'due_date': Formatters.toDateString(dueDate),
+        'status': status.name,
+      };
+      if (paidDate != null) {
+        updateData['paid_date'] = Formatters.toDateString(paidDate);
+      }
+      if (receiptUrl != null) {
+        updateData['receipt_url'] = receiptUrl;
+      }
+
+      final response = await _client
+          .from(SupabaseConstants.paymentTable)
+          .update(updateData)
+          .eq('payment_id', paymentId)
+          .select(
+            '*, users!payment_user_id_fkey(*), room!payment_room_id_fkey(*, house!room_house_id_fkey(*))',
+          )
+          .single();
+
+      return PaymentModel.fromJson(response);
+    } catch (e) {
+      throw ServiceException('Failed to update payment.', cause: e);
+    }
+  }
+
+  /// Delete a payment (Admin)
+  Future<void> deletePayment(int paymentId) async {
+    try {
+      await _client
+          .from(SupabaseConstants.paymentTable)
+          .delete()
+          .eq('payment_id', paymentId);
+    } catch (e) {
+      throw ServiceException('Failed to delete payment.', cause: e);
+    }
+  }
+
   /// Create an invoice/bill for a tenant
   Future<PaymentModel> createPayment({
     required int userId,

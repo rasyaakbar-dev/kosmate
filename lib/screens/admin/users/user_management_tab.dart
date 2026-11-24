@@ -173,7 +173,11 @@ class _UserManagementTabState extends State<UserManagementTab> {
               ),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear, size: 18),
+                      icon: const Icon(
+                        Icons.clear,
+                        size: 18,
+                        color: AppTheme.textMuted,
+                      ),
                       onPressed: () {
                         _searchController.clear();
                         _loadUsers();

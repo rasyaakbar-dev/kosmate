@@ -5,8 +5,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../models/house_model.dart';
 import '../../../models/user_model.dart';
 import '../../houses/house_detail_screen.dart';
-import '../../houses/house_form_screen.dart';
 import '../../houses/widgets/house_card.dart';
+import 'admin_house_form_screen.dart';
 
 class AdminHousesTab extends StatefulWidget {
   final UserModel currentUser;
@@ -66,15 +66,13 @@ class _AdminHousesTabState extends State<AdminHousesTab> {
   }
 
   Future<void> _openAddHouseScreen() async {
-    final created = await Navigator.push<HouseModel>(
+    final created = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => HouseFormScreen(
-          ownerId: widget.filterOwnerId ?? widget.currentUser.userId,
-        ),
+        builder: (_) => const AdminHouseFormScreen(),
       ),
     );
-    if (created != null && mounted) {
+    if (created == true && mounted) {
       _loadHouses();
     }
   }
@@ -93,13 +91,13 @@ class _AdminHousesTabState extends State<AdminHousesTab> {
   }
 
   Future<void> _openEditHouse(HouseModel house) async {
-    final updated = await Navigator.push<HouseModel>(
+    final updated = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => HouseFormScreen(house: house, ownerId: house.ownerId),
+        builder: (_) => AdminHouseFormScreen(house: house),
       ),
     );
-    if (updated != null && mounted) {
+    if (updated == true && mounted) {
       _loadHouses();
     }
   }
@@ -214,7 +212,11 @@ class _AdminHousesTabState extends State<AdminHousesTab> {
               ),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear, size: 18),
+                      icon: const Icon(
+                        Icons.clear,
+                        size: 18,
+                        color: AppTheme.textMuted,
+                      ),
                       onPressed: () {
                         _searchController.clear();
                         _loadHouses();

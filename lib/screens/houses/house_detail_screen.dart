@@ -6,6 +6,8 @@ import '../../core/utils/formatters.dart';
 import '../../models/house_model.dart';
 import '../../models/room_model.dart';
 import '../../models/user_model.dart';
+import '../admin/houses/admin_house_form_screen.dart';
+import '../admin/rooms/admin_room_form_screen.dart';
 import 'house_form_screen.dart';
 
 class HouseDetailScreen extends StatefulWidget {
@@ -59,6 +61,19 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
   }
 
   Future<void> _handleEditHouse() async {
+    if (widget.currentUser.role == UserRole.admin) {
+      final changed = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => AdminHouseFormScreen(house: _house),
+        ),
+      );
+      if (changed == true && mounted) {
+        _loadHouseData();
+      }
+      return;
+    }
+
     final updated = await Navigator.push<HouseModel>(
       context,
       MaterialPageRoute(
@@ -68,6 +83,36 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
     if (updated != null && mounted) {
       setState(() => _house = updated);
       _loadHouseData();
+    }
+  }
+
+  Future<void> _handleAddRoom() async {
+    if (widget.currentUser.role == UserRole.admin) {
+      final created = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => AdminRoomFormScreen(initialHouseId: _house.houseId),
+        ),
+      );
+      if (created == true && mounted) {
+        _loadHouseData();
+      }
+      return;
+    }
+    _showAddRoomDialog();
+  }
+
+  Future<void> _handleRoomTap(RoomModel room) async {
+    if (widget.currentUser.role == UserRole.admin) {
+      final changed = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => AdminRoomFormScreen(room: room),
+        ),
+      );
+      if (changed == true && mounted) {
+        _loadHouseData();
+      }
     }
   }
 
@@ -475,7 +520,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                             ),
                             icon: const Icon(Icons.add, size: 18),
                             label: const Text('Add Room'),
-                            onPressed: _showAddRoomDialog,
+                            onPressed: _handleAddRoom,
                           ),
                       ],
                     ),
@@ -528,97 +573,112 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                           final isAvailable =
                               room.status == RoomStatus.available;
 
-                          return Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
+                          return Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => _handleRoomTap(room),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: AppTheme.borderLight),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: isAvailable
-                                        ? AppTheme.successLight
-                                        : AppTheme.destructiveLight,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Icon(
-                                    Icons.bed_outlined,
-                                    color: isAvailable
-                                        ? AppTheme.successColor
-                                        : AppTheme.destructiveColor,
-                                  ),
+                              child: Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: AppTheme.borderLight),
                                 ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Room ${room.roomNumber} (${room.roomType})',
-                                        style: const TextStyle(
-                                          fontFamily: 'Roboto',
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppTheme.foregroundColor,
-                                        ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 44,
+                                      height: 44,
+                                      decoration: BoxDecoration(
+                                        color: isAvailable
+                                            ? AppTheme.successLight
+                                            : AppTheme.destructiveLight,
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
-                                      const SizedBox(height: 3),
-                                      Text(
-                                        '${Formatters.formatCurrency(room.price)} / month',
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500,
-                                          color: AppTheme.primaryColor,
-                                        ),
+                                      child: Icon(
+                                        Icons.bed_outlined,
+                                        color: isAvailable
+                                            ? AppTheme.successColor
+                                            : AppTheme.destructiveColor,
                                       ),
-                                      if (room.facilities != null &&
-                                          room.facilities!
-                                              .trim()
-                                              .isNotEmpty) ...[
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          room.facilities!,
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: AppTheme.textSubtle,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isAvailable
-                                        ? AppTheme.successLight
-                                        : AppTheme.destructiveLight,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    room.status.displayName,
-                                    style: TextStyle(
-                                      fontFamily: 'Roboto',
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: isAvailable
-                                          ? AppTheme.successColor
-                                          : AppTheme.destructiveColor,
                                     ),
-                                  ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Room ${room.roomNumber} (${room.roomType})',
+                                            style: const TextStyle(
+                                              fontFamily: 'Roboto',
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppTheme.foregroundColor,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 3),
+                                          Text(
+                                            '${Formatters.formatCurrency(room.price)} / month',
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                              color: AppTheme.primaryColor,
+                                            ),
+                                          ),
+                                          if (room.facilities != null &&
+                                              room.facilities!
+                                                  .trim()
+                                                  .isNotEmpty) ...[
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              room.facilities!,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: AppTheme.textSubtle,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isAvailable
+                                            ? AppTheme.successLight
+                                            : AppTheme.destructiveLight,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        room.status.displayName,
+                                        style: TextStyle(
+                                          fontFamily: 'Roboto',
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: isAvailable
+                                              ? AppTheme.successColor
+                                              : AppTheme.destructiveColor,
+                                        ),
+                                      ),
+                                    ),
+                                    if (widget.currentUser.role == UserRole.admin) ...[
+                                      const SizedBox(width: 6),
+                                      const Icon(
+                                        Icons.chevron_right,
+                                        color: AppTheme.textSubtle,
+                                        size: 18,
+                                      ),
+                                    ],
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
                           );
                         },

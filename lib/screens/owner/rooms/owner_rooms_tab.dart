@@ -317,7 +317,11 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
               ),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear, size: 18),
+                      icon: const Icon(
+                        Icons.clear,
+                        size: 18,
+                        color: AppTheme.textMuted,
+                      ),
                       onPressed: () {
                         setState(() {
                           _searchController.clear();
@@ -804,7 +808,11 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
               ),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear, size: 18),
+                      icon: const Icon(
+                        Icons.clear,
+                        size: 18,
+                        color: AppTheme.textMuted,
+                      ),
                       onPressed: () {
                         setState(() {
                           _searchController.clear();
