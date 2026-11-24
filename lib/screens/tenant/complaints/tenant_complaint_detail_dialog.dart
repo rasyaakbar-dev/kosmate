@@ -272,7 +272,11 @@ class TenantComplaintDetailDialog extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                icon: const Icon(Icons.arrow_back, size: 18),
+                icon: const Icon(
+                  Icons.arrow_back,
+                  size: 18,
+                  color: AppTheme.destructiveColor,
+                ),
                 label: const Text('Back to complaints'),
                 onPressed: () => Navigator.pop(context),
                 style: OutlinedButton.styleFrom(

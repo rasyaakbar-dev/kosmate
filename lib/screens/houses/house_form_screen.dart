@@ -29,6 +29,7 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
   final _imagePicker = ImagePicker();
 
   Uint8List? _selectedImageBytes;
+  String _selectedImageExtension = 'jpg';
   String? _currentThumbnailUrl;
   bool _isLoading = false;
 
@@ -67,6 +68,7 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
         final bytes = await picked.readAsBytes();
         setState(() {
           _selectedImageBytes = bytes;
+          _selectedImageExtension = picked.name.split('.').last;
         });
       }
     } catch (e) {
@@ -164,6 +166,7 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
         final uploaded = await _storageService.uploadHouseImage(
           widget.house?.houseId,
           _selectedImageBytes!,
+          extension: _selectedImageExtension,
         );
         finalThumbnailUrl = uploaded;
       }
@@ -241,7 +244,7 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.foregroundColor),
+          icon: const Icon(Icons.arrow_back, color: AppTheme.destructiveColor),
           onPressed: () => Navigator.pop(context),
         ),
         bottom: PreferredSize(

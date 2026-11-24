@@ -26,6 +26,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _imagePicker = ImagePicker();
 
   Uint8List? _newAvatarBytes;
+  String _newAvatarExtension = 'jpg';
   String? _currentAvatarUrl;
   bool _resetAvatar = false;
   bool _isLoading = false;
@@ -57,6 +58,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         final bytes = await picked.readAsBytes();
         setState(() {
           _newAvatarBytes = bytes;
+          _newAvatarExtension = picked.name.split('.').last;
           _resetAvatar = false;
         });
       }
@@ -160,9 +162,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         finalAvatarUrl = await _storageService.uploadAvatar(
           widget.user.userId,
           _newAvatarBytes!,
+          extension: _newAvatarExtension,
         );
       } else if (_resetAvatar) {
-        await _storageService.deleteAvatar(widget.user.userId);
         finalAvatarUrl = null;
       }
 
@@ -173,11 +175,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         avatarUrl: finalAvatarUrl,
         clearAvatar: _resetAvatar,
       );
+      String? cleanupWarning;
+      if (_resetAvatar || _newAvatarBytes != null) {
+        try {
+          await _storageService.deleteAvatar(
+            widget.user.userId,
+            avatarUrl: _currentAvatarUrl,
+          );
+        } catch (e) {
+          cleanupWarning =
+              'Profile saved, but the previous image could not be removed: $e';
+        }
+      }
 
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Profile updated successfully!'),
-          backgroundColor: AppTheme.successColor,
+        SnackBar(
+          content: Text(cleanupWarning ?? 'Profile updated successfully!'),
+          backgroundColor: cleanupWarning == null
+              ? AppTheme.successColor
+              : AppTheme.warningColor,
         ),
       );
 
@@ -448,7 +464,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.foregroundColor),
+          icon: const Icon(Icons.arrow_back, color: AppTheme.destructiveColor),
           onPressed: () => Navigator.pop(context),
         ),
         bottom: PreferredSize(

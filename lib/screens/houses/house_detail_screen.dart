@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/widgets/room_facilities_selector.dart';
 import '../../models/house_model.dart';
 import '../../models/room_model.dart';
 import '../../models/user_model.dart';
@@ -163,7 +164,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
     final numberCtrl = TextEditingController();
     final typeCtrl = TextEditingController();
     final priceCtrl = TextEditingController();
-    final facilitiesCtrl = TextEditingController();
+    var selectedFacilities = <String>[];
     RoomStatus selectedStatus = RoomStatus.available;
     bool isSaving = false;
 
@@ -201,12 +202,16 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: facilitiesCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Facilities (optional)',
-                    hintText: 'AC, WiFi, Kasur, Kamar Mandi Dalam',
-                  ),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Facilities (optional)'),
+                ),
+                const SizedBox(height: 8),
+                RoomFacilitiesSelector(
+                  selectedFacilities: selectedFacilities,
+                  onChanged: (facilities) {
+                    setDialogState(() => selectedFacilities = facilities);
+                  },
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<RoomStatus>(
@@ -265,8 +270,8 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                             roomNumber: numberCtrl.text.trim(),
                             roomType: typeCtrl.text.trim(),
                             price: parsedPrice,
-                            facilities: facilitiesCtrl.text.trim().isNotEmpty
-                                ? facilitiesCtrl.text.trim()
+                            facilities: selectedFacilities.isNotEmpty
+                                ? selectedFacilities.join(', ')
                                 : null,
                             status: selectedStatus,
                           ),
@@ -321,7 +326,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.foregroundColor),
+          icon: const Icon(Icons.arrow_back, color: AppTheme.destructiveColor),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [

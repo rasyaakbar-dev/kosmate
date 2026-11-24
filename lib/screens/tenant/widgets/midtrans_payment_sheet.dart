@@ -182,7 +182,7 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
                 IconButton(
                   icon: const Icon(
                     Icons.close,
-                    color: AppTheme.foregroundColor,
+                    color: AppTheme.destructiveColor,
                   ),
                   onPressed: () => Navigator.pop(context),
                 ),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/room_facilities.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
+import '../../../core/widgets/room_facilities_selector.dart';
 import '../../../models/house_model.dart';
 import '../../../models/room_model.dart';
 
@@ -25,12 +27,12 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
 
   late final TextEditingController _roomNumberController;
   late final TextEditingController _priceController;
-  late final TextEditingController _facilitiesController;
   late final TextEditingController _imageUrlController;
 
   int? _selectedHouseId;
   String _selectedRoomType = 'Standard';
   RoomStatus _selectedStatus = RoomStatus.available;
+  late List<String> _selectedFacilities;
 
   List<HouseModel> _houses = [];
   bool _isLoadingHouses = true;
@@ -54,7 +56,7 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
     _priceController = TextEditingController(
       text: r != null ? r.price.toStringAsFixed(0) : '',
     );
-    _facilitiesController = TextEditingController(text: r?.facilities ?? '');
+    _selectedFacilities = RoomFacilities.parse(r?.facilities);
     _imageUrlController = TextEditingController(
       text: r?.imageUrls.isNotEmpty == true ? r!.imageUrls.first : '',
     );
@@ -75,7 +77,6 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
   void dispose() {
     _roomNumberController.dispose();
     _priceController.dispose();
-    _facilitiesController.dispose();
     _imageUrlController.dispose();
     super.dispose();
   }
@@ -128,7 +129,7 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
           roomType: _selectedRoomType,
           price: price,
           status: _selectedStatus,
-          facilities: _facilitiesController.text.trim(),
+          facilities: _selectedFacilities.join(', '),
           imageUrls: imageUrls,
         );
         await _roomService.updateRoom(updated);
@@ -146,7 +147,7 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
           roomType: _selectedRoomType,
           price: price,
           status: _selectedStatus,
-          facilities: _facilitiesController.text.trim(),
+          facilities: _selectedFacilities.join(', '),
           imageUrls: imageUrls,
           createdAt: DateTime.now(),
         );
@@ -445,33 +446,11 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    TextFormField(
-                      controller: _facilitiesController,
-                      maxLines: 2,
-                      decoration: InputDecoration(
-                        hintText: 'Single bed, study desk, bathroom, Wi-Fi',
-                        prefixIcon: const Padding(
-                          padding: EdgeInsets.only(bottom: 24),
-                          child: Icon(
-                            Icons.check_box_outlined,
-                            color: AppTheme.textMuted,
-                          ),
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppTheme.borderMedium,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppTheme.borderMedium,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
+                    RoomFacilitiesSelector(
+                      selectedFacilities: _selectedFacilities,
+                      onChanged: (facilities) {
+                        setState(() => _selectedFacilities = facilities);
+                      },
                     ),
                     const SizedBox(height: 16),
 

@@ -4,6 +4,7 @@ import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/kosmate_components.dart';
+import '../../../core/widgets/room_facilities_card.dart';
 import '../../../models/booking_model.dart';
 import '../../../models/complaint_model.dart';
 import '../../../models/house_model.dart';
@@ -345,7 +346,7 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
               ),
             ),
             const SizedBox(height: 12),
-            _buildFacilitiesGrid(room.facilities ?? ''),
+            RoomFacilitiesCard(facilities: room.facilities),
             const SizedBox(height: 20),
 
             Container(
@@ -631,49 +632,6 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildFacilitiesGrid(String facilitiesStr) {
-    final defaultFacilities = [
-      {'title': 'Single bed', 'icon': Icons.bed_outlined},
-      {'title': 'Study desk', 'icon': Icons.desk_outlined},
-      {'title': 'Bathroom', 'icon': Icons.shower_outlined},
-    ];
-
-    return Row(
-      children: defaultFacilities.map((f) {
-        return Expanded(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.borderLight),
-            ),
-            child: Column(
-              children: [
-                Icon(
-                  f['icon'] as IconData,
-                  color: AppTheme.accentColor,
-                  size: 26,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  f['title'] as String,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: AppTheme.textDark,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
     );
   }
 

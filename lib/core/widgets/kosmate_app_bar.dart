@@ -33,7 +33,10 @@ class KosMateAppBar extends StatelessWidget implements PreferredSizeWidget {
             children: [
               if (showBackButton) ...[
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: AppTheme.destructiveColor,
+                  ),
                   onPressed: () => Navigator.maybePop(context),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),

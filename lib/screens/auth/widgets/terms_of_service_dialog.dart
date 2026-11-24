@@ -48,7 +48,10 @@ class TermsOfServiceDialog extends StatelessWidget {
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: AppTheme.textMuted),
+                    icon: const Icon(
+                      Icons.close,
+                      color: AppTheme.destructiveColor,
+                    ),
                     onPressed: () => Navigator.pop(context, false),
                   ),
                 ],

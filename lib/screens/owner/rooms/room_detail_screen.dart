@@ -7,6 +7,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
 import '../../../core/widgets/kosmate_components.dart';
 import '../../../core/widgets/private_storage_image.dart';
+import '../../../core/widgets/room_facilities_card.dart';
 import '../../../models/booking_model.dart';
 import '../../../models/complaint_model.dart';
 import '../../../models/payment_model.dart';
@@ -469,13 +470,16 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                             isBold: true,
                           ),
                           const SizedBox(height: 14),
-                          _buildInfoRow(
+                          const Text(
                             'Facilities',
-                            _room.facilities?.isNotEmpty == true
-                                ? _room.facilities!
-                                : 'Standard facilities',
-                            isBold: true,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textDark,
+                            ),
                           ),
+                          const SizedBox(height: 8),
+                          RoomFacilitiesCard(facilities: _room.facilities),
                         ],
                       ),
                     ),

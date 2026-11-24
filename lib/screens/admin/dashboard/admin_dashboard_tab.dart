@@ -262,7 +262,7 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
                 icon: Icons.person_outline,
                 title: 'User registered',
                 subtitle:
-                    '${_recentUsers.first.name} • ${_recentUsers.first.role.name.toUpperCase()}',
+                    '${_recentUsers.first.name} • ${_recentUsers.first.role.displayName}',
                 trailingText: Formatters.formatDate(
                   _recentUsers.first.createdAt,
                 ),

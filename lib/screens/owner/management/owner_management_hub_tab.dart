@@ -604,7 +604,7 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
                         icon: const Icon(
                           Icons.clear,
                           size: 18,
-                          color: AppTheme.textMuted,
+                          color: AppTheme.destructiveColor,
                         ),
                         onPressed: () {
                           setState(() {
@@ -1475,7 +1475,7 @@ class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'OCCUPIED ROOM',
+                            'Occupied Room',
                             style: TextStyle(
                               fontFamily: 'Roboto',
                               fontSize: 11,
@@ -1759,7 +1759,7 @@ class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: const Text(
-                                    'PAID',
+                                    'Paid',
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
@@ -1940,7 +1940,7 @@ class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
                         IconButton(
                           icon: const Icon(
                             Icons.close,
-                            color: AppTheme.foregroundColor,
+                            color: AppTheme.destructiveColor,
                           ),
                           onPressed: () => Navigator.pop(context),
                           padding: EdgeInsets.zero,

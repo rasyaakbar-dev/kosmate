@@ -362,7 +362,7 @@ class _AdminHousesTabState extends State<AdminHousesTab> {
                       icon: const Icon(
                         Icons.clear,
                         size: 18,
-                        color: AppTheme.textMuted,
+                        color: AppTheme.destructiveColor,
                       ),
                       onPressed: () {
                         setState(() {
@@ -775,7 +775,7 @@ class _AdminHousesTabState extends State<AdminHousesTab> {
                 },
                 icon: const Icon(
                   Icons.arrow_back,
-                  color: AppTheme.foregroundColor,
+                  color: AppTheme.destructiveColor,
                 ),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -878,7 +878,7 @@ class _AdminHousesTabState extends State<AdminHousesTab> {
                       icon: const Icon(
                         Icons.clear,
                         size: 18,
-                        color: AppTheme.textMuted,
+                        color: AppTheme.destructiveColor,
                       ),
                       onPressed: () {
                         setState(() {

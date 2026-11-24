@@ -211,7 +211,7 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> {
                             ? IconButton(
                                 icon: const Icon(
                                   Icons.clear,
-                                  color: AppTheme.textMuted,
+                                  color: AppTheme.destructiveColor,
                                   size: 18,
                                 ),
                                 onPressed: () {

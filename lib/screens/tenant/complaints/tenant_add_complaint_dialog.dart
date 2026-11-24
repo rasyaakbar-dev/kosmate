@@ -242,7 +242,10 @@ class _TenantAddComplaintDialogState extends State<TenantAddComplaintDialog> {
                           _attachmentBytes = null;
                           _attachmentExtension = null;
                         }),
-                        icon: const Icon(Icons.close),
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        style: IconButton.styleFrom(
+                          backgroundColor: AppTheme.destructiveColor,
+                        ),
                         tooltip: 'Remove attachment',
                       ),
                     ),

@@ -181,7 +181,7 @@ class _UserManagementTabState extends State<UserManagementTab> {
                       icon: const Icon(
                         Icons.clear,
                         size: 18,
-                        color: AppTheme.textMuted,
+                        color: AppTheme.destructiveColor,
                       ),
                       onPressed: () {
                         _searchController.clear();

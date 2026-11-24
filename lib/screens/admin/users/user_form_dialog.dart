@@ -136,7 +136,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
                       IconButton(
                         icon: const Icon(
                           Icons.close,
-                          color: AppTheme.textMuted,
+                          color: AppTheme.destructiveColor,
                         ),
                         onPressed: _isLoading
                             ? null

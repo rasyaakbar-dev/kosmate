@@ -3,8 +3,10 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/constants/room_facilities.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/room_facilities_selector.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
 import '../../../models/house_model.dart';
 import '../../../models/room_model.dart';
@@ -37,13 +39,14 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
 
   late TextEditingController _nameController;
   late TextEditingController _rentController;
-  late TextEditingController _facilitiesController;
 
   int? _selectedHouseId;
   String _selectedFloor = 'Floor 1';
   RoomStatus _selectedStatus = RoomStatus.available;
   Uint8List? _selectedImageBytes;
+  String _selectedImageExtension = 'jpg';
   String? _currentImageUrl;
+  late List<String> _selectedFacilities;
 
   List<HouseModel> _houses = [];
   bool _isLoading = false;
@@ -65,7 +68,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
     _rentController = TextEditingController(
       text: r != null ? r.price.toStringAsFixed(0) : '',
     );
-    _facilitiesController = TextEditingController(text: r?.facilities ?? '');
+    _selectedFacilities = RoomFacilities.parse(r?.facilities);
     _selectedStatus = r?.status ?? RoomStatus.available;
     _selectedHouseId = r?.houseId ?? widget.houseId;
     _currentImageUrl = r?.imageUrls.isNotEmpty == true
@@ -85,7 +88,6 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
   void dispose() {
     _nameController.dispose();
     _rentController.dispose();
-    _facilitiesController.dispose();
     super.dispose();
   }
 
@@ -101,6 +103,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
         final bytes = await picked.readAsBytes();
         setState(() {
           _selectedImageBytes = bytes;
+          _selectedImageExtension = picked.name.split('.').last;
         });
       }
     } catch (e) {
@@ -237,6 +240,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
         final uploaded = await _storageService.uploadRoomImage(
           widget.room?.roomId,
           _selectedImageBytes!,
+          extension: _selectedImageExtension,
         );
         roomImages.add(uploaded);
       } else if (_currentImageUrl != null && _currentImageUrl!.isNotEmpty) {
@@ -249,9 +253,9 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
         roomNumber: _nameController.text.trim(),
         roomType: _selectedFloor,
         price: rentValue,
-        facilities: _facilitiesController.text.trim().isNotEmpty
-            ? _facilitiesController.text.trim()
-            : null,
+        facilities: _selectedFacilities.isEmpty
+            ? null
+            : _selectedFacilities.join(', '),
         imageUrls: roomImages,
         status: _selectedStatus,
       );
@@ -563,13 +567,11 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      TextFormField(
-                        controller: _facilitiesController,
-                        maxLines: 4,
-                        decoration: _inputDecoration(
-                          hintText: 'Bed, desk, private bathroom',
-                          prefixIcon: Icons.playlist_add_check_outlined,
-                        ),
+                      RoomFacilitiesSelector(
+                        selectedFacilities: _selectedFacilities,
+                        onChanged: (facilities) {
+                          setState(() => _selectedFacilities = facilities);
+                        },
                       ),
                       const SizedBox(height: 18),
 

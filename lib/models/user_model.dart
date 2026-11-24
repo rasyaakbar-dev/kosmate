@@ -7,6 +7,8 @@ enum UserRole {
   owner,
   tenant;
 
+  String get displayName => '${name[0].toUpperCase()}${name.substring(1)}';
+
   static UserRole fromString(String value) {
     return UserRole.values.firstWhere(
       (e) => e.name.toLowerCase() == value.toLowerCase(),
