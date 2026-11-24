@@ -4,7 +4,8 @@ import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/kosmate_components.dart';
 import '../../../models/user_model.dart';
-import 'user_form_dialog.dart';
+import 'admin_user_detail_screen.dart';
+import 'admin_user_form_screen.dart';
 
 class UserManagementTab extends StatefulWidget {
   final UserModel currentUser;
@@ -43,15 +44,21 @@ class _UserManagementTabState extends State<UserManagementTab> {
     });
   }
 
-  Future<void> _openAddUserDialog() async {
-    final changed = await UserFormDialog.show(context);
+  Future<void> _openAddUser() async {
+    final changed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const AdminUserFormScreen()),
+    );
     if (changed == true && mounted) {
       _loadUsers();
     }
   }
 
-  Future<void> _openEditUserDialog(UserModel user) async {
-    final changed = await UserFormDialog.show(context, user: user);
+  Future<void> _openEditUser(UserModel user) async {
+    final changed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => AdminUserFormScreen(user: user)),
+    );
     if (changed == true && mounted) {
       _loadUsers();
     }
@@ -148,7 +155,7 @@ class _UserManagementTabState extends State<UserManagementTab> {
                   ),
                   elevation: 0,
                 ),
-                onPressed: _openAddUserDialog,
+                onPressed: _openAddUser,
               ),
             ],
           ),
@@ -261,122 +268,147 @@ class _UserManagementTabState extends State<UserManagementTab> {
                         borderRadius: BorderRadius.circular(12),
                         side: const BorderSide(color: AppTheme.borderLight),
                       ),
+                      clipBehavior: Clip.antiAlias,
                       margin: const EdgeInsets.only(bottom: 10),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 22,
-                              backgroundColor: AppTheme.primaryColor.withValues(
-                                alpha: 0.12,
-                              ),
-                              child: Text(
-                                u.name.isNotEmpty
-                                    ? u.name[0].toUpperCase()
-                                    : 'U',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.primaryColor,
-                                ),
-                              ),
+                      child: InkWell(
+                        onTap: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => AdminUserDetailScreen(user: u),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Flexible(
-                                        child: Text(
-                                          u.name,
-                                          style: const TextStyle(
-                                            fontFamily: 'Roboto',
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppTheme.foregroundColor,
+                          );
+                          if (mounted) _loadUsers();
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 22,
+                                backgroundColor: AppTheme.primaryColor
+                                    .withValues(alpha: 0.12),
+                                backgroundImage:
+                                    (u.avatarUrl != null &&
+                                        u.avatarUrl!.isNotEmpty)
+                                    ? NetworkImage(u.avatarUrl!)
+                                    : null,
+                                child:
+                                    (u.avatarUrl == null ||
+                                        u.avatarUrl!.isEmpty)
+                                    ? Text(
+                                        u.name.isNotEmpty
+                                            ? u.name[0].toUpperCase()
+                                            : 'U',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.primaryColor,
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            u.name,
+                                            style: const TextStyle(
+                                              fontFamily: 'Roboto',
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppTheme.foregroundColor,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        _buildRoleBadge(u.role),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      u.email,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: AppTheme.textMuted,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    if (u.phone.isNotEmpty) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        u.phone,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: AppTheme.textSubtle,
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
-                                      _buildRoleBadge(u.role),
                                     ],
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    u.email,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: AppTheme.textMuted,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  if (u.phone.isNotEmpty) ...[
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      u.phone,
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppTheme.textSubtle,
-                                      ),
-                                    ),
                                   ],
-                                ],
-                              ),
-                            ),
-                            PopupMenuButton<String>(
-                              icon: const Icon(
-                                Icons.more_vert,
-                                color: AppTheme.textMuted,
-                              ),
-                              onSelected: (action) {
-                                if (action == 'edit') {
-                                  _openEditUserDialog(u);
-                                } else if (action == 'delete') {
-                                  _confirmDeleteUser(u);
-                                }
-                              },
-                              itemBuilder: (ctx) => [
-                                const PopupMenuItem(
-                                  value: 'edit',
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.edit_outlined,
-                                        size: 18,
-                                        color: AppTheme.textDark,
-                                      ),
-                                      SizedBox(width: 8),
-                                      Text('Edit User / Role'),
-                                    ],
-                                  ),
                                 ),
-                                const PopupMenuItem(
-                                  value: 'delete',
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.delete_outline,
-                                        size: 18,
-                                        color: AppTheme.destructiveColor,
-                                      ),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        'Delete User',
-                                        style: TextStyle(
+                              ),
+                              const Icon(
+                                Icons.chevron_right,
+                                color: AppTheme.textMuted,
+                                size: 20,
+                              ),
+                              PopupMenuButton<String>(
+                                icon: const Icon(
+                                  Icons.more_vert,
+                                  color: AppTheme.textMuted,
+                                ),
+                                onSelected: (action) {
+                                  if (action == 'edit') {
+                                    _openEditUser(u);
+                                  } else if (action == 'delete') {
+                                    _confirmDeleteUser(u);
+                                  }
+                                },
+                                itemBuilder: (ctx) => [
+                                  const PopupMenuItem(
+                                    value: 'edit',
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.edit_outlined,
+                                          size: 18,
+                                          color: AppTheme.textDark,
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text('Edit User / Role'),
+                                      ],
+                                    ),
+                                  ),
+                                  const PopupMenuItem(
+                                    value: 'delete',
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.delete_outline,
+                                          size: 18,
                                           color: AppTheme.destructiveColor,
                                         ),
-                                      ),
-                                    ],
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Delete User',
+                                          style: TextStyle(
+                                            color: AppTheme.destructiveColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     );
@@ -395,6 +427,9 @@ class _UserManagementTabState extends State<UserManagementTab> {
     return ChoiceChip(
       label: Text(label),
       selected: isSelected,
+      showCheckmark: false,
+      checkmarkColor: AppTheme.accentColor,
+      backgroundColor: Colors.white,
       onSelected: (_) {
         setState(() => _selectedRoleFilter = role);
         _loadUsers();

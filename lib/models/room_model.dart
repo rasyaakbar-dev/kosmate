@@ -28,6 +28,8 @@ enum RoomStatus {
         return 'Unavailable';
     }
   }
+
+  String get label => displayName;
 }
 
 @immutable

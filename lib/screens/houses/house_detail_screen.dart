@@ -64,9 +64,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
     if (widget.currentUser.role == UserRole.admin) {
       final changed = await Navigator.push<bool>(
         context,
-        MaterialPageRoute(
-          builder: (_) => AdminHouseFormScreen(house: _house),
-        ),
+        MaterialPageRoute(builder: (_) => AdminHouseFormScreen(house: _house)),
       );
       if (changed == true && mounted) {
         _loadHouseData();
@@ -106,9 +104,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
     if (widget.currentUser.role == UserRole.admin) {
       final changed = await Navigator.push<bool>(
         context,
-        MaterialPageRoute(
-          builder: (_) => AdminRoomFormScreen(room: room),
-        ),
+        MaterialPageRoute(builder: (_) => AdminRoomFormScreen(room: room)),
       );
       if (changed == true && mounted) {
         _loadHouseData();
@@ -583,7 +579,9 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: AppTheme.borderLight),
+                                  border: Border.all(
+                                    color: AppTheme.borderLight,
+                                  ),
                                 ),
                                 child: Row(
                                   children: [
@@ -668,7 +666,8 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                                         ),
                                       ),
                                     ),
-                                    if (widget.currentUser.role == UserRole.admin) ...[
+                                    if (widget.currentUser.role ==
+                                        UserRole.admin) ...[
                                       const SizedBox(width: 6),
                                       const Icon(
                                         Icons.chevron_right,

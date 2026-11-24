@@ -273,11 +273,15 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         filled: true,
                         fillColor: Colors.white,
@@ -316,17 +320,22 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         filled: true,
                         fillColor: Colors.white,
                       ),
                       items: _rooms.map((r) {
-                        final houseName = r.house?.houseName ?? 'House #${r.houseId}';
+                        final houseName =
+                            r.house?.houseName ?? 'House #${r.houseId}';
                         return DropdownMenuItem<int>(
                           value: r.roomId,
                           child: Text(
@@ -342,8 +351,8 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
                           if (val != null) {
                             final match = _rooms.where((r) => r.roomId == val);
                             if (match.isNotEmpty && !widget.isEditing) {
-                              _amountController.text =
-                                  match.first.price.toStringAsFixed(0);
+                              _amountController.text = match.first.price
+                                  .toStringAsFixed(0);
                             }
                           }
                         });
@@ -372,11 +381,15 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         filled: true,
                         fillColor: Colors.white,
@@ -463,11 +476,15 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         filled: true,
                         fillColor: Colors.white,
@@ -506,11 +523,15 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         filled: true,
                         fillColor: Colors.white,

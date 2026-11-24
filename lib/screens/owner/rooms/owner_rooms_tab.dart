@@ -860,6 +860,8 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                   child: ChoiceChip(
                     label: Text(status),
                     selected: isSelected,
+                    showCheckmark: false,
+                    checkmarkColor: AppTheme.accentColor,
                     selectedColor: AppTheme.primaryLight,
                     backgroundColor: Colors.white,
                     side: BorderSide(

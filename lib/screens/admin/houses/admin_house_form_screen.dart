@@ -39,7 +39,9 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
     _nameController = TextEditingController(text: h?.houseName ?? '');
     _addressController = TextEditingController(text: h?.houseAddress ?? '');
     _descriptionController = TextEditingController(text: h?.description ?? '');
-    _thumbnailUrlController = TextEditingController(text: h?.thumbnailUrl ?? '');
+    _thumbnailUrlController = TextEditingController(
+      text: h?.thumbnailUrl ?? '',
+    );
     _selectedOwnerId = h?.ownerId;
 
     _loadOwners();
@@ -247,11 +249,15 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         filled: true,
                         fillColor: Colors.white,
@@ -285,11 +291,15 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         filled: true,
                         fillColor: Colors.white,
@@ -304,7 +314,8 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
                           ),
                         );
                       }).toList(),
-                      onChanged: (val) => setState(() => _selectedOwnerId = val),
+                      onChanged: (val) =>
+                          setState(() => _selectedOwnerId = val),
                     ),
                     const SizedBox(height: 16),
 
@@ -332,11 +343,15 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         filled: true,
                         fillColor: Colors.white,
@@ -374,11 +389,15 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         filled: true,
                         fillColor: Colors.white,
@@ -406,11 +425,15 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         filled: true,
                         fillColor: Colors.white,

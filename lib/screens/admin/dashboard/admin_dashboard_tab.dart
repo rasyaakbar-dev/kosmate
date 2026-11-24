@@ -6,7 +6,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../models/house_model.dart';
 import '../../../models/user_model.dart';
+import '../houses/admin_house_form_screen.dart';
 import '../payments/admin_payments_screen.dart';
+import '../users/admin_user_detail_screen.dart';
 
 class AdminDashboardTab extends StatefulWidget {
   final UserModel user;
@@ -106,89 +108,103 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
             Row(
               children: [
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryLight,
+                  child: Material(
+                    color: AppTheme.primaryLight,
+                    borderRadius: BorderRadius.circular(14),
+                    child: InkWell(
+                      onTap: () => widget.onNavigateToTab(1),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppTheme.borderLight),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppTheme.borderLight),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Users',
-                              style: TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 14,
-                                color: AppTheme.textDark,
-                              ),
+                            const Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Users',
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 14,
+                                    color: AppTheme.textDark,
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.group_outlined,
+                                  color: AppTheme.accentColor,
+                                  size: 22,
+                                ),
+                              ],
                             ),
-                            Icon(
-                              Icons.group_outlined,
-                              color: AppTheme.accentColor,
-                              size: 22,
+                            const SizedBox(height: 12),
+                            Text(
+                              '$_userCount',
+                              style: const TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 26,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.primaryColor,
+                              ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          '$_userCount',
-                          style: const TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 26,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.primaryColor,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.warningLight,
+                  child: Material(
+                    color: AppTheme.warningLight,
+                    borderRadius: BorderRadius.circular(14),
+                    child: InkWell(
+                      onTap: () => widget.onNavigateToTab(2),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppTheme.warningLight),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppTheme.warningLight),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Houses',
-                              style: TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 14,
-                                color: AppTheme.textDark,
-                              ),
+                            const Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Houses',
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 14,
+                                    color: AppTheme.textDark,
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.apartment_outlined,
+                                  color: AppTheme.accentColor,
+                                  size: 22,
+                                ),
+                              ],
                             ),
-                            Icon(
-                              Icons.apartment_outlined,
-                              color: AppTheme.accentColor,
-                              size: 22,
+                            const SizedBox(height: 12),
+                            Text(
+                              '$_houseCount',
+                              style: const TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 26,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.primaryColor,
+                              ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          '$_houseCount',
-                          style: const TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 26,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.primaryColor,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -250,6 +266,16 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
                 trailingText: Formatters.formatDate(
                   _recentUsers.first.createdAt,
                 ),
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          AdminUserDetailScreen(user: _recentUsers.first),
+                    ),
+                  );
+                  if (mounted) _loadAdminData();
+                },
               ),
               const SizedBox(height: 10),
             ],
@@ -263,6 +289,16 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
                 trailingText: Formatters.formatDate(
                   _recentHouses.first.createdAt,
                 ),
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          AdminHouseFormScreen(house: _recentHouses.first),
+                    ),
+                  );
+                  if (mounted) _loadAdminData();
+                },
               ),
             ] else if (_recentUsers.isEmpty) ...[
               const Padding(
@@ -287,31 +323,35 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
     required VoidCallback onTap,
   }) {
     return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.borderMedium, width: 1.2),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: AppTheme.accentColor, size: 28),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.foregroundColor,
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 18),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.borderMedium, width: 1.2),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: AppTheme.accentColor, size: 28),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.foregroundColor,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -323,59 +363,75 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
     required String title,
     required String subtitle,
     required String trailingText,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.borderLight),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppTheme.iconBadgeBackground,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: AppTheme.accentColor),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppTheme.borderLight),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.foregroundColor,
-                  ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppTheme.iconBadgeBackground,
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.textMuted,
-                  ),
+                child: Icon(icon, color: AppTheme.accentColor),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.foregroundColor,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                trailingText,
+                style: const TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 12,
+                  color: AppTheme.textMuted,
+                ),
+              ),
+              if (onTap != null) ...[
+                const SizedBox(width: 6),
+                const Icon(
+                  Icons.chevron_right,
+                  color: AppTheme.textSubtle,
+                  size: 18,
                 ),
               ],
-            ),
+            ],
           ),
-          Text(
-            trailingText,
-            style: const TextStyle(
-              fontFamily: 'Roboto',
-              fontSize: 12,
-              color: AppTheme.textMuted,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

@@ -1384,6 +1384,8 @@ class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
                       child: ChoiceChip(
                         label: Text(f),
                         selected: selected,
+                        showCheckmark: false,
+                        checkmarkColor: AppTheme.accentColor,
                         selectedColor: AppTheme.primaryLight,
                         backgroundColor: Colors.white,
                         side: BorderSide(

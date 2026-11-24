@@ -426,140 +426,242 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
             const SizedBox(height: 12),
 
             if (_latestPayment != null) ...[
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
+              Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  onTap: () => widget.onNavigateToTab(2),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.borderLight),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppTheme.iconBadgeBackground,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.receipt_long_outlined,
-                        color: AppTheme.accentColor,
-                      ),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.borderLight),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Latest Invoice',
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppTheme.iconBadgeBackground,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.receipt_long_outlined,
+                            color: AppTheme.accentColor,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Latest Invoice',
+                                style: TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.foregroundColor,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                '${Formatters.formatCurrency(_latestPayment!.amount)} • Due: ${Formatters.formatDate(_latestPayment!.dueDate)}',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppTheme.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _latestPayment!.status == PaymentStatus.paid
+                                ? AppTheme.successLight
+                                : AppTheme.warningLight,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            _latestPayment!.status.displayName,
                             style: TextStyle(
                               fontFamily: 'Roboto',
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.foregroundColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  _latestPayment!.status == PaymentStatus.paid
+                                  ? AppTheme.successColor
+                                  : AppTheme.warningColor,
                             ),
                           ),
-                          const SizedBox(height: 3),
-                          Text(
-                            '${Formatters.formatCurrency(_latestPayment!.amount)} • Due: ${Formatters.formatDate(_latestPayment!.dueDate)}',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: AppTheme.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _latestPayment!.status == PaymentStatus.paid
-                            ? AppTheme.successLight
-                            : AppTheme.warningLight,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        _latestPayment!.status.displayName,
-                        style: TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: _latestPayment!.status == PaymentStatus.paid
-                              ? AppTheme.successColor
-                              : AppTheme.warningColor,
                         ),
-                      ),
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.chevron_right,
+                          color: AppTheme.textSubtle,
+                          size: 20,
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.chevron_right,
-                      color: AppTheme.textSubtle,
-                      size: 20,
-                    ),
-                  ],
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
             ],
 
             if (_latestComplaint != null) ...[
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.borderLight),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppTheme.iconBadgeBackground,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.info_outline_rounded,
-                        color: AppTheme.accentColor,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _latestComplaint!.title,
-                            style: const TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.foregroundColor,
+              Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: Text(_latestComplaint!.title),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _latestComplaint!.description,
+                              style: const TextStyle(fontSize: 14),
                             ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            _latestComplaint!.description,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: AppTheme.textMuted,
+                            const SizedBox(height: 12),
+                            Text(
+                              'Category: ${_latestComplaint!.category.displayName}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.textDark,
+                              ),
                             ),
+                            Text(
+                              'Priority: ${_latestComplaint!.priority.displayName}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.textDark,
+                              ),
+                            ),
+                            Text(
+                              'Status: ${_latestComplaint!.status.displayName}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.textDark,
+                              ),
+                            ),
+                            if (_latestComplaint!.response != null &&
+                                _latestComplaint!.response!.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.surfaceLight,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'Owner Response:\n${_latestComplaint!.response!}',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: AppTheme.foregroundColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Close'),
                           ),
                         ],
                       ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.borderLight),
                     ),
-                    Chip(label: Text(_latestComplaint!.status.displayName)),
-                  ],
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppTheme.iconBadgeBackground,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.info_outline_rounded,
+                            color: AppTheme.accentColor,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _latestComplaint!.title,
+                                style: const TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.foregroundColor,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                _latestComplaint!.description,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppTheme.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surfaceLight,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            _latestComplaint!.status.displayName,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textDark,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.chevron_right,
+                          color: AppTheme.textSubtle,
+                          size: 18,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
+              const SizedBox(height: 12),
             ] else if (_latestPayment == null) ...[
               if (!hasActiveRoom) ...[
                 Container(

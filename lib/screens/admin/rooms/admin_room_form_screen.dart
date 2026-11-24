@@ -279,11 +279,15 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         filled: true,
                         fillColor: Colors.white,
@@ -317,17 +321,22 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         filled: true,
                         fillColor: Colors.white,
                       ),
                       items: _houses.map((h) {
-                        final ownerName = h.owner?.name ?? 'Owner #${h.ownerId}';
+                        final ownerName =
+                            h.owner?.name ?? 'Owner #${h.ownerId}';
                         return DropdownMenuItem<int>(
                           value: h.houseId,
                           child: Text(
@@ -337,7 +346,8 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
                           ),
                         );
                       }).toList(),
-                      onChanged: (val) => setState(() => _selectedHouseId = val),
+                      onChanged: (val) =>
+                          setState(() => _selectedHouseId = val),
                     ),
                     const SizedBox(height: 16),
 
@@ -360,11 +370,15 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         filled: true,
                         fillColor: Colors.white,
@@ -376,7 +390,8 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
                         );
                       }).toList(),
                       onChanged: (val) {
-                        if (val != null) setState(() => _selectedRoomType = val);
+                        if (val != null)
+                          setState(() => _selectedRoomType = val);
                       },
                     ),
                     const SizedBox(height: 16),
@@ -402,11 +417,15 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         filled: true,
                         fillColor: Colors.white,
@@ -444,11 +463,15 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         filled: true,
                         fillColor: Colors.white,
@@ -475,11 +498,15 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         filled: true,
                         fillColor: Colors.white,
@@ -516,11 +543,15 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         filled: true,
                         fillColor: Colors.white,

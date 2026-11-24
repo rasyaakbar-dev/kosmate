@@ -95,6 +95,32 @@ class ComplaintService {
     }
   }
 
+  /// Update status and optionally response of a complaint ticket
+  Future<ComplaintModel> updateComplaintStatus({
+    required int complaintId,
+    required ComplaintStatus status,
+    String? responseText,
+  }) async {
+    try {
+      final updateData = <String, dynamic>{'status': status.dbValue};
+      if (responseText != null && responseText.trim().isNotEmpty) {
+        updateData['response'] = responseText.trim();
+      }
+      final response = await _client
+          .from(SupabaseConstants.complaintTable)
+          .update(updateData)
+          .eq('complaint_id', complaintId)
+          .select(
+            '*, users!complaint_user_id_fkey(*), room!complaint_room_id_fkey(*, house!room_house_id_fkey(*))',
+          )
+          .single();
+
+      return ComplaintModel.fromJson(response);
+    } catch (e) {
+      throw ServiceException('Failed to update complaint status.', cause: e);
+    }
+  }
+
   /// Owner responds to a complaint ticket
   Future<ComplaintModel> respondToComplaint({
     required int complaintId,

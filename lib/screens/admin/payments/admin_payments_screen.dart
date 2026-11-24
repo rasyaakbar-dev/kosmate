@@ -70,8 +70,7 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> {
             p.status != PaymentStatus.pending) {
           return false;
         }
-        if (_selectedStatusFilter == 'Paid' &&
-            p.status != PaymentStatus.paid) {
+        if (_selectedStatusFilter == 'Paid' && p.status != PaymentStatus.paid) {
           return false;
         }
         if (_selectedStatusFilter == 'Overdue' &&
@@ -161,13 +160,41 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildStatColumn('Total', '$totalCount', AppTheme.primaryColor),
-                          Container(width: 1, height: 24, color: AppTheme.borderMedium),
-                          _buildStatColumn('Paid', '$paidCount', AppTheme.successColor),
-                          Container(width: 1, height: 24, color: AppTheme.borderMedium),
-                          _buildStatColumn('Pending', '$pendingCount', AppTheme.warningColor),
-                          Container(width: 1, height: 24, color: AppTheme.borderMedium),
-                          _buildStatColumn('Overdue', '$overdueCount', AppTheme.destructiveColor),
+                          _buildStatColumn(
+                            'Total',
+                            '$totalCount',
+                            AppTheme.primaryColor,
+                          ),
+                          Container(
+                            width: 1,
+                            height: 24,
+                            color: AppTheme.borderMedium,
+                          ),
+                          _buildStatColumn(
+                            'Paid',
+                            '$paidCount',
+                            AppTheme.successColor,
+                          ),
+                          Container(
+                            width: 1,
+                            height: 24,
+                            color: AppTheme.borderMedium,
+                          ),
+                          _buildStatColumn(
+                            'Pending',
+                            '$pendingCount',
+                            AppTheme.warningColor,
+                          ),
+                          Container(
+                            width: 1,
+                            height: 24,
+                            color: AppTheme.borderMedium,
+                          ),
+                          _buildStatColumn(
+                            'Overdue',
+                            '$overdueCount',
+                            AppTheme.destructiveColor,
+                          ),
                         ],
                       ),
                     ),
@@ -206,14 +233,19 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> {
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppTheme.borderMedium),
+                          borderSide: const BorderSide(
+                            color: AppTheme.borderMedium,
+                          ),
                         ),
                       ),
-                      onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                      onChanged: (val) =>
+                          setState(() => _searchQuery = val.trim()),
                     ),
                     const SizedBox(height: 10),
 
@@ -221,13 +253,17 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> {
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
-                        children: ['All', 'Pending', 'Paid', 'Overdue'].map((f) {
+                        children: ['All', 'Pending', 'Paid', 'Overdue'].map((
+                          f,
+                        ) {
                           final isSelected = _selectedStatusFilter == f;
                           return Padding(
                             padding: const EdgeInsets.only(right: 6.0),
                             child: ChoiceChip(
                               label: Text(f),
                               selected: isSelected,
+                              showCheckmark: false,
+                              checkmarkColor: AppTheme.accentColor,
                               selectedColor: AppTheme.primaryLight,
                               backgroundColor: Colors.white,
                               side: BorderSide(

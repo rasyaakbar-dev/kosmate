@@ -26,8 +26,8 @@ class MidtransConstants {
   static const String productionBaseUrl = 'https://api.midtrans.com/v2';
 
   /// Midtrans Sandbox Server Key (configured for testing)
-  static const String serverKey = 'SB-Mid-server-YOUR_SERVER_KEY_HERE';
-  static const String clientKey = 'SB-Mid-client-YOUR_CLIENT_KEY_HERE';
+  static const String serverKey = 'SB-Mid-server-duFIbKS.1AauUsSlVf3Y45CW';
+  static const String clientKey = 'SB-Mid-client-4Vnhbq-qYvpVFZEl';
 
   static String get baseUrl =>
       isProduction ? productionBaseUrl : sandboxBaseUrl;

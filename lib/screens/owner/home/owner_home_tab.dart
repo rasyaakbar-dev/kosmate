@@ -34,7 +34,6 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
   int _totalRooms = 0;
   int _availableRooms = 0;
   int _unpaidOverduePaymentsCount = 0;
-  int _activeComplaintsCount = 0;
 
   List<BookingModel> _recentBookings = [];
   List<PaymentModel> _recentPayments = [];
@@ -79,16 +78,11 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
           )
           .length;
 
-      final activeComplaints = complaints
-          .where((c) => c.status != ComplaintStatus.resolved)
-          .length;
-
       if (mounted) {
         setState(() {
           _totalRooms = total;
           _availableRooms = available;
           _unpaidOverduePaymentsCount = unpaidOverdue;
-          _activeComplaintsCount = activeComplaints;
           _recentBookings = bookings;
           _recentPayments = payments;
           _recentComplaints = complaints;
@@ -235,36 +229,25 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
             Row(
               children: [
                 _buildStatCard(
-                  label: 'Available',
+                  label: 'Rooms',
                   count: '$_availableRooms',
-                  subtext: 'of $_totalRooms total',
+                  subtext: 'available of $_totalRooms',
                   icon: Icons.meeting_room_outlined,
                   bgColor: AppTheme.primaryLight,
                   borderColor: AppTheme.borderLight,
                   textColor: AppTheme.primaryColor,
                   onTap: () => widget.onNavigateToTab(1),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 14),
                 _buildStatCard(
-                  label: 'Unpaid bills',
+                  label: 'Payments',
                   count: '$_unpaidOverduePaymentsCount',
-                  subtext: 'need attention',
+                  subtext: 'bills need attention',
                   icon: Icons.receipt_long_outlined,
                   bgColor: AppTheme.warningLight,
                   borderColor: AppTheme.warningLight,
-                  textColor: AppTheme.warningColor,
+                  textColor: AppTheme.primaryColor,
                   onTap: () => widget.onNavigateToTab(2),
-                ),
-                const SizedBox(width: 10),
-                _buildStatCard(
-                  label: 'Complaints',
-                  count: '$_activeComplaintsCount',
-                  subtext: 'active / open',
-                  icon: Icons.build_circle_outlined,
-                  bgColor: AppTheme.surfaceLight,
-                  borderColor: AppTheme.borderLight,
-                  textColor: AppTheme.foregroundColor,
-                  onTap: _openComplaintsScreen,
                 ),
               ],
             ),
@@ -477,14 +460,14 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
   }) {
     return Expanded(
       child: Material(
-        color: Colors.transparent,
+        color: bgColor,
+        borderRadius: BorderRadius.circular(14),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(14),
           child: Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: bgColor,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: borderColor),
             ),
@@ -499,7 +482,7 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
                         label,
                         style: const TextStyle(
                           fontFamily: 'Roboto',
-                          fontSize: 13,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: AppTheme.textDark,
                         ),
@@ -507,15 +490,15 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    Icon(icon, color: AppTheme.accentColor, size: 20),
+                    Icon(icon, color: AppTheme.accentColor, size: 22),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 Text(
                   count,
                   style: TextStyle(
                     fontFamily: 'Roboto',
-                    fontSize: 24,
+                    fontSize: 26,
                     fontWeight: FontWeight.w700,
                     color: textColor ?? AppTheme.primaryColor,
                   ),
@@ -526,7 +509,7 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
                     subtext,
                     style: const TextStyle(
                       fontFamily: 'Roboto',
-                      fontSize: 11,
+                      fontSize: 12,
                       color: AppTheme.textMuted,
                     ),
                     maxLines: 1,
