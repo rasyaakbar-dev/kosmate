@@ -277,9 +277,7 @@ class _TenantPaymentsTabState extends State<TenantPaymentsTab> {
                         if (selectedImageBytes == null) {
                           ScaffoldMessenger.of(ctx).showSnackBar(
                             const SnackBar(
-                              content: Text(
-                                'Please attach a receipt image.',
-                              ),
+                              content: Text('Please attach a receipt image.'),
                               backgroundColor: AppTheme.warningColor,
                             ),
                           );

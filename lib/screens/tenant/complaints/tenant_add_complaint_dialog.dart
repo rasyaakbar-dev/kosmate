@@ -123,9 +123,8 @@ class _TenantAddComplaintDialogState extends State<TenantAddComplaintDialog> {
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to select image: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to select image: $e')));
     }
   }
 
@@ -263,7 +262,10 @@ class _TenantAddComplaintDialogState extends State<TenantAddComplaintDialog> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () => _pickAttachment(ImageSource.gallery),
-                        icon: const Icon(Icons.photo_library_outlined, size: 18),
+                        icon: const Icon(
+                          Icons.photo_library_outlined,
+                          size: 18,
+                        ),
                         label: const Text('Gallery'),
                       ),
                     ),
