@@ -156,8 +156,8 @@ class PaymentService {
           .from(SupabaseConstants.paymentTable)
           .update({
             'receipt_url': receiptUrl,
-            'paid_date': Formatters.toDateString(DateTime.now()),
-            // Remains pending until owner verifies or set to paid
+            // Status remains pending until owner verifies or Midtrans confirms.
+            // paid_date is set only when status transitions to paid.
           })
           .eq('payment_id', paymentId)
           .select(

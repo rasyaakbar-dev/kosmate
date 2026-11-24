@@ -177,7 +177,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       messenger.showSnackBar(
         const SnackBar(
           content: Text('Profile updated successfully!'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppTheme.successColor,
         ),
       );
 
@@ -325,7 +325,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         messenger.showSnackBar(
                           const SnackBar(
                             content: Text('Password changed successfully!'),
-                            backgroundColor: Colors.green,
+                            backgroundColor: AppTheme.successColor,
                           ),
                         );
                       } catch (e) {

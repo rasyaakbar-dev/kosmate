@@ -225,7 +225,7 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
       subtitleLabel = 'Room $roomNumber • $houseName';
       paymentStatus = _latestPayment != null
           ? _latestPayment!.status.displayName
-          : 'Paid';
+          : 'No Bills';
     } else if (hasPendingBooking) {
       roomNumber = 'Pending';
       final houseName =

@@ -215,7 +215,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                   messenger.showSnackBar(
                     const SnackBar(
                       content: Text('Complaint updated successfully!'),
-                      backgroundColor: Colors.green,
+                      backgroundColor: AppTheme.successColor,
                     ),
                   );
                 } catch (e) {
@@ -260,7 +260,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Room deleted successfully.'),
-              backgroundColor: Colors.green,
+              backgroundColor: AppTheme.successColor,
             ),
           );
           Navigator.pop(context, true);
@@ -270,7 +270,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Failed to delete room: $e'),
-              backgroundColor: Colors.redAccent,
+              backgroundColor: AppTheme.destructiveColor,
             ),
           );
         }
@@ -551,9 +551,10 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                     ],
                                   ),
                                 ),
-                                KosMateStatusChip.fromPaymentStatus(
-                                  _currentPayment?.status ?? PaymentStatus.paid,
-                                ),
+                                if (_currentPayment != null)
+                                  KosMateStatusChip.fromPaymentStatus(
+                                    _currentPayment!.status,
+                                  ),
                               ],
                             ),
                           ),

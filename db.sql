@@ -432,3 +432,24 @@ BEGIN
 END;
 $$;
 
+-- ============================================================================
+-- 10. OVERDUE PAYMENT TRANSITION HELPER
+-- ============================================================================
+CREATE OR REPLACE FUNCTION public.update_overdue_payments()
+RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_updated integer;
+BEGIN
+  UPDATE public.payment
+  SET status = 'overdue'::public.payment_status
+  WHERE status = 'pending'::public.payment_status
+    AND due_date < CURRENT_DATE;
+  GET DIAGNOSTICS v_updated = ROW_COUNT;
+  RETURN v_updated;
+END;
+$$;
+
+

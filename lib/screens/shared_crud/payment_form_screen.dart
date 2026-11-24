@@ -126,7 +126,7 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
         messenger.showSnackBar(
           const SnackBar(
             content: Text('Payment updated successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       } else {
@@ -139,7 +139,7 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
         messenger.showSnackBar(
           const SnackBar(
             content: Text('Invoice issued successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       }
@@ -149,7 +149,10 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
       if (mounted) {
         setState(() => _isSaving = false);
         messenger.showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppTheme.destructiveColor,
+          ),
         );
       }
     }

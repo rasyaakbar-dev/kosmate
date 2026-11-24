@@ -72,7 +72,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
         messenger.showSnackBar(
           const SnackBar(
             content: Text('User updated successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       } else {
@@ -86,7 +86,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
         messenger.showSnackBar(
           const SnackBar(
             content: Text('User created successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       }

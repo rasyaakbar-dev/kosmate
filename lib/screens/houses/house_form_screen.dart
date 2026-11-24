@@ -182,7 +182,7 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
         messenger.showSnackBar(
           const SnackBar(
             content: Text('Boarding house updated successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       } else {
@@ -200,7 +200,7 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
         messenger.showSnackBar(
           const SnackBar(
             content: Text('Boarding house added successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       }

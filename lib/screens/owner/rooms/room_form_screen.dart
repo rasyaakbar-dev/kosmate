@@ -271,7 +271,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                   ? 'Room updated successfully!'
                   : 'Room created successfully!',
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
         Navigator.pop(context, saved);

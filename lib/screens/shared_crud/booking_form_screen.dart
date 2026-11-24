@@ -114,7 +114,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
         messenger.showSnackBar(
           const SnackBar(
             content: Text('Booking updated successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       } else {
@@ -129,7 +129,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
         messenger.showSnackBar(
           const SnackBar(
             content: Text('Booking request created successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       }
@@ -139,7 +139,10 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
       if (mounted) {
         setState(() => _isSaving = false);
         messenger.showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppTheme.destructiveColor,
+          ),
         );
       }
     }

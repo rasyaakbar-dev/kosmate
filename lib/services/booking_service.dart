@@ -5,7 +5,6 @@ import '../core/errors/app_exception.dart';
 import '../core/utils/formatters.dart';
 import '../core/utils/supabase_helpers.dart';
 import '../models/booking_model.dart';
-import '../models/room_model.dart';
 
 class BookingService {
   final SupabaseClient _client = supabase;
@@ -89,21 +88,9 @@ class BookingService {
           )
           .single();
 
-      // If booking was approved and room_id provided, mark room as occupied
-      if (status == BookingStatus.approved && roomId != null) {
-        await _client
-            .from(SupabaseConstants.roomTable)
-            .update({'status': RoomStatus.occupied.name})
-            .eq('room_id', roomId);
-      } else if ((status == BookingStatus.cancelled ||
-              status == BookingStatus.rejected) &&
-          roomId != null) {
-        // When cancelled or rejected, release room back to available
-        await _client
-            .from(SupabaseConstants.roomTable)
-            .update({'status': RoomStatus.available.name})
-            .eq('room_id', roomId);
-      }
+      // NOTE: Room status transitions (occupied/available) are handled by the
+      // DB trigger `handle_booking_status_change`. No redundant client-side
+      // update needed here to avoid double-write race conditions.
 
       return BookingModel.fromJson(response);
     } catch (e) {

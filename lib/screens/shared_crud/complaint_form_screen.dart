@@ -122,7 +122,7 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
         messenger.showSnackBar(
           const SnackBar(
             content: Text('Complaint updated successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       } else {
@@ -140,7 +140,7 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
         messenger.showSnackBar(
           const SnackBar(
             content: Text('Complaint filed successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       }
@@ -150,7 +150,10 @@ class _ComplaintFormScreenState extends State<ComplaintFormScreen> {
       if (mounted) {
         setState(() => _isSaving = false);
         messenger.showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppTheme.destructiveColor,
+          ),
         );
       }
     }

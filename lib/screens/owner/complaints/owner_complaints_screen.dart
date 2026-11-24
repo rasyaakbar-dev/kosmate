@@ -190,7 +190,7 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                   messenger.showSnackBar(
                     const SnackBar(
                       content: Text('Complaint updated successfully!'),
-                      backgroundColor: Colors.green,
+                      backgroundColor: AppTheme.successColor,
                     ),
                   );
                 } catch (e) {

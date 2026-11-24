@@ -223,7 +223,7 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('No active tenants available to issue an invoice to.'),
-          backgroundColor: Colors.orange,
+          backgroundColor: AppTheme.warningColor,
         ),
       );
       return;
@@ -234,7 +234,7 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
     final amountController = TextEditingController(
       text: selectedBooking.room?.price.toInt().toString() ?? '',
     );
-    DateTime dueDate = DateTime.now().add(const Duration(days: 7));
+    DateTime dueDate = DateTime.now().add(const Duration(days: 30));
     final formKey = GlobalKey<FormState>();
 
     showDialog(

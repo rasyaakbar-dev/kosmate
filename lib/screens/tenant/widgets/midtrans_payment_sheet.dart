@@ -53,7 +53,7 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
           Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              backgroundColor: Colors.green,
+              backgroundColor: AppTheme.successColor,
               content: Text('Payment confirmed! Invoice is now PAID.'),
             ),
           );
@@ -161,7 +161,7 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppTheme.borderMedium,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -292,28 +292,30 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
                               child: Text(
                                 'Failed to load QR code image.\nPlease check network.',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.red),
+                                style: TextStyle(
+                                  color: AppTheme.destructiveColor,
+                                ),
                               ),
                             ),
                           );
                         },
                       ),
                       const SizedBox(height: 10),
-                      Row(
+                      const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             Icons.qr_code_scanner,
                             size: 18,
-                            color: Colors.grey[700],
+                            color: AppTheme.textMuted,
                           ),
-                          const SizedBox(width: 6),
+                          SizedBox(width: 6),
                           Text(
                             'Scan with Gojek / Any QRIS App',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: Colors.grey[800],
+                              color: AppTheme.textDark,
                             ),
                           ),
                         ],
@@ -377,11 +379,11 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
               icon: const Icon(
                 Icons.cancel_outlined,
                 size: 18,
-                color: Colors.grey,
+                color: AppTheme.textMuted,
               ),
               label: Text(
                 _isCancelling ? 'Cancelling...' : 'Cancel payment session',
-                style: const TextStyle(color: Colors.grey),
+                style: const TextStyle(color: AppTheme.textMuted),
               ),
               onPressed: _isCancelling ? null : _cancelPayment,
             ),

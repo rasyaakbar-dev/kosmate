@@ -88,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
             content: Text(
               'Profile not found. Please contact support or retry.',
             ),
-            backgroundColor: Colors.orange,
+            backgroundColor: AppTheme.warningColor,
           ),
         );
         return;
@@ -277,7 +277,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             content: Text(
                               'Password reset link sent! Please check your email inbox.',
                             ),
-                            backgroundColor: Colors.green,
+                            backgroundColor: AppTheme.successColor,
                           ),
                         );
                       } catch (e) {

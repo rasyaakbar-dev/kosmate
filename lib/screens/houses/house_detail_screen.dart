@@ -144,7 +144,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
         messenger.showSnackBar(
           const SnackBar(
             content: Text('Boarding house deleted successfully.'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
         if (mounted) Navigator.pop(context, true);
@@ -276,7 +276,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                         messenger.showSnackBar(
                           const SnackBar(
                             content: Text('Room created successfully!'),
-                            backgroundColor: Colors.green,
+                            backgroundColor: AppTheme.successColor,
                           ),
                         );
                       } catch (e) {

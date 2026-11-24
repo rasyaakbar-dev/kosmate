@@ -69,7 +69,7 @@ class _UserManagementTabState extends State<UserManagementTab> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('You cannot delete your own account while logged in.'),
-          backgroundColor: Colors.orange,
+          backgroundColor: AppTheme.warningColor,
         ),
       );
       return;
@@ -106,7 +106,7 @@ class _UserManagementTabState extends State<UserManagementTab> {
         messenger.showSnackBar(
           const SnackBar(
             content: Text('User deleted successfully.'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
         _loadUsers();
@@ -460,7 +460,7 @@ class _UserManagementTabState extends State<UserManagementTab> {
         break;
       case UserRole.owner:
         bg = AppTheme.warningLight;
-        fg = Colors.orange[900]!;
+        fg = AppTheme.warningColor;
         label = 'OWNER';
         break;
       case UserRole.tenant:

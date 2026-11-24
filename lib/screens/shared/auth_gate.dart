@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/constants/supabase_constants.dart';
 import '../../core/di/service_locator.dart';
+import '../../core/theme/app_theme.dart';
 import '../../models/user_model.dart';
 import '../admin/admin_main_screen.dart';
 import '../auth/login_screen.dart';
@@ -118,7 +119,7 @@ class _AuthGateState extends State<AuthGate> {
                 const Icon(
                   Icons.person_off_outlined,
                   size: 64,
-                  color: Colors.orange,
+                  color: AppTheme.warningColor,
                 ),
                 const SizedBox(height: 16),
                 const Text(

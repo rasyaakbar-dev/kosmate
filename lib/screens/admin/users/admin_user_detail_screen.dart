@@ -771,7 +771,7 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
         break;
       case UserRole.owner:
         bg = AppTheme.warningLight;
-        fg = Colors.orange[900]!;
+        fg = AppTheme.warningColor;
         label = 'OWNER';
         break;
       case UserRole.tenant:

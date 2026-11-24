@@ -71,6 +71,18 @@ class PaymentModel {
   });
 
   factory PaymentModel.fromJson(Map<String, dynamic> json) {
+    final parsedDueDate = json['due_date'] != null
+        ? DateTime.tryParse(json['due_date'].toString()) ?? DateTime.now()
+        : DateTime.now();
+    final rawStatus = PaymentStatus.fromString(
+      json['status'] as String? ?? 'pending',
+    );
+    final effectiveStatus =
+        (rawStatus == PaymentStatus.pending &&
+            parsedDueDate.isBefore(DateTime.now()))
+        ? PaymentStatus.overdue
+        : rawStatus;
+
     return PaymentModel(
       paymentId: parseIntField(json['payment_id']),
       userId: parseIntField(json['user_id']),
@@ -78,10 +90,8 @@ class PaymentModel {
       amount: json['amount'] != null
           ? double.tryParse(json['amount'].toString()) ?? 0.0
           : 0.0,
-      dueDate: json['due_date'] != null
-          ? DateTime.tryParse(json['due_date'].toString()) ?? DateTime.now()
-          : DateTime.now(),
-      status: PaymentStatus.fromString(json['status'] as String? ?? 'pending'),
+      dueDate: parsedDueDate,
+      status: effectiveStatus,
       paidDate: json['paid_date'] != null
           ? DateTime.tryParse(json['paid_date'].toString())
           : null,

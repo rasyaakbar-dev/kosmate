@@ -4,6 +4,7 @@ import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/kosmate_components.dart';
 import '../../models/user_model.dart';
+import '../debug/midtrans_debug_screen.dart';
 import 'auth_gate.dart';
 import 'edit_profile_screen.dart';
 
@@ -194,6 +195,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
               icon: Icons.edit_outlined,
               onPressed: _openEditProfileScreen,
             ),
+            // const SizedBox(height: 12),
+            // KosMateButton.outlined(
+            //   label: 'Midtrans Sandbox Debugger',
+            //   icon: Icons.developer_mode_rounded,
+            //   onPressed: () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(
+            //         builder: (_) =>
+            //             MidtransDebugScreen(currentUser: _currentUser),
+            //       ),
+            //     );
+            //   },
+            // ),
             const SizedBox(height: 12),
             KosMateButton.destructive(
               label: 'Logout',
