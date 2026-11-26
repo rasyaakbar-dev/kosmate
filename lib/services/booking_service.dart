@@ -41,7 +41,7 @@ class BookingService {
       final response = await _client
           .from(SupabaseConstants.bookingTable)
           .select(
-            '*, users!booking_user_id_fkey(*), room!booking_room_id_fkey(*, house!room_house_id_fkey(*))',
+            '*, users!booking_user_id_fkey(*), room!booking_room_id_fkey(*, house!room_house_id_fkey(*, users!house_owner_id_fkey(*)))',
           )
           .eq('user_id', userId)
           .order('created_at', ascending: false);

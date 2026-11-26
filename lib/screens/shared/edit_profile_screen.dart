@@ -464,7 +464,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.destructiveColor),
+          icon: const Icon(Icons.arrow_back, color: AppTheme.foregroundColor),
           onPressed: () => Navigator.pop(context),
         ),
         bottom: PreferredSize(

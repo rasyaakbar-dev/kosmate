@@ -275,7 +275,7 @@ class TenantComplaintDetailDialog extends StatelessWidget {
                 icon: const Icon(
                   Icons.arrow_back,
                   size: 18,
-                  color: AppTheme.destructiveColor,
+                  color: AppTheme.accentColor,
                 ),
                 label: const Text('Back to complaints'),
                 onPressed: () => Navigator.pop(context),

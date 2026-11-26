@@ -4,6 +4,7 @@ import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/kosmate_components.dart';
+import '../../../core/widgets/owner_information_card.dart';
 import '../../../core/widgets/room_facilities_card.dart';
 import '../../../models/booking_model.dart';
 import '../../../models/complaint_model.dart';
@@ -347,6 +348,9 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
             ),
             const SizedBox(height: 12),
             RoomFacilitiesCard(facilities: room.facilities),
+            const SizedBox(height: 20),
+
+            OwnerInformationCard(owner: house?.owner),
             const SizedBox(height: 20),
 
             Container(
@@ -862,6 +866,11 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
                                     ),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  OwnerInformationCard(
+                                    owner: house.owner,
+                                    compact: true,
                                   ),
                                   const SizedBox(height: 8),
                                   const Row(

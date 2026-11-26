@@ -232,11 +232,15 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
                           fontSize: 13,
                         ),
                       ),
-                      Text(
-                        orderId,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SelectableText(
+                          orderId,
+                          textAlign: TextAlign.end,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],

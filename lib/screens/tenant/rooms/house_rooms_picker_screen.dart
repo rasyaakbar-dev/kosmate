@@ -4,6 +4,7 @@ import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
+import '../../../core/widgets/owner_information_card.dart';
 import '../../../models/house_model.dart';
 import '../../../models/room_model.dart';
 import '../../../models/user_model.dart';
@@ -469,6 +470,8 @@ class _HouseRoomsPickerScreenState extends State<HouseRoomsPickerScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 12),
+              OwnerInformationCard(owner: widget.house.owner),
               const SizedBox(height: 20),
 
               const Text(

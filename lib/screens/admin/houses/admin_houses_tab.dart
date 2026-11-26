@@ -775,7 +775,7 @@ class _AdminHousesTabState extends State<AdminHousesTab> {
                 },
                 icon: const Icon(
                   Icons.arrow_back,
-                  color: AppTheme.destructiveColor,
+                  color: AppTheme.foregroundColor,
                 ),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
