@@ -20,10 +20,16 @@ KosMate is a comprehensive, multi-tenant boarding house management platform desi
 
 ### 👤 Tenant
 
-- **Room Discovery & Booking**: Explore available rooms with photo galleries, facilities, and rent prices; submit move-in booking requests.
+- **Room Discovery & Booking**: Explore available rooms with photo galleries, rent prices, owner contact details, and each room's selected facilities; submit move-in booking requests.
+- **Booking Cancellation**: Approved bookings are restricted from cancellation during the first month and the 7–14-day window before month-end.
 - **Digital Payments (Midtrans Gateway)**: Pay monthly dues seamlessly via GoPay and QRIS with automated transaction verification.
 - **Manual Transfer Receipt Upload**: Alternative payment method with a private photo upload for owner approval.
 - **Maintenance & Complaints**: File maintenance tickets with category, priority, description, and photo attachments.
+
+### 🔑 Authentication
+
+- Sign in with email and password, register an account, and use the password-reset workflow.
+- Social sign-in providers such as Google, Apple, and Facebook are not currently supported.
 
 ### 🛡️ System Administrator
 
@@ -34,8 +40,10 @@ KosMate is a comprehensive, multi-tenant boarding house management platform desi
 ### 🔐 Security & Account Management
 
 - **Password Recovery**: Integrated "Forgot Password" workflow sending password reset links via Supabase Auth.
-- **Profile Customization**: Local image picker for camera & gallery with automatic 512x512 client-side compression and deterministic storage bucket management (`avatars` bucket).
+- **Image Uploads**: Add house, room, and profile images from the camera or gallery; profile images are compressed and stored in the `avatars` bucket.
 - **Account Controls**: In-app password updating and permanent account deletion from Edit Profile.
+
+> **Account deletion warning:** Deleting a tenant account removes its bookings, payment records, and complaints. It does not apply the booking cancellation policy, cancel external Midtrans transactions, or automatically make an approved room available again. Resolve an active tenancy with the owner before deleting an account.
 
 ---
 
@@ -183,6 +191,15 @@ erDiagram
    ```bash
    flutter run
    ```
+
+### Build the Android APK
+
+The Android launcher icon is generated from `assets/app_icon.png`. Regenerate the launcher assets after changing that image, then build the APK:
+
+```bash
+dart run flutter_launcher_icons
+flutter build apk --release
+```
 
 ---
 
