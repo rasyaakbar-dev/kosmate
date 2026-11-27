@@ -1,3 +1,5 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../services/auth_service.dart';
 import '../../services/booking_service.dart';
 import '../../services/complaint_service.dart';
@@ -8,43 +10,33 @@ import '../../services/room_service.dart';
 import '../../services/storage_service.dart';
 import '../../services/user_service.dart';
 
-/// A simple, manually-wired service locator (singleton registry).
-///
-/// Call [ServiceLocator.instance.setup()] once in [main] after Supabase
-/// is initialized. Access services anywhere via the [sl] top-level getter.
-///
-/// Example:
-/// ```dart
-/// final houses = await sl.house.getHousesByOwner(userId);
-/// ```
 class ServiceLocator {
   ServiceLocator._();
 
   static final ServiceLocator instance = ServiceLocator._();
 
-  late final AuthService auth;
-  late final UserService user;
-  late final HouseService house;
-  late final RoomService room;
-  late final BookingService booking;
-  late final PaymentService payment;
-  late final ComplaintService complaint;
-  late final StorageService storage;
-  late final MidtransService midtrans;
+  late AuthService auth;
+  late UserService user;
+  late HouseService house;
+  late RoomService room;
+  late BookingService booking;
+  late PaymentService payment;
+  late ComplaintService complaint;
+  late StorageService storage;
+  late MidtransService midtrans;
 
-  /// Wire up all services. Must be called once after [Supabase.initialize].
-  void setup() {
-    auth = AuthService();
-    user = UserService(auth);
-    house = HouseService();
-    room = RoomService();
-    booking = BookingService();
-    midtrans = MidtransService();
-    payment = PaymentService(midtrans);
-    complaint = ComplaintService();
-    storage = StorageService();
+  void setup([SupabaseClient? client]) {
+    final supabaseClient = client ?? Supabase.instance.client;
+    auth = AuthService(supabaseClient);
+    user = UserService(auth, supabaseClient);
+    house = HouseService(supabaseClient);
+    room = RoomService(supabaseClient);
+    booking = BookingService(supabaseClient);
+    midtrans = MidtransService(supabaseClient);
+    payment = PaymentService(midtrans, supabaseClient);
+    complaint = ComplaintService(supabaseClient);
+    storage = StorageService(supabaseClient);
   }
 }
 
-/// Convenience top-level accessor: `sl.house`, `sl.auth`, etc.
 ServiceLocator get sl => ServiceLocator.instance;

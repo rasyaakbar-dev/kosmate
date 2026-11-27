@@ -129,4 +129,34 @@ class RoomModel {
       house: house ?? this.house,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is RoomModel &&
+        other.roomId == roomId &&
+        other.houseId == houseId &&
+        other.roomNumber == roomNumber &&
+        other.roomType == roomType &&
+        other.price == price &&
+        other.facilities == facilities &&
+        listEquals(other.imageUrls, imageUrls) &&
+        other.status == status &&
+        other.createdAt == createdAt &&
+        other.house == house;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    roomId,
+    houseId,
+    roomNumber,
+    roomType,
+    price,
+    facilities,
+    Object.hashAll(imageUrls),
+    status,
+    createdAt,
+    house,
+  );
 }

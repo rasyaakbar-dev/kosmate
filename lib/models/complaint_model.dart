@@ -218,4 +218,42 @@ class ComplaintModel {
       room: room ?? this.room,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is ComplaintModel &&
+        other.complaintId == complaintId &&
+        other.userId == userId &&
+        other.roomId == roomId &&
+        other.category == category &&
+        other.title == title &&
+        other.description == description &&
+        other.priority == priority &&
+        other.date == date &&
+        other.response == response &&
+        other.attachmentPath == attachmentPath &&
+        other.status == status &&
+        other.createdAt == createdAt &&
+        other.user == user &&
+        other.room == room;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    complaintId,
+    userId,
+    roomId,
+    category,
+    title,
+    description,
+    priority,
+    date,
+    response,
+    attachmentPath,
+    status,
+    createdAt,
+    user,
+    room,
+  );
 }

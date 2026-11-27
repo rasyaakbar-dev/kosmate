@@ -77,9 +77,15 @@ class PaymentModel {
     final rawStatus = PaymentStatus.fromString(
       json['status'] as String? ?? 'pending',
     );
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final dueDateOnly = DateTime(
+      parsedDueDate.year,
+      parsedDueDate.month,
+      parsedDueDate.day,
+    );
     final effectiveStatus =
-        (rawStatus == PaymentStatus.pending &&
-            parsedDueDate.isBefore(DateTime.now()))
+        (rawStatus == PaymentStatus.pending && dueDateOnly.isBefore(today))
         ? PaymentStatus.overdue
         : rawStatus;
 
@@ -171,4 +177,46 @@ class PaymentModel {
       room: room ?? this.room,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is PaymentModel &&
+        other.paymentId == paymentId &&
+        other.userId == userId &&
+        other.roomId == roomId &&
+        other.amount == amount &&
+        other.dueDate == dueDate &&
+        other.status == status &&
+        other.paidDate == paidDate &&
+        other.receiptPath == receiptPath &&
+        other.orderId == orderId &&
+        other.transactionId == transactionId &&
+        other.paymentType == paymentType &&
+        other.qrCodeUrl == qrCodeUrl &&
+        other.deeplinkUrl == deeplinkUrl &&
+        other.createdAt == createdAt &&
+        other.user == user &&
+        other.room == room;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    paymentId,
+    userId,
+    roomId,
+    amount,
+    dueDate,
+    status,
+    paidDate,
+    receiptPath,
+    orderId,
+    transactionId,
+    paymentType,
+    qrCodeUrl,
+    deeplinkUrl,
+    createdAt,
+    user,
+    room,
+  );
 }

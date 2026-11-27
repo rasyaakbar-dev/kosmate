@@ -4,13 +4,16 @@ import '../../../core/constants/supabase_constants.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/list_controls.dart';
+import '../../../core/widgets/kosmate_components.dart';
+import '../../../core/widgets/complaint_response_sheet.dart';
+import '../../../core/widgets/payment_detail_sheet.dart';
 import '../../../core/widgets/private_storage_image.dart';
 import '../../../models/booking_model.dart';
 import '../../../models/complaint_model.dart';
 import '../../../models/payment_model.dart';
 import '../../../models/room_model.dart';
 import '../../../models/user_model.dart';
-import '../complaints/owner_complaints_screen.dart';
 
 class OwnerManagementHubTab extends StatefulWidget {
   final UserModel user;
@@ -72,15 +75,9 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
       if (allRooms.isNotEmpty) {
         try {
           final roomIds = allRooms.map((r) => r.roomId).toList();
-          final bookingRes = await supabase
-              .from(SupabaseConstants.bookingTable)
-              .select('*, users!booking_user_id_fkey(*)')
-              .inFilter('room_id', roomIds)
-              .order('created_at', ascending: false);
+          final bookings = await _bookingService.getBookingsByRoomIds(roomIds);
 
-          for (final row in bookingRes as List) {
-            final b = BookingModel.fromJson(row as Map<String, dynamic>);
-            // Attach house & room information
+          for (final b in bookings) {
             final matchedRoom = allRooms.where((r) => r.roomId == b.roomId);
             BookingModel fullBooking = b;
             if (matchedRoom.isNotEmpty) {
@@ -136,7 +133,6 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
       await _bookingService.updateBookingStatus(
         bookingId: booking.bookingId,
         status: BookingStatus.approved,
-        roomId: booking.roomId,
       );
 
       final roomPrice = booking.room?.price ?? 0.0;
@@ -199,7 +195,6 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
         await _bookingService.updateBookingStatus(
           bookingId: booking.bookingId,
           status: BookingStatus.rejected,
-          roomId: booking.roomId,
         );
         messenger.showSnackBar(
           const SnackBar(
@@ -414,11 +409,11 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
   }
 
   void _openComplaintsManagement() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => OwnerComplaintsScreen(owner: widget.user),
-      ),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _ComplaintsSheet(ownerId: widget.user.userId),
     ).then((_) {
       if (mounted) _loadManagementData();
     });
@@ -1089,11 +1084,15 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
                             color: AppTheme.textMuted,
                           ),
                           const SizedBox(width: 4),
-                          Text(
-                            phone,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.textDark,
+                          Flexible(
+                            child: Text(
+                              phone,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.textDark,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const Spacer(),
@@ -1218,102 +1217,13 @@ class _TenantInspectorSheet extends StatefulWidget {
 }
 
 class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
-  final _complaintService = sl.complaint;
   final _paymentService = sl.payment;
 
   void _showComplaintResponseDialog(ComplaintModel complaint) {
-    final responseCtrl = TextEditingController(text: complaint.response ?? '');
-    final attachmentPath = complaint.attachmentPath;
-    ComplaintStatus selectedStatus = complaint.status == ComplaintStatus.pending
-        ? ComplaintStatus.inProgress
-        : complaint.status;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(complaint.title),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Description:\n${complaint.description}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.textMuted,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                if (attachmentPath != null && attachmentPath.isNotEmpty) ...[
-                  PrivateStorageImage(
-                    bucketName: SupabaseConstants.complaintAttachmentsBucket,
-                    path: attachmentPath,
-                    height: 180,
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                DropdownButtonFormField<ComplaintStatus>(
-                  isExpanded: true,
-                  initialValue: selectedStatus,
-                  decoration: const InputDecoration(labelText: 'Status'),
-                  items: const [
-                    DropdownMenuItem(
-                      value: ComplaintStatus.inProgress,
-                      child: Text('In Progress'),
-                    ),
-                    DropdownMenuItem(
-                      value: ComplaintStatus.resolved,
-                      child: Text('Resolved'),
-                    ),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) {
-                      setDialogState(() => selectedStatus = val);
-                    }
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: responseCtrl,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Response / Note',
-                    hintText: 'e.g. Technician arrived and fixed.',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentColor,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () async {
-                try {
-                  await _complaintService.respondToComplaint(
-                    complaintId: complaint.complaintId,
-                    responseText: responseCtrl.text.trim(),
-                    status: selectedStatus,
-                  );
-                  if (ctx.mounted) {
-                    Navigator.pop(ctx);
-                  }
-                  widget.onDataChanged();
-                } catch (_) {}
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        ),
-      ),
+    ComplaintResponseSheet.show(
+      context,
+      complaint,
+      onUpdated: widget.onDataChanged,
     );
   }
 
@@ -1488,16 +1398,21 @@ class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                room?.roomNumber ??
-                                    'Room ${widget.booking.roomId}',
-                                style: const TextStyle(
-                                  fontFamily: 'Roboto',
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.foregroundColor,
+                              Expanded(
+                                child: Text(
+                                  room?.roomNumber ??
+                                      'Room ${widget.booking.roomId}',
+                                  style: const TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.foregroundColor,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
+                              const SizedBox(width: 8),
                               Text(
                                 '${Formatters.formatCurrency(room?.price ?? 0)} / mo',
                                 style: const TextStyle(
@@ -1533,15 +1448,20 @@ class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Complaints',
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.foregroundColor,
+                        const Expanded(
+                          child: Text(
+                            'Complaints',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.foregroundColor,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        const SizedBox(width: 8),
                         Text(
                           '${widget.complaints.length} filed',
                           style: const TextStyle(
@@ -1639,28 +1559,31 @@ class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Payment History',
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.foregroundColor,
+                        const Expanded(
+                          child: Text(
+                            'Payment History',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.foregroundColor,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        const SizedBox(width: 8),
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             if (widget.onIssueInvoice != null) ...[
-                              TextButton.icon(
-                                onPressed: widget.onIssueInvoice,
-                                icon: const Icon(Icons.add, size: 16),
-                                label: const Text('Issue Invoice'),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: AppTheme.accentColor,
-                                  visualDensity: VisualDensity.compact,
-                                ),
+                              KosMateHeaderActionButton(
+                                icon: Icons.add,
+                                label: 'Issue Invoice',
+                                onPressed: widget.onIssueInvoice!,
+                                collapseBreakpoint: 450,
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 8),
                             ],
                             Text(
                               '${widget.payments.length} invoices',
@@ -1688,86 +1611,97 @@ class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
                     else
                       ...widget.payments.map((p) {
                         final isPaid = p.status == PaymentStatus.paid;
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: AppTheme.borderLight),
+                        return InkWell(
+                          onTap: () => PaymentDetailSheet.show(
+                            context,
+                            p,
+                            onMarkPaid: !isPaid
+                                ? () => _markPaymentPaid(p)
+                                : null,
                           ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                isPaid
-                                    ? Icons.check_circle_outline
-                                    : Icons.receipt_long_outlined,
-                                color: isPaid
-                                    ? AppTheme.successColor
-                                    : AppTheme.destructiveColor,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      Formatters.formatCurrency(p.amount),
-                                      style: const TextStyle(
-                                        fontFamily: 'Roboto',
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppTheme.foregroundColor,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Due: ${Formatters.formatDate(p.dueDate)}',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppTheme.textMuted,
-                                      ),
-                                    ),
-                                  ],
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: AppTheme.borderLight),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  isPaid
+                                      ? Icons.check_circle_outline
+                                      : Icons.receipt_long_outlined,
+                                  color: isPaid
+                                      ? AppTheme.successColor
+                                      : AppTheme.destructiveColor,
+                                  size: 20,
                                 ),
-                              ),
-                              if (!isPaid)
-                                ElevatedButton(
-                                  onPressed: () => _markPaymentPaid(p),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppTheme.accentColor,
-                                    foregroundColor: Colors.white,
-                                    visualDensity: VisualDensity.compact,
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        Formatters.formatCurrency(p.amount),
+                                        style: const TextStyle(
+                                          fontFamily: 'Roboto',
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppTheme.foregroundColor,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Due: ${Formatters.formatDate(p.dueDate)}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: AppTheme.textMuted,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (!isPaid)
+                                  ElevatedButton(
+                                    onPressed: () => _markPaymentPaid(p),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppTheme.accentColor,
+                                      foregroundColor: Colors.white,
+                                      visualDensity: VisualDensity.compact,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Mark Paid',
+                                      style: TextStyle(fontSize: 11),
+                                    ),
+                                  )
+                                else
+                                  Container(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 4,
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.successLight,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Text(
+                                      'Paid',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.successColor,
+                                      ),
                                     ),
                                   ),
-                                  child: const Text(
-                                    'Mark Paid',
-                                    style: TextStyle(fontSize: 11),
-                                  ),
-                                )
-                              else
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.successLight,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: const Text(
-                                    'Paid',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.successColor,
-                                    ),
-                                  ),
-                                ),
-                            ],
+                              ],
+                            ),
                           ),
                         );
                       }),
@@ -1775,6 +1709,363 @@ class _TenantInspectorSheetState extends State<_TenantInspectorSheet> {
                   ],
                 ),
               ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// _ComplaintsSheet — bottom-sheet version of OwnerComplaintsScreen
+// ---------------------------------------------------------------------------
+
+class _ComplaintsSheet extends StatefulWidget {
+  final int ownerId;
+
+  const _ComplaintsSheet({required this.ownerId});
+
+  @override
+  State<_ComplaintsSheet> createState() => _ComplaintsSheetState();
+}
+
+class _ComplaintsSheetState extends State<_ComplaintsSheet> {
+  final _complaintService = sl.complaint;
+  final _searchController = TextEditingController();
+
+  List<ComplaintModel> _allComplaints = [];
+  List<ComplaintModel> _filteredComplaints = [];
+  bool _isLoading = true;
+  String _searchQuery = '';
+  String _selectedFilter = 'All';
+  String _sortId = 'newest';
+  int _page = 1;
+  int _pageSize = 10;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadComplaints();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadComplaints() async {
+    setState(() => _isLoading = true);
+    try {
+      final complaints = await _complaintService.getComplaintsForOwner(
+        widget.ownerId,
+      );
+      if (mounted) {
+        setState(() {
+          _allComplaints = complaints;
+          _applyFilter();
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  List<KosMateSortOption<ComplaintModel>> get _sortOptions => [
+    KosMateSortOption<ComplaintModel>(
+      id: 'newest',
+      label: 'Newest',
+      comparator: (a, b) => b.date.compareTo(a.date),
+    ),
+    KosMateSortOption<ComplaintModel>(
+      id: 'oldest',
+      label: 'Oldest',
+      comparator: (a, b) => a.date.compareTo(b.date),
+    ),
+    KosMateSortOption<ComplaintModel>(
+      id: 'priority',
+      label: 'Priority (High–Low)',
+      comparator: (a, b) => b.priority.index.compareTo(a.priority.index),
+    ),
+    KosMateSortOption<ComplaintModel>(
+      id: 'room',
+      label: 'Room # (A–Z)',
+      comparator: (a, b) => (a.room?.roomNumber ?? '${a.roomId}')
+          .toLowerCase()
+          .compareTo((b.room?.roomNumber ?? '${b.roomId}').toLowerCase()),
+    ),
+  ];
+
+  void _applyFilter() {
+    var list = List<ComplaintModel>.from(_allComplaints);
+
+    if (_selectedFilter == 'Open') {
+      list = list.where((c) => c.status == ComplaintStatus.pending).toList();
+    } else if (_selectedFilter == 'In Progress') {
+      list = list.where((c) => c.status == ComplaintStatus.inProgress).toList();
+    } else if (_selectedFilter == 'Resolved') {
+      list = list.where((c) => c.status == ComplaintStatus.resolved).toList();
+    } else if (_selectedFilter == 'Rejected') {
+      list = list.where((c) => c.status == ComplaintStatus.rejected).toList();
+    }
+
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      list = list.where((c) {
+        final title = c.title.toLowerCase();
+        final desc = c.description.toLowerCase();
+        final tenant = c.user?.name.toLowerCase() ?? '';
+        final room = c.room?.roomNumber.toLowerCase() ?? '';
+        return title.contains(q) ||
+            desc.contains(q) ||
+            tenant.contains(q) ||
+            room.contains(q);
+      }).toList();
+    }
+
+    final selectedSort = _sortOptions.firstWhere(
+      (s) => s.id == _sortId,
+      orElse: () => _sortOptions.first,
+    );
+    list.sort(selectedSort.comparator);
+
+    _filteredComplaints = list;
+  }
+
+  void _showComplaintResponseDialog(ComplaintModel complaint) {
+    ComplaintResponseSheet.show(context, complaint, onUpdated: _loadComplaints);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final paged = paginateList(_filteredComplaints, _page, _pageSize);
+    final openCount = _allComplaints
+        .where(
+          (c) =>
+              c.status == ComplaintStatus.pending ||
+              c.status == ComplaintStatus.inProgress,
+        )
+        .length;
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      maxChildSize: 0.95,
+      minChildSize: 0.5,
+      builder: (context, scrollCtrl) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Drag handle
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 10, bottom: 8),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppTheme.borderMedium,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              // Header row
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Complaints',
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.foregroundColor,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: AppTheme.textMuted),
+                      onPressed: () => Navigator.pop(context),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+              ),
+              // Search
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: KosMateSearchField(
+                  controller: _searchController,
+                  hintText: 'Search by title, tenant, or room...',
+                  fillColor: AppTheme.surfaceLight,
+                  onChanged: (val) => setState(() {
+                    _searchQuery = val.trim();
+                    _page = 1;
+                    _applyFilter();
+                  }),
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Filter + Sort bar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: KosMateFilterSortBar<ComplaintModel>(
+                  filterOptions: const [
+                    'All',
+                    'Open',
+                    'In Progress',
+                    'Resolved',
+                    'Rejected',
+                  ],
+                  selectedFilter: _selectedFilter,
+                  onFilterChanged: (val) => setState(() {
+                    _selectedFilter = val;
+                    _page = 1;
+                    _applyFilter();
+                  }),
+                  sortOptions: _sortOptions,
+                  selectedSortId: _sortId,
+                  onSortChanged: (val) => setState(() {
+                    _sortId = val;
+                    _page = 1;
+                    _applyFilter();
+                  }),
+                  totalCount: _filteredComplaints.length,
+                  itemLabel:
+                      '${_filteredComplaints.length == 1 ? 'complaint' : 'complaints'} ($openCount Open)',
+                ),
+              ),
+              const SizedBox(height: 6),
+              // List
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _filteredComplaints.isEmpty
+                    ? KosMateEmptyState(
+                        icon: Icons.build_circle_outlined,
+                        title: 'No complaints found',
+                        subtitle: _selectedFilter != 'All'
+                            ? 'No complaints match the "$_selectedFilter" filter.'
+                            : 'Tenant maintenance tickets will appear here.',
+                        plain: true,
+                      )
+                    : ListView.builder(
+                        controller: scrollCtrl,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 6,
+                        ),
+                        itemCount: paged.pageItems.length,
+                        itemBuilder: (context, index) {
+                          final c = paged.pageItems[index];
+                          final tenant = c.user?.name ?? 'Tenant';
+                          final room = c.room?.roomNumber ?? 'Room ${c.roomId}';
+                          final subtitle = '$tenant • $room';
+
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: const BorderSide(
+                                color: AppTheme.borderLight,
+                                width: 1.1,
+                              ),
+                            ),
+                            child: InkWell(
+                              onTap: () => _showComplaintResponseDialog(c),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 44,
+                                      height: 44,
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.iconBadgeBackground,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(
+                                        Icons.build_rounded,
+                                        color: AppTheme.accentColor,
+                                        size: 22,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            c.title,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontFamily: 'Roboto',
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppTheme.textDark,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 3),
+                                          Text(
+                                            subtitle,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: AppTheme.textMuted,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    KosMateStatusChip.fromComplaintStatus(
+                                      c.status,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    const Icon(
+                                      Icons.chevron_right_rounded,
+                                      color: AppTheme.accentColor,
+                                      size: 22,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+              if (!_isLoading && _filteredComplaints.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+                  child: KosMatePaginationBar(
+                    currentPage: paged.safePage,
+                    totalPages: paged.totalPages,
+                    totalItems: _filteredComplaints.length,
+                    startIndex: paged.startIndex,
+                    endIndex: paged.endIndex,
+                    pageSize: _pageSize,
+                    onPageChanged: (p) => setState(() => _page = p),
+                    onPageSizeChanged: (s) => setState(() {
+                      _pageSize = s;
+                      _page = 1;
+                    }),
+                  ),
+                ),
             ],
           ),
         );
@@ -1800,8 +2091,18 @@ class _AllPaymentsSheet extends StatefulWidget {
 
 class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
   final _paymentService = sl.payment;
+  final _searchController = TextEditingController();
   String _selectedFilter = 'All';
   String _search = '';
+  String _sortId = 'due_desc';
+  int _page = 1;
+  int _pageSize = 10;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _markPaid(PaymentModel payment) async {
     final receiptPath = payment.receiptPath;
@@ -1858,6 +2159,36 @@ class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final sortOptions = [
+      KosMateSortOption<PaymentModel>(
+        id: 'due_desc',
+        label: 'Due Date (Newest)',
+        comparator: (a, b) => b.dueDate.compareTo(a.dueDate),
+      ),
+      KosMateSortOption<PaymentModel>(
+        id: 'due_asc',
+        label: 'Due Date (Oldest)',
+        comparator: (a, b) => a.dueDate.compareTo(b.dueDate),
+      ),
+      KosMateSortOption<PaymentModel>(
+        id: 'amount_desc',
+        label: 'Amount: High to Low',
+        comparator: (a, b) => b.amount.compareTo(a.amount),
+      ),
+      KosMateSortOption<PaymentModel>(
+        id: 'amount_asc',
+        label: 'Amount: Low to High',
+        comparator: (a, b) => a.amount.compareTo(b.amount),
+      ),
+      KosMateSortOption<PaymentModel>(
+        id: 'tenant_asc',
+        label: 'Tenant (A–Z)',
+        comparator: (a, b) => (a.user?.name ?? '').toLowerCase().compareTo(
+          (b.user?.name ?? '').toLowerCase(),
+        ),
+      ),
+    ];
+
     final filtered = widget.payments.where((p) {
       if (_selectedFilter == 'Pending' && p.status != PaymentStatus.pending) {
         return false;
@@ -1877,6 +2208,14 @@ class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
       }
       return true;
     }).toList();
+
+    final selectedSort = sortOptions.firstWhere(
+      (s) => s.id == _sortId,
+      orElse: () => sortOptions.first,
+    );
+    filtered.sort(selectedSort.comparator);
+
+    final paged = paginateList(filtered, _page, _pageSize);
 
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
@@ -1906,41 +2245,36 @@ class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'All Invoices & Payments',
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.foregroundColor,
+                    const Expanded(
+                      child: Text(
+                        'All Invoices & Payments',
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.foregroundColor,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 8),
                     Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         if (widget.onIssueInvoice != null) ...[
-                          ElevatedButton.icon(
-                            onPressed: widget.onIssueInvoice,
-                            icon: const Icon(Icons.add, size: 16),
-                            label: const Text('Issue Invoice'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.accentColor,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
+                          KosMateHeaderActionButton(
+                            icon: Icons.add,
+                            label: 'Issue Invoice',
+                            onPressed: widget.onIssueInvoice!,
+                            collapseBreakpoint: 450,
                           ),
                           const SizedBox(width: 8),
                         ],
                         IconButton(
                           icon: const Icon(
                             Icons.close,
-                            color: AppTheme.destructiveColor,
+                            color: AppTheme.textMuted,
                           ),
                           onPressed: () => Navigator.pop(context),
                           padding: EdgeInsets.zero,
@@ -1951,67 +2285,36 @@ class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
                   ],
                 ),
               ),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
+              Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: ['All', 'Pending', 'Paid', 'Overdue'].map((f) {
-                    final selected = _selectedFilter == f;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 6.0),
-                      child: ChoiceChip(
-                        label: Text(f),
-                        selected: selected,
-                        showCheckmark: false,
-                        checkmarkColor: AppTheme.accentColor,
-                        selectedColor: AppTheme.primaryLight,
-                        backgroundColor: Colors.white,
-                        side: BorderSide(
-                          color: selected
-                              ? AppTheme.accentColor
-                              : AppTheme.borderMedium,
-                        ),
-                        labelStyle: TextStyle(
-                          fontSize: 12,
-                          fontWeight: selected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                          color: selected
-                              ? AppTheme.accentColor
-                              : AppTheme.textDark,
-                        ),
-                        onSelected: (_) => setState(() => _selectedFilter = f),
-                      ),
-                    );
-                  }).toList(),
+                child: KosMateSearchField(
+                  controller: _searchController,
+                  hintText: 'Search tenant or room...',
+                  fillColor: AppTheme.surfaceLight,
+                  onChanged: (val) => setState(() {
+                    _search = val.trim();
+                    _page = 1;
+                  }),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 4,
-                ),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Search tenant or room...',
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      size: 18,
-                      color: AppTheme.textMuted,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: 12,
-                    ),
-                    filled: true,
-                    fillColor: AppTheme.surfaceLight,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  onChanged: (val) => setState(() => _search = val.trim()),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: KosMateFilterSortBar<PaymentModel>(
+                  filterOptions: const ['All', 'Pending', 'Paid', 'Overdue'],
+                  selectedFilter: _selectedFilter,
+                  onFilterChanged: (f) => setState(() {
+                    _selectedFilter = f;
+                    _page = 1;
+                  }),
+                  sortOptions: sortOptions,
+                  selectedSortId: _sortId,
+                  onSortChanged: (s) => setState(() {
+                    _sortId = s;
+                    _page = 1;
+                  }),
+                  totalCount: filtered.length,
+                  itemLabel: filtered.length == 1 ? 'invoice' : 'invoices',
                 ),
               ),
               const SizedBox(height: 8),
@@ -2023,106 +2326,144 @@ class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
                           style: TextStyle(color: AppTheme.textMuted),
                         ),
                       )
-                    : ListView.builder(
-                        controller: scrollCtrl,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 8,
-                        ),
-                        itemCount: filtered.length,
-                        itemBuilder: (ctx, idx) {
-                          final p = filtered[idx];
-                          final isPaid = p.status == PaymentStatus.paid;
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: AppTheme.borderLight),
-                            ),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 18,
-                                  backgroundColor: isPaid
-                                      ? AppTheme.successLight
-                                      : AppTheme.destructiveLight,
-                                  child: Icon(
-                                    isPaid
-                                        ? Icons.check
-                                        : Icons.receipt_outlined,
-                                    size: 16,
-                                    color: isPaid
-                                        ? AppTheme.successColor
-                                        : AppTheme.destructiveColor,
+                    : Column(
+                        children: [
+                          Expanded(
+                            child: ListView.builder(
+                              controller: scrollCtrl,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 8,
+                              ),
+                              itemCount: paged.pageItems.length,
+                              itemBuilder: (ctx, idx) {
+                                final p = paged.pageItems[idx];
+                                final isPaid = p.status == PaymentStatus.paid;
+                                return InkWell(
+                                  onTap: () => PaymentDetailSheet.show(
+                                    context,
+                                    p,
+                                    onMarkPaid: !isPaid
+                                        ? () => _markPaid(p)
+                                        : null,
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        p.user?.name ?? 'Tenant',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      Text(
-                                        'Room ${p.room?.roomNumber ?? p.roomId} • Due ${Formatters.formatDate(p.dueDate)}',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: AppTheme.textMuted,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      Formatters.formatCurrency(p.amount),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    margin: const EdgeInsets.only(bottom: 10),
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: AppTheme.borderLight,
                                       ),
                                     ),
-                                    if (!isPaid) ...[
-                                      const SizedBox(height: 4),
-                                      GestureDetector(
-                                        onTap: () => _markPaid(p),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 2,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.accentColor,
-                                            borderRadius: BorderRadius.circular(
-                                              4,
-                                            ),
-                                          ),
-                                          child: const Text(
-                                            'Mark Paid',
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                            ),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 18,
+                                          backgroundColor: isPaid
+                                              ? AppTheme.successLight
+                                              : AppTheme.destructiveLight,
+                                          child: Icon(
+                                            isPaid
+                                                ? Icons.check
+                                                : Icons.receipt_outlined,
+                                            size: 16,
+                                            color: isPaid
+                                                ? AppTheme.successColor
+                                                : AppTheme.destructiveColor,
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ],
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                p.user?.name ?? 'Tenant',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              Text(
+                                                'Room ${p.room?.roomNumber ?? p.roomId} • Due ${Formatters.formatDate(p.dueDate)}',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: AppTheme.textMuted,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              Formatters.formatCurrency(
+                                                p.amount,
+                                              ),
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                            if (!isPaid) ...[
+                                              const SizedBox(height: 4),
+                                              GestureDetector(
+                                                onTap: () => _markPaid(p),
+                                                child: Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 2,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color: AppTheme.accentColor,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          4,
+                                                        ),
+                                                  ),
+                                                  child: const Text(
+                                                    'Mark Paid',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      color: Colors.white,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
-                          );
-                        },
+                          ),
+                          KosMatePaginationBar(
+                            currentPage: paged.safePage,
+                            totalPages: paged.totalPages,
+                            totalItems: filtered.length,
+                            startIndex: paged.startIndex,
+                            endIndex: paged.endIndex,
+                            pageSize: _pageSize,
+                            onPageChanged: (p) => setState(() => _page = p),
+                            onPageSizeChanged: (s) => setState(() {
+                              _pageSize = s;
+                              _page = 1;
+                            }),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
                       ),
               ),
             ],

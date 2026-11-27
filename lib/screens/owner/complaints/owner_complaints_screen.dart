@@ -5,6 +5,7 @@ import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
 import '../../../core/widgets/kosmate_components.dart';
+import '../../../core/widgets/list_controls.dart';
 import '../../../core/widgets/private_storage_image.dart';
 import '../../../models/complaint_model.dart';
 import '../../../models/user_model.dart';
@@ -26,9 +27,10 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
   List<ComplaintModel> _filteredComplaints = [];
   bool _isLoading = true;
   String _searchQuery = '';
-
-  // Tab filter: 0 = "All complaints", 1 = "Resolved"
-  int _selectedFilterTab = 0;
+  String _selectedFilter = 'All';
+  String _sortId = 'newest';
+  int _page = 1;
+  int _pageSize = 10;
 
   @override
   void initState() {
@@ -62,11 +64,42 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
     }
   }
 
+  List<KosMateSortOption<ComplaintModel>> get _sortOptions => [
+    KosMateSortOption<ComplaintModel>(
+      id: 'newest',
+      label: 'Newest',
+      comparator: (a, b) => b.date.compareTo(a.date),
+    ),
+    KosMateSortOption<ComplaintModel>(
+      id: 'oldest',
+      label: 'Oldest',
+      comparator: (a, b) => a.date.compareTo(b.date),
+    ),
+    KosMateSortOption<ComplaintModel>(
+      id: 'priority',
+      label: 'Priority (High–Low)',
+      comparator: (a, b) => b.priority.index.compareTo(a.priority.index),
+    ),
+    KosMateSortOption<ComplaintModel>(
+      id: 'room',
+      label: 'Room # (A–Z)',
+      comparator: (a, b) => (a.room?.roomNumber ?? '${a.roomId}')
+          .toLowerCase()
+          .compareTo((b.room?.roomNumber ?? '${b.roomId}').toLowerCase()),
+    ),
+  ];
+
   void _applyFilter() {
     var list = List<ComplaintModel>.from(_allComplaints);
 
-    if (_selectedFilterTab == 1) {
+    if (_selectedFilter == 'Open') {
+      list = list.where((c) => c.status == ComplaintStatus.pending).toList();
+    } else if (_selectedFilter == 'In Progress') {
+      list = list.where((c) => c.status == ComplaintStatus.inProgress).toList();
+    } else if (_selectedFilter == 'Resolved') {
       list = list.where((c) => c.status == ComplaintStatus.resolved).toList();
+    } else if (_selectedFilter == 'Rejected') {
+      list = list.where((c) => c.status == ComplaintStatus.rejected).toList();
     }
 
     if (_searchQuery.isNotEmpty) {
@@ -82,6 +115,12 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
             room.contains(q);
       }).toList();
     }
+
+    final selectedSort = _sortOptions.firstWhere(
+      (s) => s.id == _sortId,
+      orElse: () => _sortOptions.first,
+    );
+    list.sort(selectedSort.comparator);
 
     _filteredComplaints = list;
   }
@@ -221,7 +260,7 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final totalCount = _filteredComplaints.length;
+    final paged = paginateList(_filteredComplaints, _page, _pageSize);
     final openCount = _allComplaints
         .where(
           (c) =>
@@ -247,138 +286,61 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
 
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
-                              setState(() {
-                                _selectedFilterTab = 0;
-                                _applyFilter();
-                              });
-                            },
-                            borderRadius: BorderRadius.circular(10),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: _selectedFilterTab == 0
-                                    ? AppTheme.accentColor
-                                    : AppTheme.surfaceLight,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                'All complaints',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: _selectedFilterTab == 0
-                                      ? Colors.white
-                                      : AppTheme.textMuted,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
-                              setState(() {
-                                _selectedFilterTab = 1;
-                                _applyFilter();
-                              });
-                            },
-                            borderRadius: BorderRadius.circular(10),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: _selectedFilterTab == 1
-                                    ? AppTheme.accentColor
-                                    : AppTheme.surfaceLight,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                'Resolved',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: _selectedFilterTab == 1
-                                      ? Colors.white
-                                      : AppTheme.textMuted,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: KosMateSearchBar(
+                    child: KosMateSearchField(
                       controller: _searchController,
-                      hintText: 'Search complaints',
+                      hintText: 'Search by title, tenant, or room...',
                       onChanged: (val) {
                         setState(() {
                           _searchQuery = val.trim();
-                          _applyFilter();
-                        });
-                      },
-                      onClear: () {
-                        setState(() {
-                          _searchQuery = '';
+                          _page = 1;
                           _applyFilter();
                         });
                       },
                     ),
                   ),
+                  const SizedBox(height: 10),
 
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '$totalCount complaints',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppTheme.textMuted,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.destructiveLight,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '$openCount Open',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.destructiveColor,
-                            ),
-                          ),
-                        ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: KosMateFilterSortBar<ComplaintModel>(
+                      filterOptions: const [
+                        'All',
+                        'Open',
+                        'In Progress',
+                        'Resolved',
+                        'Rejected',
                       ],
+                      selectedFilter: _selectedFilter,
+                      onFilterChanged: (val) {
+                        setState(() {
+                          _selectedFilter = val;
+                          _page = 1;
+                          _applyFilter();
+                        });
+                      },
+                      sortOptions: _sortOptions,
+                      selectedSortId: _sortId,
+                      onSortChanged: (val) {
+                        setState(() {
+                          _sortId = val;
+                          _page = 1;
+                          _applyFilter();
+                        });
+                      },
+                      totalCount: _filteredComplaints.length,
+                      itemLabel:
+                          '${_filteredComplaints.length == 1 ? 'complaint' : 'complaints'} ($openCount Open)',
                     ),
                   ),
+                  const SizedBox(height: 6),
 
                   Expanded(
                     child: _filteredComplaints.isEmpty
                         ? KosMateEmptyState(
                             icon: Icons.build_circle_outlined,
                             title: 'No complaints found',
-                            subtitle: _selectedFilterTab == 1
-                                ? 'Resolved tickets will appear here.'
+                            subtitle: _selectedFilter != 'All'
+                                ? 'No complaints match the "$_selectedFilter" filter.'
                                 : 'Tenant maintenance tickets will appear here.',
                             plain: true,
                           )
@@ -387,9 +349,9 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                               horizontal: 16,
                               vertical: 6,
                             ),
-                            itemCount: _filteredComplaints.length,
+                            itemCount: paged.pageItems.length,
                             itemBuilder: (context, index) {
-                              final c = _filteredComplaints[index];
+                              final c = paged.pageItems[index];
                               final tenant = c.user?.name ?? 'Tenant';
                               final room =
                                   c.room?.roomNumber ?? 'Room ${c.roomId}';
@@ -473,6 +435,23 @@ class _OwnerComplaintsScreenState extends State<OwnerComplaintsScreen> {
                             },
                           ),
                   ),
+                  if (_filteredComplaints.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                      child: KosMatePaginationBar(
+                        currentPage: paged.safePage,
+                        totalPages: paged.totalPages,
+                        totalItems: _filteredComplaints.length,
+                        startIndex: paged.startIndex,
+                        endIndex: paged.endIndex,
+                        pageSize: _pageSize,
+                        onPageChanged: (p) => setState(() => _page = p),
+                        onPageSizeChanged: (s) => setState(() {
+                          _pageSize = s;
+                          _page = 1;
+                        }),
+                      ),
+                    ),
                 ],
               ),
             ),

@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/room_facilities.dart';
 import '../../../core/di/service_locator.dart';
@@ -24,15 +27,19 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _roomService = sl.room;
   final _houseService = sl.house;
+  final _storageService = sl.storage;
+  final _imagePicker = ImagePicker();
 
   late final TextEditingController _roomNumberController;
   late final TextEditingController _priceController;
-  late final TextEditingController _imageUrlController;
 
   int? _selectedHouseId;
   String _selectedRoomType = 'Standard';
   RoomStatus _selectedStatus = RoomStatus.available;
   late List<String> _selectedFacilities;
+  Uint8List? _selectedImageBytes;
+  String _selectedImageExtension = 'jpg';
+  String? _currentImageUrl;
 
   List<HouseModel> _houses = [];
   bool _isLoadingHouses = true;
@@ -57,9 +64,9 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
       text: r != null ? r.price.toStringAsFixed(0) : '',
     );
     _selectedFacilities = RoomFacilities.parse(r?.facilities);
-    _imageUrlController = TextEditingController(
-      text: r?.imageUrls.isNotEmpty == true ? r!.imageUrls.first : '',
-    );
+    _currentImageUrl = r?.imageUrls.isNotEmpty == true
+        ? r!.imageUrls.first
+        : null;
     _selectedHouseId = r?.houseId ?? widget.initialHouseId;
     _selectedStatus = r?.status ?? RoomStatus.available;
 
@@ -77,8 +84,103 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
   void dispose() {
     _roomNumberController.dispose();
     _priceController.dispose();
-    _imageUrlController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picked = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 80,
+      );
+      if (picked != null) {
+        final bytes = await picked.readAsBytes();
+        setState(() {
+          _selectedImageBytes = bytes;
+          _selectedImageExtension = picked.name.split('.').last;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to pick image: $e'),
+            backgroundColor: AppTheme.destructiveColor,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showImageSourceModal() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Text(
+                'Upload Room Photo',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.foregroundColor,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.photo_camera_outlined,
+                color: AppTheme.primaryColor,
+              ),
+              title: const Text('Take a photo'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.photo_library_outlined,
+                color: AppTheme.primaryColor,
+              ),
+              title: const Text('Choose from gallery'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            if (_selectedImageBytes != null ||
+                (_currentImageUrl != null && _currentImageUrl!.isNotEmpty))
+              ListTile(
+                leading: const Icon(
+                  Icons.delete_outline,
+                  color: AppTheme.destructiveColor,
+                ),
+                title: const Text(
+                  'Remove photo',
+                  style: TextStyle(color: AppTheme.destructiveColor),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  setState(() {
+                    _selectedImageBytes = null;
+                    _currentImageUrl = null;
+                  });
+                },
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _loadHouses() async {
@@ -119,8 +221,17 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
     final messenger = ScaffoldMessenger.of(context);
 
     try {
-      final img = _imageUrlController.text.trim();
-      final List<String> imageUrls = img.isNotEmpty ? [img] : [];
+      String? imageUrl = _currentImageUrl;
+      if (_selectedImageBytes != null) {
+        imageUrl = await _storageService.uploadRoomImage(
+          widget.room?.roomId,
+          _selectedImageBytes!,
+          extension: _selectedImageExtension,
+        );
+      }
+      final List<String> imageUrls = imageUrl != null && imageUrl.isNotEmpty
+          ? [imageUrl]
+          : [];
 
       if (widget.isEditing) {
         final updated = widget.room!.copyWith(
@@ -498,65 +609,72 @@ class _AdminRoomFormScreenState extends State<AdminRoomFormScreen> {
                     const SizedBox(height: 16),
 
                     const Text(
-                      'Photo URL (Optional)',
+                      'Room Photo (Optional)',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.textDark,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    TextFormField(
-                      controller: _imageUrlController,
-                      decoration: InputDecoration(
-                        hintText: 'https://...',
-                        prefixIcon: const Icon(
-                          Icons.image_outlined,
-                          color: AppTheme.textMuted,
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: _showImageSourceModal,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: double.infinity,
+                        height: 150,
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceLight,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppTheme.borderMedium),
                         ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppTheme.borderMedium,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppTheme.borderMedium,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                      onChanged: (_) => setState(() {}),
-                    ),
-
-                    if (_imageUrlController.text.trim().isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(
-                          _imageUrlController.text.trim(),
-                          height: 120,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Container(
-                            height: 60,
-                            color: AppTheme.surfaceLight,
-                            child: const Center(
-                              child: Text(
-                                'Invalid image URL preview',
-                                style: TextStyle(
-                                  color: AppTheme.textMuted,
-                                  fontSize: 12,
+                        child: _selectedImageBytes != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(11),
+                                child: Image.memory(
+                                  _selectedImageBytes!,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
                                 ),
+                              )
+                            : (_currentImageUrl != null &&
+                                  _currentImageUrl!.trim().isNotEmpty)
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(11),
+                                child: Image.network(
+                                  _currentImageUrl!.trim(),
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  errorBuilder: (_, _, _) => const Center(
+                                    child: Icon(
+                                      Icons.broken_image_outlined,
+                                      size: 36,
+                                      color: AppTheme.textMuted,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : const Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.add_a_photo_outlined,
+                                    size: 32,
+                                    color: AppTheme.accentColor,
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Tap to upload room photo',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppTheme.textMuted,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ),
-                        ),
                       ),
-                    ],
+                    ),
 
                     const SizedBox(height: 28),
 

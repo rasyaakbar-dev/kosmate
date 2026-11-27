@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/kosmate_components.dart';
+import '../../../core/widgets/list_controls.dart';
 import '../../../models/user_model.dart';
 import 'admin_user_detail_screen.dart';
 import 'admin_user_form_screen.dart';
@@ -22,6 +23,10 @@ class _UserManagementTabState extends State<UserManagementTab> {
 
   late Future<List<UserModel>> _usersFuture;
   UserRole? _selectedRoleFilter;
+  String _selectedRoleLabel = 'All Users';
+  String _sortId = 'newest';
+  int _page = 1;
+  int _pageSize = 10;
 
   @override
   void initState() {
@@ -123,6 +128,31 @@ class _UserManagementTabState extends State<UserManagementTab> {
 
   @override
   Widget build(BuildContext context) {
+    final sortOptions = [
+      KosMateSortOption<UserModel>(
+        id: 'newest',
+        label: 'Newest',
+        comparator: (a, b) => b.userId.compareTo(a.userId),
+      ),
+      KosMateSortOption<UserModel>(
+        id: 'name_asc',
+        label: 'Name (A–Z)',
+        comparator: (a, b) =>
+            a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+      ),
+      KosMateSortOption<UserModel>(
+        id: 'name_desc',
+        label: 'Name (Z–A)',
+        comparator: (a, b) =>
+            b.name.toLowerCase().compareTo(a.name.toLowerCase()),
+      ),
+      KosMateSortOption<UserModel>(
+        id: 'role',
+        label: 'Role',
+        comparator: (a, b) => a.role.name.compareTo(b.role.name),
+      ),
+    ];
+
     return Column(
       children: [
         Padding(
@@ -130,30 +160,23 @@ class _UserManagementTabState extends State<UserManagementTab> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Users Directory',
-                style: TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.foregroundColor,
+              const Expanded(
+                child: Text(
+                  'Users Directory',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.foregroundColor,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.person_add_outlined, size: 18),
-                label: const Text('Add User'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accentColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  elevation: 0,
-                ),
+              const SizedBox(width: 12),
+              KosMateHeaderActionButton(
+                icon: Icons.person_add_outlined,
+                label: 'Add User',
                 onPressed: _openAddUser,
               ),
             ],
@@ -162,72 +185,13 @@ class _UserManagementTabState extends State<UserManagementTab> {
 
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: TextField(
+          child: KosMateSearchField(
             controller: _searchController,
-            onChanged: (_) => _loadUsers(),
-            decoration: InputDecoration(
-              hintText: 'Search by name, email, or phone...',
-              hintStyle: const TextStyle(
-                color: AppTheme.textSubtle,
-                fontSize: 14,
-              ),
-              prefixIcon: const Icon(
-                Icons.search,
-                color: AppTheme.textMuted,
-                size: 20,
-              ),
-              suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(
-                        Icons.clear,
-                        size: 18,
-                        color: AppTheme.destructiveColor,
-                      ),
-                      onPressed: () {
-                        _searchController.clear();
-                        _loadUsers();
-                      },
-                    )
-                  : null,
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 10,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppTheme.borderMedium),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppTheme.borderMedium),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: AppTheme.accentColor,
-                  width: 1.5,
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            children: [
-              _buildFilterChip('All Users', null),
-              const SizedBox(width: 8),
-              _buildFilterChip('Tenants', UserRole.tenant),
-              const SizedBox(width: 8),
-              _buildFilterChip('Kos Owners', UserRole.owner),
-              const SizedBox(width: 8),
-              _buildFilterChip('Admins', UserRole.admin),
-            ],
+            hintText: 'Search by name, email, or phone...',
+            onChanged: (_) {
+              _page = 1;
+              _loadUsers();
+            },
           ),
         ),
         const SizedBox(height: 10),
@@ -241,205 +205,263 @@ class _UserManagementTabState extends State<UserManagementTab> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                final users = snapshot.data ?? [];
-                if (users.isEmpty) {
-                  return const KosMateEmptyState(
-                    icon: Icons.people_outline,
-                    title: 'No users found',
-                    subtitle: 'Try adjusting your search terms or filter.',
-                  );
-                }
+                final rawUsers = List<UserModel>.from(snapshot.data ?? []);
+                final selectedSort = sortOptions.firstWhere(
+                  (s) => s.id == _sortId,
+                  orElse: () => sortOptions.first,
+                );
+                rawUsers.sort(selectedSort.comparator);
+                final paged = paginateList(rawUsers, _page, _pageSize);
 
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 6,
-                  ),
-                  itemCount: users.length,
-                  itemBuilder: (context, idx) {
-                    final u = users[idx];
-                    return Card(
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: const BorderSide(color: AppTheme.borderLight),
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      margin: const EdgeInsets.only(bottom: 10),
-                      child: InkWell(
-                        onTap: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => AdminUserDetailScreen(user: u),
-                            ),
-                          );
-                          if (mounted) _loadUsers();
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: KosMateFilterSortBar<UserModel>(
+                        filterOptions: const [
+                          'All Users',
+                          'Tenants',
+                          'Owners',
+                          'Admins',
+                        ],
+                        selectedFilter: _selectedRoleLabel,
+                        onFilterChanged: (val) {
+                          setState(() {
+                            _selectedRoleLabel = val;
+                            _page = 1;
+                            if (val == 'Tenants') {
+                              _selectedRoleFilter = UserRole.tenant;
+                            } else if (val == 'Owners') {
+                              _selectedRoleFilter = UserRole.owner;
+                            } else if (val == 'Admins') {
+                              _selectedRoleFilter = UserRole.admin;
+                            } else {
+                              _selectedRoleFilter = null;
+                            }
+                            _loadUsers();
+                          });
                         },
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 22,
-                                backgroundColor: AppTheme.primaryColor
-                                    .withValues(alpha: 0.12),
-                                backgroundImage:
-                                    (u.avatarUrl != null &&
-                                        u.avatarUrl!.isNotEmpty)
-                                    ? NetworkImage(u.avatarUrl!)
-                                    : null,
-                                child:
-                                    (u.avatarUrl == null ||
-                                        u.avatarUrl!.isEmpty)
-                                    ? Text(
-                                        u.name.isNotEmpty
-                                            ? u.name[0].toUpperCase()
-                                            : 'U',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.primaryColor,
-                                        ),
-                                      )
-                                    : null,
+                        sortOptions: sortOptions,
+                        selectedSortId: _sortId,
+                        onSortChanged: (val) => setState(() {
+                          _sortId = val;
+                          _page = 1;
+                        }),
+                        totalCount: rawUsers.length,
+                        itemLabel: rawUsers.length == 1 ? 'user' : 'users',
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Expanded(
+                      child: rawUsers.isEmpty
+                          ? const KosMateEmptyState(
+                              icon: Icons.people_outline,
+                              title: 'No users found',
+                              subtitle:
+                                  'Try adjusting your search terms or filter.',
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 6,
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Flexible(
-                                          child: Text(
-                                            u.name,
-                                            style: const TextStyle(
-                                              fontFamily: 'Roboto',
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w600,
-                                              color: AppTheme.foregroundColor,
+                              itemCount: paged.pageItems.length,
+                              itemBuilder: (context, idx) {
+                                final u = paged.pageItems[idx];
+                                return Card(
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side: const BorderSide(
+                                      color: AppTheme.borderLight,
+                                    ),
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  child: InkWell(
+                                    onTap: () async {
+                                      await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => AdminUserDetailScreen(
+                                            user: u,
+                                            currentUser: widget.currentUser,
+                                          ),
+                                        ),
+                                      );
+                                      if (mounted) _loadUsers();
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Row(
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 22,
+                                            backgroundColor: AppTheme
+                                                .primaryColor
+                                                .withValues(alpha: 0.12),
+                                            backgroundImage:
+                                                (u.avatarUrl != null &&
+                                                    u.avatarUrl!.isNotEmpty)
+                                                ? NetworkImage(u.avatarUrl!)
+                                                : null,
+                                            child:
+                                                (u.avatarUrl == null ||
+                                                    u.avatarUrl!.isEmpty)
+                                                ? Text(
+                                                    u.name.isNotEmpty
+                                                        ? u.name[0]
+                                                              .toUpperCase()
+                                                        : 'U',
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color:
+                                                          AppTheme.primaryColor,
+                                                    ),
+                                                  )
+                                                : null,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Flexible(
+                                                      child: Text(
+                                                        u.name,
+                                                        style: const TextStyle(
+                                                          fontFamily: 'Roboto',
+                                                          fontSize: 15,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: AppTheme
+                                                              .foregroundColor,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    _buildRoleBadge(u.role),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 3),
+                                                Text(
+                                                  u.email,
+                                                  style: const TextStyle(
+                                                    fontSize: 13,
+                                                    color: AppTheme.textMuted,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                                if (u.phone.isNotEmpty) ...[
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    u.phone,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      color:
+                                                          AppTheme.textSubtle,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ],
                                             ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        _buildRoleBadge(u.role),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 3),
-                                    Text(
-                                      u.email,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        color: AppTheme.textMuted,
+                                          const Icon(
+                                            Icons.chevron_right,
+                                            color: AppTheme.textMuted,
+                                            size: 20,
+                                          ),
+                                          PopupMenuButton<String>(
+                                            icon: const Icon(
+                                              Icons.more_vert,
+                                              color: AppTheme.textMuted,
+                                            ),
+                                            onSelected: (action) {
+                                              if (action == 'edit') {
+                                                _openEditUser(u);
+                                              } else if (action == 'delete') {
+                                                _confirmDeleteUser(u);
+                                              }
+                                            },
+                                            itemBuilder: (ctx) => [
+                                              const PopupMenuItem(
+                                                value: 'edit',
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.edit_outlined,
+                                                      size: 18,
+                                                      color: AppTheme.textDark,
+                                                    ),
+                                                    SizedBox(width: 8),
+                                                    Text('Edit User / Role'),
+                                                  ],
+                                                ),
+                                              ),
+                                              const PopupMenuItem(
+                                                value: 'delete',
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.delete_outline,
+                                                      size: 18,
+                                                      color: AppTheme
+                                                          .destructiveColor,
+                                                    ),
+                                                    SizedBox(width: 8),
+                                                    Text(
+                                                      'Delete User',
+                                                      style: TextStyle(
+                                                        color: AppTheme
+                                                            .destructiveColor,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    if (u.phone.isNotEmpty) ...[
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        u.phone,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: AppTheme.textSubtle,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                              const Icon(
-                                Icons.chevron_right,
-                                color: AppTheme.textMuted,
-                                size: 20,
-                              ),
-                              PopupMenuButton<String>(
-                                icon: const Icon(
-                                  Icons.more_vert,
-                                  color: AppTheme.textMuted,
-                                ),
-                                onSelected: (action) {
-                                  if (action == 'edit') {
-                                    _openEditUser(u);
-                                  } else if (action == 'delete') {
-                                    _confirmDeleteUser(u);
-                                  }
-                                },
-                                itemBuilder: (ctx) => [
-                                  const PopupMenuItem(
-                                    value: 'edit',
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.edit_outlined,
-                                          size: 18,
-                                          color: AppTheme.textDark,
-                                        ),
-                                        SizedBox(width: 8),
-                                        Text('Edit User / Role'),
-                                      ],
                                     ),
                                   ),
-                                  const PopupMenuItem(
-                                    value: 'delete',
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.delete_outline,
-                                          size: 18,
-                                          color: AppTheme.destructiveColor,
-                                        ),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          'Delete User',
-                                          style: TextStyle(
-                                            color: AppTheme.destructiveColor,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+                                );
+                              },
+                            ),
+                    ),
+                    if (rawUsers.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                        child: KosMatePaginationBar(
+                          currentPage: paged.safePage,
+                          totalPages: paged.totalPages,
+                          totalItems: rawUsers.length,
+                          startIndex: paged.startIndex,
+                          endIndex: paged.endIndex,
+                          pageSize: _pageSize,
+                          onPageChanged: (p) => setState(() => _page = p),
+                          onPageSizeChanged: (s) => setState(() {
+                            _pageSize = s;
+                            _page = 1;
+                          }),
                         ),
                       ),
-                    );
-                  },
+                  ],
                 );
               },
             ),
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildFilterChip(String label, UserRole? role) {
-    final isSelected = _selectedRoleFilter == role;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      showCheckmark: false,
-      checkmarkColor: AppTheme.accentColor,
-      backgroundColor: Colors.white,
-      onSelected: (_) {
-        setState(() => _selectedRoleFilter = role);
-        _loadUsers();
-      },
-      selectedColor: AppTheme.accentColor.withValues(alpha: 0.15),
-      labelStyle: TextStyle(
-        fontFamily: 'Roboto',
-        fontSize: 13,
-        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-        color: isSelected ? AppTheme.accentColor : AppTheme.textDark,
-      ),
-      side: BorderSide(
-        color: isSelected ? AppTheme.accentColor : AppTheme.borderMedium,
-      ),
     );
   }
 

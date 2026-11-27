@@ -583,10 +583,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
+
+              _buildReadOnlyField(
+                label: 'Email Address',
+                value: widget.user.email,
+                icon: Icons.email_outlined,
+              ),
+              const SizedBox(height: 16),
+
+              _buildReadOnlyField(
+                label: 'Account Role',
+                value: widget.user.role.displayName,
+                icon: Icons.admin_panel_settings_outlined,
+              ),
               const SizedBox(height: 28),
 
               const Text(
-                'Account Details',
+                'Account Security',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 16,
@@ -604,22 +618,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-
-              _buildReadOnlyCard(
-                label: 'Email Address',
-                value: widget.user.email,
-                icon: Icons.email_outlined,
-                badge: 'Verified',
-              ),
-              const SizedBox(height: 12),
-
-              _buildReadOnlyCard(
-                label: 'Account Role',
-                value: widget.user.role.name.toUpperCase(),
-                icon: Icons.admin_panel_settings_outlined,
-                badge: 'Assigned',
-              ),
-              const SizedBox(height: 16),
 
               Material(
                 color: Colors.white,
@@ -879,66 +877,70 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Widget _buildReadOnlyCard({
+  Widget _buildReadOnlyField({
     required String label,
     required String value,
     required IconData icon,
-    required String badge,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppTheme.scaffoldBackground,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.borderLight),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: AppTheme.textSubtle, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 12,
-                    color: AppTheme.textSubtle,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textDark,
-                  ),
-                ),
-              ],
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: AppTheme.foregroundColor,
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppTheme.borderLight,
-              borderRadius: BorderRadius.circular(6),
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          initialValue: value,
+          readOnly: true,
+          style: const TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: AppTheme.textMuted,
+          ),
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, color: AppTheme.textSubtle, size: 20),
+            suffixIcon: const Icon(
+              Icons.lock_outline_rounded,
+              color: AppTheme.textSubtle,
+              size: 18,
             ),
-            child: Text(
-              badge,
-              style: const TextStyle(
-                fontFamily: 'Roboto',
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textDark,
+            filled: true,
+            fillColor: AppTheme.surfaceLight,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(
+                color: AppTheme.borderLight,
+                width: 1.2,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(
+                color: AppTheme.borderLight,
+                width: 1.2,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(
+                color: AppTheme.borderMedium,
+                width: 1.2,
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -5,9 +5,14 @@ import '../core/errors/app_exception.dart';
 import '../models/user_model.dart';
 
 class AuthService {
-  final SupabaseClient _client = supabase;
+  final SupabaseClient _client;
+
+  AuthService([SupabaseClient? client])
+    : _client = client ?? Supabase.instance.client;
 
   User? get currentUser => _client.auth.currentUser;
+
+  bool get hasActiveSession => _client.auth.currentSession != null;
 
   Stream<AuthState> get authStateChanges => _client.auth.onAuthStateChange;
 
@@ -25,13 +30,13 @@ class AuthService {
         data: {'name': name.trim(), 'phone': phone.trim(), 'role': role.name},
       );
 
-      // Fallback: If trigger didn't insert the profile, ensure it exists
+      // Ensure profile row exists if DB trigger did not create it.
       final authUser = response.user;
       if (authUser != null) {
         try {
           final existing = await _client
               .from(SupabaseConstants.usersTable)
-              .select()
+              .select('user_id')
               .eq('auth_id', authUser.id)
               .maybeSingle();
 
@@ -44,14 +49,12 @@ class AuthService {
               'role': role.name,
             });
           }
-        } catch (_) {
-          // Ignored if handled by DB trigger
-        }
+        } catch (_) {}
       }
 
       return response;
     } on AuthException catch (e) {
-      throw AuthAppException(e.message, code: e.statusCode);
+      throw AuthAppException(e.message, code: e.statusCode, cause: e);
     } catch (e) {
       throw AuthAppException('Sign up failed. Please try again.', cause: e);
     }
@@ -67,7 +70,7 @@ class AuthService {
         password: password,
       );
     } on AuthException catch (e) {
-      throw AuthAppException(e.message, code: e.statusCode);
+      throw AuthAppException(e.message, code: e.statusCode, cause: e);
     } catch (e) {
       throw AuthAppException('Sign in failed. Please try again.', cause: e);
     }
@@ -77,7 +80,7 @@ class AuthService {
     try {
       await _client.auth.signOut();
     } on AuthException catch (e) {
-      throw AuthAppException(e.message, code: e.statusCode);
+      throw AuthAppException(e.message, code: e.statusCode, cause: e);
     } catch (e) {
       throw AuthAppException('Sign out failed.', cause: e);
     }
@@ -97,7 +100,13 @@ class AuthService {
       if (response == null) return null;
       return UserModel.fromJson(response);
     } on AuthException catch (e) {
-      throw AuthAppException(e.message, code: e.statusCode);
+      throw AuthAppException(e.message, code: e.statusCode, cause: e);
+    } on PostgrestException catch (e) {
+      throw ServiceException(
+        'Failed to load user profile.',
+        code: e.code,
+        cause: e,
+      );
     } catch (e) {
       throw ServiceException('Failed to load user profile.', cause: e);
     }
@@ -129,6 +138,12 @@ class AuthService {
           .single();
 
       return UserModel.fromJson(response);
+    } on PostgrestException catch (e) {
+      throw ServiceException(
+        'Failed to update profile.',
+        code: e.code,
+        cause: e,
+      );
     } catch (e) {
       throw ServiceException('Failed to update profile.', cause: e);
     }
@@ -138,7 +153,7 @@ class AuthService {
     try {
       await _client.auth.resetPasswordForEmail(email.trim());
     } on AuthException catch (e) {
-      throw AuthAppException(e.message, code: e.statusCode);
+      throw AuthAppException(e.message, code: e.statusCode, cause: e);
     } catch (e) {
       throw AuthAppException('Failed to send password reset email.', cause: e);
     }
@@ -150,7 +165,7 @@ class AuthService {
         UserAttributes(password: newPassword),
       );
     } on AuthException catch (e) {
-      throw AuthAppException(e.message, code: e.statusCode);
+      throw AuthAppException(e.message, code: e.statusCode, cause: e);
     } catch (e) {
       throw AuthAppException('Failed to update password.', cause: e);
     }
@@ -164,6 +179,14 @@ class AuthService {
           .eq('user_id', userId);
 
       await signOut();
+    } on AppException {
+      rethrow;
+    } on PostgrestException catch (e) {
+      throw ServiceException(
+        'Failed to delete account.',
+        code: e.code,
+        cause: e,
+      );
     } catch (e) {
       throw ServiceException('Failed to delete account.', cause: e);
     }

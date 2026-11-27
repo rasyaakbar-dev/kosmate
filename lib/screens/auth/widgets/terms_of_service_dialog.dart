@@ -48,10 +48,7 @@ class TermsOfServiceDialog extends StatelessWidget {
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(
-                      Icons.close,
-                      color: AppTheme.destructiveColor,
-                    ),
+                    icon: const Icon(Icons.close, color: AppTheme.textMuted),
                     onPressed: () => Navigator.pop(context, false),
                   ),
                 ],
@@ -86,7 +83,7 @@ class TermsOfServiceDialog extends StatelessWidget {
                       _buildSectionBody(
                         '• Users must provide accurate, current, and complete registration information including legal name, valid phone number, and email address.\n'
                         '• You are responsible for safeguarding your login credentials and for any activity under your account.\n'
-                        '• Kos owners must have verified rights to manage and rent the listed boarding houses.',
+                        '• Owners must have verified rights to manage and rent the listed boarding houses.',
                       ),
                       const SizedBox(height: 16),
 
@@ -112,7 +109,7 @@ class TermsOfServiceDialog extends StatelessWidget {
                       _buildSectionBody(
                         '• Renters agree to respect the designated boarding house rules, curfews, and common area regulations.\n'
                         '• Maintenance issues or disputes should be submitted promptly via the KosMate Complaint system.\n'
-                        '• Kos owners are required to review and respond to tenant complaints within a reasonable timeframe.',
+                        '• Owners are required to review and respond to tenant complaints within a reasonable timeframe.',
                       ),
                       const SizedBox(height: 16),
 

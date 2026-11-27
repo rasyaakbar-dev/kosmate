@@ -115,4 +115,32 @@ class BookingModel {
       room: room ?? this.room,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is BookingModel &&
+        other.bookingId == bookingId &&
+        other.userId == userId &&
+        other.roomId == roomId &&
+        other.requestDate == requestDate &&
+        other.status == status &&
+        other.notes == notes &&
+        other.createdAt == createdAt &&
+        other.user == user &&
+        other.room == room;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    bookingId,
+    userId,
+    roomId,
+    requestDate,
+    status,
+    notes,
+    createdAt,
+    user,
+    room,
+  );
 }

@@ -6,7 +6,11 @@ import '../core/constants/supabase_constants.dart';
 import '../core/errors/app_exception.dart';
 
 class StorageService {
-  final SupabaseClient _client = supabase;
+  final SupabaseClient _client;
+  static int _uploadCounter = 0;
+
+  StorageService([SupabaseClient? client])
+    : _client = client ?? Supabase.instance.client;
 
   Future<String> uploadBytes({
     required String bucketName,
@@ -99,18 +103,22 @@ class StorageService {
     return segments.skip(bucketIndex + 1).join('/');
   }
 
+  String _uniqueFileName(String prefix, String extension) {
+    _uploadCounter = (_uploadCounter + 1) % 100000;
+    final micros = DateTime.now().microsecondsSinceEpoch;
+    return '${prefix}_${micros}_$_uploadCounter.$extension';
+  }
+
   Future<String> uploadHouseImage(
     int? houseId,
     Uint8List bytes, {
     String extension = 'jpg',
-  }) async {
+  }) {
     final safeExtension = _imageExtension(extension);
     final prefix = houseId != null ? 'house_$houseId' : 'house_new';
-    final fileName =
-        '${prefix}_${DateTime.now().millisecondsSinceEpoch}.$safeExtension';
     return uploadBytes(
       bucketName: SupabaseConstants.roomImagesBucket,
-      path: fileName,
+      path: _uniqueFileName(prefix, safeExtension),
       bytes: bytes,
       mimeType: _imageMimeType(safeExtension),
     );
@@ -120,14 +128,12 @@ class StorageService {
     int? roomId,
     Uint8List bytes, {
     String extension = 'jpg',
-  }) async {
+  }) {
     final safeExtension = _imageExtension(extension);
     final prefix = roomId != null ? 'room_$roomId' : 'room_new';
-    final fileName =
-        '${prefix}_${DateTime.now().millisecondsSinceEpoch}.$safeExtension';
     return uploadBytes(
       bucketName: SupabaseConstants.roomImagesBucket,
-      path: fileName,
+      path: _uniqueFileName(prefix, safeExtension),
       bytes: bytes,
       mimeType: _imageMimeType(safeExtension),
     );
@@ -137,13 +143,11 @@ class StorageService {
     int paymentId,
     Uint8List bytes,
     String extension,
-  ) async {
+  ) {
     final safeExtension = _imageExtension(extension);
-    final fileName =
-        'payment_${paymentId}_${DateTime.now().millisecondsSinceEpoch}.$safeExtension';
     return uploadPrivateBytes(
       bucketName: SupabaseConstants.paymentReceiptsBucket,
-      path: fileName,
+      path: _uniqueFileName('payment_$paymentId', safeExtension),
       bytes: bytes,
       mimeType: _imageMimeType(safeExtension),
     );
@@ -153,13 +157,11 @@ class StorageService {
     int userId,
     Uint8List bytes,
     String extension,
-  ) async {
+  ) {
     final safeExtension = _imageExtension(extension);
-    final fileName =
-        'complaint_${userId}_${DateTime.now().millisecondsSinceEpoch}.$safeExtension';
     return uploadPrivateBytes(
       bucketName: SupabaseConstants.complaintAttachmentsBucket,
-      path: fileName,
+      path: _uniqueFileName('complaint_$userId', safeExtension),
       bytes: bytes,
       mimeType: _imageMimeType(safeExtension),
     );
@@ -183,8 +185,7 @@ class StorageService {
     String extension = 'jpg',
   }) async {
     final safeExtension = _imageExtension(extension);
-    final fileName =
-        'user_${userId}_${DateTime.now().millisecondsSinceEpoch}.$safeExtension';
+    final fileName = _uniqueFileName('user_$userId', safeExtension);
     try {
       final url = await uploadBytes(
         bucketName: SupabaseConstants.avatarsBucket,
@@ -193,8 +194,8 @@ class StorageService {
         mimeType: _imageMimeType(safeExtension),
       );
       return '$url?t=${DateTime.now().millisecondsSinceEpoch}';
-    } catch (e) {
-      // If avatars bucket fails (e.g., not configured), try room-images fallback
+    } catch (_) {
+      // Fallback to room-images bucket if avatars bucket is unavailable.
       try {
         final fallbackUrl = await uploadBytes(
           bucketName: SupabaseConstants.roomImagesBucket,
@@ -204,7 +205,6 @@ class StorageService {
         );
         return '$fallbackUrl?t=${DateTime.now().millisecondsSinceEpoch}';
       } catch (_) {
-        // Re-throw original exception so user gets the accurate bucket error
         rethrow;
       }
     }
@@ -215,24 +215,24 @@ class StorageService {
     String? avatarUrl,
     String extension = 'jpg',
   }) async {
-    final avatarPaths = <String>{'user_$userId.$extension'};
-    final roomImagePaths = <String>{'avatars/user_$userId.$extension'};
     final storedImage = avatarUrl == null ? null : _avatarObject(avatarUrl);
     if (storedImage != null) {
-      if (storedImage.$1 == SupabaseConstants.avatarsBucket) {
-        avatarPaths.add(storedImage.$2);
-      } else {
-        roomImagePaths.add(storedImage.$2);
+      try {
+        await _client.storage.from(storedImage.$1).remove([storedImage.$2]);
+      } catch (e) {
+        throw ServiceException('Failed to remove profile image.', cause: e);
       }
+      return;
     }
 
+    // Legacy non-timestamped path cleanup if avatarUrl is unavailable.
     try {
-      await _client.storage
-          .from(SupabaseConstants.avatarsBucket)
-          .remove(avatarPaths.toList());
-      await _client.storage
-          .from(SupabaseConstants.roomImagesBucket)
-          .remove(roomImagePaths.toList());
+      await _client.storage.from(SupabaseConstants.avatarsBucket).remove([
+        'user_$userId.$extension',
+      ]);
+      await _client.storage.from(SupabaseConstants.roomImagesBucket).remove([
+        'avatars/user_$userId.$extension',
+      ]);
     } catch (e) {
       throw ServiceException('Failed to remove profile image.', cause: e);
     }

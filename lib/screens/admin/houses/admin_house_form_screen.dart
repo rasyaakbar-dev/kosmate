@@ -1,6 +1,8 @@
-import 'package:flutter/material.dart';
+import 'dart:typed_data';
 
-import '../../../core/constants/supabase_constants.dart';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
@@ -21,11 +23,16 @@ class AdminHouseFormScreen extends StatefulWidget {
 class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _houseService = sl.house;
+  final _storageService = sl.storage;
+  final _imagePicker = ImagePicker();
 
   late final TextEditingController _nameController;
   late final TextEditingController _addressController;
   late final TextEditingController _descriptionController;
-  late final TextEditingController _thumbnailUrlController;
+
+  Uint8List? _selectedImageBytes;
+  String _selectedImageExtension = 'jpg';
+  String? _currentThumbnailUrl;
 
   int? _selectedOwnerId;
   List<UserModel> _owners = [];
@@ -39,9 +46,7 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
     _nameController = TextEditingController(text: h?.houseName ?? '');
     _addressController = TextEditingController(text: h?.houseAddress ?? '');
     _descriptionController = TextEditingController(text: h?.description ?? '');
-    _thumbnailUrlController = TextEditingController(
-      text: h?.thumbnailUrl ?? '',
-    );
+    _currentThumbnailUrl = h?.thumbnailUrl;
     _selectedOwnerId = h?.ownerId;
 
     _loadOwners();
@@ -52,20 +57,112 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
     _nameController.dispose();
     _addressController.dispose();
     _descriptionController.dispose();
-    _thumbnailUrlController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picked = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 80,
+      );
+      if (picked != null) {
+        final bytes = await picked.readAsBytes();
+        setState(() {
+          _selectedImageBytes = bytes;
+          _selectedImageExtension = picked.name.split('.').last;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to pick image: $e'),
+            backgroundColor: AppTheme.destructiveColor,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showImageSourceModal() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Text(
+                'Upload House Photo',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.foregroundColor,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.photo_camera_outlined,
+                color: AppTheme.primaryColor,
+              ),
+              title: const Text('Take a photo'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.photo_library_outlined,
+                color: AppTheme.primaryColor,
+              ),
+              title: const Text('Choose from gallery'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            if (_selectedImageBytes != null ||
+                (_currentThumbnailUrl != null &&
+                    _currentThumbnailUrl!.isNotEmpty))
+              ListTile(
+                leading: const Icon(
+                  Icons.delete_outline,
+                  color: AppTheme.destructiveColor,
+                ),
+                title: const Text(
+                  'Remove photo',
+                  style: TextStyle(color: AppTheme.destructiveColor),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  setState(() {
+                    _selectedImageBytes = null;
+                    _currentThumbnailUrl = null;
+                  });
+                },
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _loadOwners() async {
     try {
-      final res = await supabase
-          .from(SupabaseConstants.usersTable)
-          .select()
-          .eq('role', 'owner')
-          .order('name');
-      final owners = (res as List)
-          .map((j) => UserModel.fromJson(j as Map<String, dynamic>))
-          .toList();
+      final owners = await sl.user.getAllUsers(roleFilter: UserRole.owner);
+      owners.sort(
+        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+      );
 
       if (mounted) {
         setState(() {
@@ -94,14 +191,22 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
     final messenger = ScaffoldMessenger.of(context);
 
     try {
-      final thumb = _thumbnailUrlController.text.trim();
+      String? thumb = _currentThumbnailUrl;
+      if (_selectedImageBytes != null) {
+        thumb = await _storageService.uploadHouseImage(
+          widget.house?.houseId,
+          _selectedImageBytes!,
+          extension: _selectedImageExtension,
+        );
+      }
+
       if (widget.isEditing) {
         final updated = widget.house!.copyWith(
           houseName: _nameController.text.trim(),
           ownerId: _selectedOwnerId!,
           houseAddress: _addressController.text.trim(),
           description: _descriptionController.text.trim(),
-          thumbnailUrl: thumb.isNotEmpty ? thumb : null,
+          thumbnailUrl: thumb != null && thumb.isNotEmpty ? thumb : null,
         );
         await _houseService.updateHouse(updated);
         messenger.showSnackBar(
@@ -117,7 +222,7 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
           houseName: _nameController.text.trim(),
           houseAddress: _addressController.text.trim(),
           description: _descriptionController.text.trim(),
-          thumbnailUrl: thumb.isNotEmpty ? thumb : null,
+          thumbnailUrl: thumb != null && thumb.isNotEmpty ? thumb : null,
           createdAt: DateTime.now(),
         );
         await _houseService.createHouse(newHouse);
@@ -402,67 +507,73 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Thumbnail URL
                     const Text(
-                      'Thumbnail URL (Photo Link)',
+                      'House Photo (Optional)',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.textDark,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    TextFormField(
-                      controller: _thumbnailUrlController,
-                      decoration: InputDecoration(
-                        hintText: 'https://...',
-                        prefixIcon: const Icon(
-                          Icons.image_outlined,
-                          color: AppTheme.textMuted,
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: _showImageSourceModal,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: double.infinity,
+                        height: 150,
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceLight,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppTheme.borderMedium),
                         ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppTheme.borderMedium,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppTheme.borderMedium,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                      onChanged: (_) => setState(() {}),
-                    ),
-
-                    if (_thumbnailUrlController.text.trim().isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(
-                          _thumbnailUrlController.text.trim(),
-                          height: 120,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Container(
-                            height: 60,
-                            color: AppTheme.surfaceLight,
-                            child: const Center(
-                              child: Text(
-                                'Invalid image URL preview',
-                                style: TextStyle(
-                                  color: AppTheme.textMuted,
-                                  fontSize: 12,
+                        child: _selectedImageBytes != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(11),
+                                child: Image.memory(
+                                  _selectedImageBytes!,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
                                 ),
+                              )
+                            : (_currentThumbnailUrl != null &&
+                                  _currentThumbnailUrl!.trim().isNotEmpty)
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(11),
+                                child: Image.network(
+                                  _currentThumbnailUrl!.trim(),
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  errorBuilder: (_, _, _) => const Center(
+                                    child: Icon(
+                                      Icons.broken_image_outlined,
+                                      size: 36,
+                                      color: AppTheme.textMuted,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : const Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.add_a_photo_outlined,
+                                    size: 32,
+                                    color: AppTheme.accentColor,
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Tap to upload house photo',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppTheme.textMuted,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ),
-                        ),
                       ),
-                    ],
+                    ),
 
                     const SizedBox(height: 28),
 

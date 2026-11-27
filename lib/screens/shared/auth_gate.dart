@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../core/constants/supabase_constants.dart';
 import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/user_model.dart';
@@ -35,13 +34,13 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   void _initAuthListener() {
-    final session = supabase.auth.currentSession;
-    if (session == null) {
+    final currentUser = _authService.currentUser;
+    if (!_authService.hasActiveSession || currentUser == null) {
       _cachedUser = null;
       _currentUserId = null;
       _isLoading = false;
     } else {
-      _currentUserId = session.user.id;
+      _currentUserId = currentUser.id;
       _loadUserProfile();
     }
 
@@ -94,9 +93,7 @@ class _AuthGateState extends State<AuthGate> {
 
   @override
   Widget build(BuildContext context) {
-    final session = supabase.auth.currentSession;
-
-    if (session == null) {
+    if (!_authService.hasActiveSession) {
       return const LoginScreen();
     }
 

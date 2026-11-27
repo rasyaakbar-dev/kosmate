@@ -1,5 +1,3 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 class SupabaseConstants {
   static const String supabaseUrl = 'https://mojbiwkvxanpkpzvamnh.supabase.co';
   static const String supabaseAnonKey =
@@ -17,5 +15,3 @@ class SupabaseConstants {
   static const String paymentReceiptsBucket = 'payment-receipts';
   static const String complaintAttachmentsBucket = 'complaint-attachments';
 }
-
-final supabase = Supabase.instance.client;

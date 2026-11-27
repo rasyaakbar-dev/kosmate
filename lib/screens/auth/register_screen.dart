@@ -439,8 +439,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 children: [
                                   Text(
                                     _selectedRole == UserRole.owner
-                                        ? 'Kos Owner'
-                                        : 'Renter / Tenant',
+                                        ? 'Owner'
+                                        : 'Tenant',
                                     style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,

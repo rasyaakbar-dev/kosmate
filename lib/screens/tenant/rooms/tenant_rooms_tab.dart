@@ -4,6 +4,7 @@ import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/kosmate_components.dart';
+import '../../../core/widgets/list_controls.dart';
 import '../../../core/widgets/owner_information_card.dart';
 import '../../../core/widgets/room_facilities_card.dart';
 import '../../../models/booking_model.dart';
@@ -27,20 +28,38 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
   final _houseService = sl.house;
   final _complaintService = sl.complaint;
 
+  final _complaintSearchController = TextEditingController();
+  final _houseSearchController = TextEditingController();
+
   bool _isLoading = true;
   BookingModel? _activeBooking;
   BookingModel? _pendingBooking;
   List<ComplaintModel> _complaints = [];
-  int _complaintFilter = 0; // 0 = All, 1 = Resolved
+  String _complaintFilter = 'All';
+  String _complaintSearchQuery = '';
+  String _complaintSortId = 'newest';
+  int _complaintPage = 1;
+  int _complaintPageSize = 5;
 
   // Houses for when tenant has no active room
   List<HouseModel> _houses = [];
   String _houseSearchQuery = '';
+  String _houseFilter = 'All';
+  String _houseSortId = 'name_asc';
+  int _housePage = 1;
+  int _housePageSize = 10;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    _complaintSearchController.dispose();
+    _houseSearchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -186,7 +205,6 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
         await _bookingService.updateBookingStatus(
           bookingId: booking.bookingId,
           status: BookingStatus.cancelled,
-          roomId: booking.roomId,
         );
         messenger.showSnackBar(
           const SnackBar(content: Text('Booking request withdrawn.')),
@@ -221,10 +239,61 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
     final house = room.house;
     final requestId = 'KM-RR-${booking.bookingId.toString().padLeft(4, '0')}';
 
+    final complaintSortOptions = [
+      KosMateSortOption<ComplaintModel>(
+        id: 'newest',
+        label: 'Newest',
+        comparator: (a, b) => b.date.compareTo(a.date),
+      ),
+      KosMateSortOption<ComplaintModel>(
+        id: 'oldest',
+        label: 'Oldest',
+        comparator: (a, b) => a.date.compareTo(b.date),
+      ),
+      KosMateSortOption<ComplaintModel>(
+        id: 'priority',
+        label: 'Priority (High–Low)',
+        comparator: (a, b) => b.priority.index.compareTo(a.priority.index),
+      ),
+    ];
+
     final filteredComplaints = _complaints.where((c) {
-      if (_complaintFilter == 1) return c.status == ComplaintStatus.resolved;
+      if (_complaintFilter == 'Open' && c.status != ComplaintStatus.pending) {
+        return false;
+      }
+      if (_complaintFilter == 'In Progress' &&
+          c.status != ComplaintStatus.inProgress) {
+        return false;
+      }
+      if (_complaintFilter == 'Resolved' &&
+          c.status != ComplaintStatus.resolved) {
+        return false;
+      }
+      if (_complaintFilter == 'Rejected' &&
+          c.status != ComplaintStatus.rejected) {
+        return false;
+      }
+
+      if (_complaintSearchQuery.isNotEmpty) {
+        final q = _complaintSearchQuery.toLowerCase();
+        return c.title.toLowerCase().contains(q) ||
+            c.description.toLowerCase().contains(q) ||
+            c.category.displayName.toLowerCase().contains(q);
+      }
       return true;
     }).toList();
+
+    final selectedComplaintSort = complaintSortOptions.firstWhere(
+      (s) => s.id == _complaintSortId,
+      orElse: () => complaintSortOptions.first,
+    );
+    filteredComplaints.sort(selectedComplaintSort.comparator);
+
+    final pagedComplaints = paginateList(
+      filteredComplaints,
+      _complaintPage,
+      _complaintPageSize,
+    );
 
     return RefreshIndicator(
       onRefresh: _loadData,
@@ -395,22 +464,24 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Maintenance & Complaints',
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.foregroundColor,
+                const Expanded(
+                  child: Text(
+                    'Maintenance & Complaints',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.foregroundColor,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                TextButton.icon(
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add ticket'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppTheme.accentColor,
-                    padding: EdgeInsets.zero,
-                  ),
+                const SizedBox(width: 8),
+                KosMateHeaderActionButton(
+                  icon: Icons.add,
+                  label: 'Add ticket',
+                  isTextButton: true,
                   onPressed: () {
                     TenantAddComplaintDialog.show(
                       context,
@@ -424,62 +495,39 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
             ),
             const SizedBox(height: 10),
 
-            Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    onTap: () => setState(() => _complaintFilter = 0),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: _complaintFilter == 0
-                            ? AppTheme.accentColor
-                            : AppTheme.surfaceLight,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'All complaints',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: _complaintFilter == 0
-                              ? Colors.white
-                              : AppTheme.textMuted,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: InkWell(
-                    onTap: () => setState(() => _complaintFilter = 1),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: _complaintFilter == 1
-                            ? AppTheme.accentColor
-                            : AppTheme.surfaceLight,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Resolved',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: _complaintFilter == 1
-                              ? Colors.white
-                              : AppTheme.textMuted,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+            KosMateSearchField(
+              controller: _complaintSearchController,
+              hintText: 'Search complaints by title or category...',
+              onChanged: (val) => setState(() {
+                _complaintSearchQuery = val;
+                _complaintPage = 1;
+              }),
+            ),
+            const SizedBox(height: 10),
+
+            KosMateFilterSortBar<ComplaintModel>(
+              filterOptions: const [
+                'All',
+                'Open',
+                'In Progress',
+                'Resolved',
+                'Rejected',
               ],
+              selectedFilter: _complaintFilter,
+              onFilterChanged: (val) => setState(() {
+                _complaintFilter = val;
+                _complaintPage = 1;
+              }),
+              sortOptions: complaintSortOptions,
+              selectedSortId: _complaintSortId,
+              onSortChanged: (val) => setState(() {
+                _complaintSortId = val;
+                _complaintPage = 1;
+              }),
+              totalCount: filteredComplaints.length,
+              itemLabel: filteredComplaints.length == 1
+                  ? 'complaint'
+                  : 'complaints',
             ),
             const SizedBox(height: 12),
 
@@ -493,18 +541,18 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
                 ),
                 alignment: Alignment.center,
                 child: const Text(
-                  'No complaints registered for this room.',
+                  'No complaints match your filter.',
                   style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
                 ),
               )
-            else
+            else ...[
               ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: filteredComplaints.length,
+                itemCount: pagedComplaints.pageItems.length,
                 separatorBuilder: (_, _) => const SizedBox(height: 8),
                 itemBuilder: (context, i) {
-                  final c = filteredComplaints[i];
+                  final c = pagedComplaints.pageItems[i];
                   return Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -571,6 +619,20 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
                   );
                 },
               ),
+              KosMatePaginationBar(
+                currentPage: pagedComplaints.safePage,
+                totalPages: pagedComplaints.totalPages,
+                totalItems: filteredComplaints.length,
+                startIndex: pagedComplaints.startIndex,
+                endIndex: pagedComplaints.endIndex,
+                pageSize: _complaintPageSize,
+                onPageChanged: (p) => setState(() => _complaintPage = p),
+                onPageSizeChanged: (s) => setState(() {
+                  _complaintPageSize = s;
+                  _complaintPage = 1;
+                }),
+              ),
+            ],
             const SizedBox(height: 36),
 
             Center(
@@ -627,12 +689,18 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
           label,
           style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
         ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.foregroundColor,
+        const SizedBox(width: 12),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.foregroundColor,
+            ),
           ),
         ),
       ],
@@ -643,266 +711,321 @@ class _TenantRoomsTabState extends State<TenantRoomsTab> {
   // 2. SEARCH & PICK HOUSE VIEW (WHEN USER HAS NO ROOM)
   // ===========================================================================
   Widget _buildSearchAndPickHouseView() {
+    final houseSortOptions = [
+      KosMateSortOption<HouseModel>(
+        id: 'name_asc',
+        label: 'Name (A–Z)',
+        comparator: (a, b) =>
+            a.houseName.toLowerCase().compareTo(b.houseName.toLowerCase()),
+      ),
+      KosMateSortOption<HouseModel>(
+        id: 'name_desc',
+        label: 'Name (Z–A)',
+        comparator: (a, b) =>
+            b.houseName.toLowerCase().compareTo(a.houseName.toLowerCase()),
+      ),
+      KosMateSortOption<HouseModel>(
+        id: 'newest',
+        label: 'Newest',
+        comparator: (a, b) => b.houseId.compareTo(a.houseId),
+      ),
+    ];
+
     final filteredHouses = _houses.where((h) {
+      if (_houseFilter == 'With Description' &&
+          (h.description == null || h.description!.trim().isEmpty)) {
+        return false;
+      }
+      if (_houseSearchQuery.isEmpty) return true;
       final q = _houseSearchQuery.toLowerCase();
       return h.houseName.toLowerCase().contains(q) ||
           h.houseAddress.toLowerCase().contains(q);
     }).toList();
 
+    final selectedHouseSort = houseSortOptions.firstWhere(
+      (s) => s.id == _houseSortId,
+      orElse: () => houseSortOptions.first,
+    );
+    filteredHouses.sort(selectedHouseSort.comparator);
+
+    final pagedHouses = paginateList(
+      filteredHouses,
+      _housePage,
+      _housePageSize,
+    );
+
     return RefreshIndicator(
       onRefresh: _loadData,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (_pendingBooking != null) ...[
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppTheme.warningLight,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppTheme.warningColor.withValues(alpha: 0.4),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.pending_actions_outlined,
-                      color: AppTheme.warningColor,
-                      size: 28,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_pendingBooking != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppTheme.warningLight,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppTheme.warningColor.withValues(alpha: 0.4),
+                        ),
+                      ),
+                      child: Row(
                         children: [
-                          const Text(
-                            'Booking Request Pending',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                              color: AppTheme.warningColor,
+                          const Icon(
+                            Icons.pending_actions_outlined,
+                            color: AppTheme.warningColor,
+                            size: 28,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Booking Request Pending',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
+                                    color: AppTheme.warningColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Room ${_pendingBooking!.room?.roomNumber ?? ""} • ${_pendingBooking!.room?.house?.houseName ?? "Boarding House"}\n'
+                                  'The owner is reviewing your request.',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.textDark,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Room ${_pendingBooking!.room?.roomNumber ?? ""} • ${_pendingBooking!.room?.house?.houseName ?? "Boarding House"}\n'
-                            'The owner is reviewing your request.',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.textDark,
+                          TextButton(
+                            onPressed: () =>
+                                _handleCancelPendingRequest(_pendingBooking!),
+                            child: const Text(
+                              'Withdraw',
+                              style: TextStyle(
+                                color: AppTheme.destructiveColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    TextButton(
-                      onPressed: () =>
-                          _handleCancelPendingRequest(_pendingBooking!),
-                      child: const Text(
-                        'Withdraw',
-                        style: TextStyle(
-                          color: AppTheme.destructiveColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+                    const SizedBox(height: 16),
                   ],
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
 
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Search boarding houses by name or address...',
-                hintStyle: const TextStyle(
-                  fontSize: 13,
-                  color: AppTheme.textSubtle,
-                ),
-                prefixIcon: const Icon(
-                  Icons.search_rounded,
-                  color: AppTheme.textMuted,
-                ),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppTheme.borderLight),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppTheme.borderLight),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: AppTheme.accentColor,
-                    width: 1.5,
+                  KosMateSearchField(
+                    controller: _houseSearchController,
+                    hintText: 'Search boarding houses by name or address...',
+                    onChanged: (val) => setState(() {
+                      _houseSearchQuery = val.trim();
+                      _housePage = 1;
+                    }),
                   ),
-                ),
-              ),
-              onChanged: (val) =>
-                  setState(() => _houseSearchQuery = val.trim()),
-            ),
-            const SizedBox(height: 18),
+                  const SizedBox(height: 10),
 
-            const Text(
-              'Boarding Houses',
-              style: TextStyle(
-                fontFamily: 'Roboto',
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.foregroundColor,
-              ),
-            ),
-            const SizedBox(height: 10),
+                  KosMateFilterSortBar<HouseModel>(
+                    filterOptions: const ['All', 'With Description'],
+                    selectedFilter: _houseFilter,
+                    onFilterChanged: (val) => setState(() {
+                      _houseFilter = val;
+                      _housePage = 1;
+                    }),
+                    sortOptions: houseSortOptions,
+                    selectedSortId: _houseSortId,
+                    onSortChanged: (val) => setState(() {
+                      _houseSortId = val;
+                      _housePage = 1;
+                    }),
+                    totalCount: filteredHouses.length,
+                    itemLabel: filteredHouses.length == 1 ? 'house' : 'houses',
+                  ),
+                  const SizedBox(height: 14),
 
-            if (filteredHouses.isEmpty)
-              Container(
-                padding: const EdgeInsets.all(32),
-                alignment: Alignment.center,
-                child: const Column(
-                  children: [
-                    Icon(
-                      Icons.home_work_outlined,
-                      size: 48,
-                      color: AppTheme.borderMedium,
+                  const Text(
+                    'Boarding Houses',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.foregroundColor,
                     ),
-                    SizedBox(height: 8),
-                    Text(
-                      'No boarding houses match your search.',
-                      style: TextStyle(color: AppTheme.textMuted),
-                    ),
-                  ],
-                ),
-              )
-            else
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: filteredHouses.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final house = filteredHouses[index];
-                  return Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      side: const BorderSide(color: AppTheme.borderLight),
-                    ),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(14),
-                      onTap: () async {
-                        final booked = await Navigator.push<bool>(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => HouseRoomsPickerScreen(
-                              house: house,
-                              user: widget.user,
-                            ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  if (filteredHouses.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(32),
+                      alignment: Alignment.center,
+                      child: const Column(
+                        children: [
+                          Icon(
+                            Icons.home_work_outlined,
+                            size: 48,
+                            color: AppTheme.borderMedium,
                           ),
-                        );
-                        if (booked == true) _loadData();
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Container(
-                                width: 64,
-                                height: 64,
-                                color: AppTheme.borderLight,
-                                child:
-                                    house.thumbnailUrl != null &&
-                                        house.thumbnailUrl!.trim().isNotEmpty
-                                    ? Image.network(
-                                        house.thumbnailUrl!.trim(),
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, _, _) => const Icon(
-                                          Icons.home_work_outlined,
-                                          color: AppTheme.textSubtle,
-                                        ),
-                                      )
-                                    : const Icon(
-                                        Icons.home_work_outlined,
-                                        color: AppTheme.textSubtle,
-                                      ),
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
+                          SizedBox(height: 8),
+                          Text(
+                            'No boarding houses match your search.',
+                            style: TextStyle(color: AppTheme.textMuted),
+                          ),
+                        ],
+                      ),
+                    )
+                  else ...[
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: pagedHouses.pageItems.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final house = pagedHouses.pageItems[index];
+                        return Card(
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            side: const BorderSide(color: AppTheme.borderLight),
+                          ),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(14),
+                            onTap: () async {
+                              final booked = await Navigator.push<bool>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => HouseRoomsPickerScreen(
+                                    house: house,
+                                    user: widget.user,
+                                  ),
+                                ),
+                              );
+                              if (booked == true) _loadData();
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(14),
+                              child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    house.houseName,
-                                    style: const TextStyle(
-                                      fontFamily: 'Roboto',
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppTheme.foregroundColor,
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Container(
+                                      width: 64,
+                                      height: 64,
+                                      color: AppTheme.borderLight,
+                                      child:
+                                          house.thumbnailUrl != null &&
+                                              house.thumbnailUrl!
+                                                  .trim()
+                                                  .isNotEmpty
+                                          ? Image.network(
+                                              house.thumbnailUrl!.trim(),
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, _, _) =>
+                                                  const Icon(
+                                                    Icons.home_work_outlined,
+                                                    color: AppTheme.textSubtle,
+                                                  ),
+                                            )
+                                          : const Icon(
+                                              Icons.home_work_outlined,
+                                              color: AppTheme.textSubtle,
+                                            ),
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    house.houseAddress,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: AppTheme.textMuted,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 6),
-                                  OwnerInformationCard(
-                                    owner: house.owner,
-                                    compact: true,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  const Row(
-                                    children: [
-                                      Text(
-                                        'View Available Rooms',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppTheme.accentColor,
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          house.houseName,
+                                          style: const TextStyle(
+                                            fontFamily: 'Roboto',
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppTheme.foregroundColor,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                      ),
-                                      SizedBox(width: 4),
-                                      Icon(
-                                        Icons.arrow_forward_rounded,
-                                        size: 14,
-                                        color: AppTheme.accentColor,
-                                      ),
-                                    ],
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          house.houseAddress,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            color: AppTheme.textMuted,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 6),
+                                        OwnerInformationCard(
+                                          owner: house.owner,
+                                          compact: true,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        const Row(
+                                          children: [
+                                            Text(
+                                              'View Available Rooms',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppTheme.accentColor,
+                                              ),
+                                            ),
+                                            SizedBox(width: 4),
+                                            Icon(
+                                              Icons.arrow_forward_rounded,
+                                              size: 14,
+                                              color: AppTheme.accentColor,
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
+                  ],
+                ],
               ),
-          ],
-        ),
+            ),
+          ),
+          if (filteredHouses.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              child: KosMatePaginationBar(
+                currentPage: pagedHouses.safePage,
+                totalPages: pagedHouses.totalPages,
+                totalItems: filteredHouses.length,
+                startIndex: pagedHouses.startIndex,
+                endIndex: pagedHouses.endIndex,
+                pageSize: _housePageSize,
+                onPageChanged: (p) => setState(() => _housePage = p),
+                onPageSizeChanged: (s) => setState(() {
+                  _housePageSize = s;
+                  _housePage = 1;
+                }),
+              ),
+            ),
+        ],
       ),
     );
   }

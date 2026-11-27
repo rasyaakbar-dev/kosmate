@@ -167,7 +167,6 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
                                                   bookingId: b.bookingId,
                                                   status:
                                                       BookingStatus.rejected,
-                                                  roomId: b.roomId,
                                                 );
                                             if (ctx.mounted) Navigator.pop(ctx);
                                             _loadDashboardData();
@@ -191,7 +190,6 @@ class _OwnerHomeTabState extends State<OwnerHomeTab> {
                                                   bookingId: b.bookingId,
                                                   status:
                                                       BookingStatus.approved,
-                                                  roomId: b.roomId,
                                                 );
 
                                             final roomPrice =

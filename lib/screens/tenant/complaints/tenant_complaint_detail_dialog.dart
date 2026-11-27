@@ -303,12 +303,18 @@ class TenantComplaintDetailDialog extends StatelessWidget {
           label,
           style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
         ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.textDark,
+        const SizedBox(width: 12),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textDark,
+            ),
           ),
         ),
       ],

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/supabase_constants.dart';
 import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
@@ -65,12 +64,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
 
   Future<void> _loadPrerequisites() async {
     try {
-      final usersRes = await supabase
-          .from(SupabaseConstants.usersTable)
-          .select();
-      final users = (usersRes as List)
-          .map((j) => UserModel.fromJson(j as Map<String, dynamic>))
-          .toList();
+      final users = await sl.user.getAllUsers();
 
       final rooms = await sl.room.getRooms();
 
@@ -109,7 +103,6 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
         await _bookingService.updateBookingStatus(
           bookingId: widget.existingBooking!.bookingId,
           status: _selectedStatus,
-          roomId: _selectedRoomId,
         );
         messenger.showSnackBar(
           const SnackBar(

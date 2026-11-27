@@ -4,6 +4,8 @@ import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
+import '../../../core/widgets/list_controls.dart';
+import '../../../core/widgets/payment_detail_sheet.dart';
 import '../../../models/payment_model.dart';
 import 'admin_payment_form_screen.dart';
 
@@ -22,6 +24,9 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> {
   bool _isLoading = true;
   String _searchQuery = '';
   String _selectedStatusFilter = 'All';
+  String _sortId = 'due_desc';
+  int _page = 1;
+  int _pageSize = 10;
 
   @override
   void initState() {
@@ -64,6 +69,36 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final sortOptions = [
+      KosMateSortOption<PaymentModel>(
+        id: 'due_desc',
+        label: 'Due Date (Newest)',
+        comparator: (a, b) => b.dueDate.compareTo(a.dueDate),
+      ),
+      KosMateSortOption<PaymentModel>(
+        id: 'due_asc',
+        label: 'Due Date (Oldest)',
+        comparator: (a, b) => a.dueDate.compareTo(b.dueDate),
+      ),
+      KosMateSortOption<PaymentModel>(
+        id: 'amount_desc',
+        label: 'Amount: High to Low',
+        comparator: (a, b) => b.amount.compareTo(a.amount),
+      ),
+      KosMateSortOption<PaymentModel>(
+        id: 'amount_asc',
+        label: 'Amount: Low to High',
+        comparator: (a, b) => a.amount.compareTo(b.amount),
+      ),
+      KosMateSortOption<PaymentModel>(
+        id: 'tenant_asc',
+        label: 'Tenant (A–Z)',
+        comparator: (a, b) => (a.user?.name ?? '').toLowerCase().compareTo(
+          (b.user?.name ?? '').toLowerCase(),
+        ),
+      ),
+    ];
+
     final filtered = _allPayments.where((p) {
       if (_selectedStatusFilter != 'All') {
         if (_selectedStatusFilter == 'Pending' &&
@@ -77,6 +112,10 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> {
             p.status != PaymentStatus.overdue) {
           return false;
         }
+        if (_selectedStatusFilter == 'Cancelled' &&
+            p.status != PaymentStatus.cancelled) {
+          return false;
+        }
       }
 
       if (_searchQuery.isNotEmpty) {
@@ -88,6 +127,14 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> {
       }
       return true;
     }).toList();
+
+    final selectedSort = sortOptions.firstWhere(
+      (s) => s.id == _sortId,
+      orElse: () => sortOptions.first,
+    );
+    filtered.sort(selectedSort.comparator);
+
+    final paged = paginateList(filtered, _page, _pageSize);
 
     final totalCount = _allPayments.length;
     final pendingCount = _allPayments
@@ -116,203 +163,174 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> {
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _loadPayments,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'All Invoices & Payments',
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.foregroundColor,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Admin overview of all tenant transactions across boarding houses',
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 13,
-                        color: AppTheme.textMuted,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    Container(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
+                        horizontal: 20,
+                        vertical: 16,
                       ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surfaceLight,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.borderLight),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildStatColumn(
-                            'Total',
-                            '$totalCount',
-                            AppTheme.primaryColor,
+                          const Text(
+                            'All Invoices & Payments',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.foregroundColor,
+                            ),
                           ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Admin overview of all tenant transactions across boarding houses',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 13,
+                              color: AppTheme.textMuted,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
                           Container(
-                            width: 1,
-                            height: 24,
-                            color: AppTheme.borderMedium,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.surfaceLight,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppTheme.borderLight),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _buildStatColumn(
+                                  'Total',
+                                  '$totalCount',
+                                  AppTheme.primaryColor,
+                                ),
+                                Container(
+                                  width: 1,
+                                  height: 24,
+                                  color: AppTheme.borderMedium,
+                                ),
+                                _buildStatColumn(
+                                  'Paid',
+                                  '$paidCount',
+                                  AppTheme.successColor,
+                                ),
+                                Container(
+                                  width: 1,
+                                  height: 24,
+                                  color: AppTheme.borderMedium,
+                                ),
+                                _buildStatColumn(
+                                  'Pending',
+                                  '$pendingCount',
+                                  AppTheme.warningColor,
+                                ),
+                                Container(
+                                  width: 1,
+                                  height: 24,
+                                  color: AppTheme.borderMedium,
+                                ),
+                                _buildStatColumn(
+                                  'Overdue',
+                                  '$overdueCount',
+                                  AppTheme.destructiveColor,
+                                ),
+                              ],
+                            ),
                           ),
-                          _buildStatColumn(
-                            'Paid',
-                            '$paidCount',
-                            AppTheme.successColor,
+                          const SizedBox(height: 14),
+
+                          KosMateSearchField(
+                            controller: _searchController,
+                            hintText: 'Search tenant, room, or house...',
+                            onChanged: (val) => setState(() {
+                              _searchQuery = val.trim();
+                              _page = 1;
+                            }),
                           ),
-                          Container(
-                            width: 1,
-                            height: 24,
-                            color: AppTheme.borderMedium,
+                          const SizedBox(height: 10),
+
+                          KosMateFilterSortBar<PaymentModel>(
+                            filterOptions: const [
+                              'All',
+                              'Pending',
+                              'Paid',
+                              'Overdue',
+                              'Cancelled',
+                            ],
+                            selectedFilter: _selectedStatusFilter,
+                            onFilterChanged: (f) => setState(() {
+                              _selectedStatusFilter = f;
+                              _page = 1;
+                            }),
+                            sortOptions: sortOptions,
+                            selectedSortId: _sortId,
+                            onSortChanged: (s) => setState(() {
+                              _sortId = s;
+                              _page = 1;
+                            }),
+                            totalCount: filtered.length,
+                            itemLabel: filtered.length == 1
+                                ? 'invoice'
+                                : 'invoices',
                           ),
-                          _buildStatColumn(
-                            'Pending',
-                            '$pendingCount',
-                            AppTheme.warningColor,
-                          ),
-                          Container(
-                            width: 1,
-                            height: 24,
-                            color: AppTheme.borderMedium,
-                          ),
-                          _buildStatColumn(
-                            'Overdue',
-                            '$overdueCount',
-                            AppTheme.destructiveColor,
-                          ),
+                          const SizedBox(height: 14),
+
+                          if (filtered.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 40),
+                              child: Center(
+                                child: Text(
+                                  'No payment records found.',
+                                  style: TextStyle(
+                                    color: AppTheme.textMuted,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            )
+                          else ...[
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: paged.pageItems.length,
+                              itemBuilder: (context, idx) {
+                                final p = paged.pageItems[idx];
+                                return _buildPaymentTile(p);
+                              },
+                            ),
+                          ],
+                          const SizedBox(height: 60),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 14),
-
-                    TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Search tenant, room, or house...',
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          color: AppTheme.textMuted,
-                          size: 20,
-                        ),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(
-                                  Icons.clear,
-                                  color: AppTheme.destructiveColor,
-                                  size: 18,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _searchController.clear();
-                                    _searchQuery = '';
-                                  });
-                                },
-                              )
-                            : null,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 10,
-                          horizontal: 14,
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppTheme.borderMedium,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppTheme.borderMedium,
-                          ),
-                        ),
-                      ),
-                      onChanged: (val) =>
-                          setState(() => _searchQuery = val.trim()),
-                    ),
-                    const SizedBox(height: 10),
-
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: ['All', 'Pending', 'Paid', 'Overdue'].map((
-                          f,
-                        ) {
-                          final isSelected = _selectedStatusFilter == f;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 6.0),
-                            child: ChoiceChip(
-                              label: Text(f),
-                              selected: isSelected,
-                              showCheckmark: false,
-                              checkmarkColor: AppTheme.accentColor,
-                              selectedColor: AppTheme.primaryLight,
-                              backgroundColor: Colors.white,
-                              side: BorderSide(
-                                color: isSelected
-                                    ? AppTheme.accentColor
-                                    : AppTheme.borderMedium,
-                              ),
-                              labelStyle: TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 12,
-                                fontWeight: isSelected
-                                    ? FontWeight.w700
-                                    : FontWeight.normal,
-                                color: isSelected
-                                    ? AppTheme.accentColor
-                                    : AppTheme.textDark,
-                              ),
-                              onSelected: (_) {
-                                setState(() => _selectedStatusFilter = f);
-                              },
-                            ),
-                          );
-                        }).toList(),
+                  ),
+                  if (filtered.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                      child: KosMatePaginationBar(
+                        currentPage: paged.safePage,
+                        totalPages: paged.totalPages,
+                        totalItems: filtered.length,
+                        startIndex: paged.startIndex,
+                        endIndex: paged.endIndex,
+                        pageSize: _pageSize,
+                        onPageChanged: (p) => setState(() => _page = p),
+                        onPageSizeChanged: (s) => setState(() {
+                          _pageSize = s;
+                          _page = 1;
+                        }),
                       ),
                     ),
-                    const SizedBox(height: 14),
-
-                    if (filtered.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 40),
-                        child: Center(
-                          child: Text(
-                            'No payment records found.',
-                            style: TextStyle(
-                              color: AppTheme.textMuted,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      )
-                    else
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: filtered.length,
-                        itemBuilder: (context, idx) {
-                          final p = filtered[idx];
-                          return _buildPaymentTile(p);
-                        },
-                      ),
-                    const SizedBox(height: 60),
-                  ],
-                ),
+                ],
               ),
             ),
     );
@@ -386,7 +404,11 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => _openPaymentForm(p),
+          onTap: () => PaymentDetailSheet.show(
+            context,
+            p,
+            onEdit: () => _openPaymentForm(p),
+          ),
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.all(12),

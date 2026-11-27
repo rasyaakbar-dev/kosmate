@@ -77,4 +77,30 @@ class HouseModel {
       owner: owner ?? this.owner,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is HouseModel &&
+        other.houseId == houseId &&
+        other.ownerId == ownerId &&
+        other.houseName == houseName &&
+        other.houseAddress == houseAddress &&
+        other.description == description &&
+        other.thumbnailUrl == thumbnailUrl &&
+        other.createdAt == createdAt &&
+        other.owner == owner;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    houseId,
+    ownerId,
+    houseName,
+    houseAddress,
+    description,
+    thumbnailUrl,
+    createdAt,
+    owner,
+  );
 }

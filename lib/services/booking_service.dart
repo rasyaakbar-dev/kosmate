@@ -3,11 +3,17 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/constants/supabase_constants.dart';
 import '../core/errors/app_exception.dart';
 import '../core/utils/formatters.dart';
-import '../core/utils/supabase_helpers.dart';
+import '../core/utils/json_helpers.dart';
 import '../models/booking_model.dart';
 
 class BookingService {
-  final SupabaseClient _client = supabase;
+  final SupabaseClient _client;
+
+  static const String _selectWithRelations =
+      '*, users!booking_user_id_fkey(*), room!booking_room_id_fkey(*, house!room_house_id_fkey(*))';
+
+  BookingService([SupabaseClient? client])
+    : _client = client ?? Supabase.instance.client;
 
   Future<BookingModel> createBooking({
     required int userId,
@@ -25,12 +31,16 @@ class BookingService {
             'status': BookingStatus.pending.name,
             'notes': notes,
           })
-          .select(
-            '*, users!booking_user_id_fkey(*), room!booking_room_id_fkey(*, house!room_house_id_fkey(*))',
-          )
+          .select(_selectWithRelations)
           .single();
 
       return BookingModel.fromJson(response);
+    } on PostgrestException catch (e) {
+      throw ServiceException(
+        'Failed to submit booking request.',
+        code: e.code,
+        cause: e,
+      );
     } catch (e) {
       throw ServiceException('Failed to submit booking request.', cause: e);
     }
@@ -47,6 +57,12 @@ class BookingService {
           .order('created_at', ascending: false);
 
       return (response as List).mapToModel(BookingModel.fromJson);
+    } on PostgrestException catch (e) {
+      throw ServiceException(
+        'Failed to load user bookings.',
+        code: e.code,
+        cause: e,
+      );
     } catch (e) {
       throw ServiceException('Failed to load user bookings.', cause: e);
     }
@@ -63,59 +79,119 @@ class BookingService {
           .order('created_at', ascending: false);
 
       return (response as List).mapToModel(BookingModel.fromJson);
+    } on PostgrestException catch (e) {
+      throw ServiceException(
+        'Failed to load bookings for owner.',
+        code: e.code,
+        cause: e,
+      );
     } catch (e) {
       throw ServiceException('Failed to load bookings for owner.', cause: e);
+    }
+  }
+
+  Future<List<BookingModel>> getBookingsByRoomIds(
+    List<int> roomIds, {
+    BookingStatus? status,
+  }) async {
+    if (roomIds.isEmpty) return const [];
+    try {
+      var query = _client
+          .from(SupabaseConstants.bookingTable)
+          .select('*, users!booking_user_id_fkey(*)')
+          .inFilter('room_id', roomIds);
+
+      if (status != null) {
+        query = query.eq('status', status.name);
+      }
+
+      final response = await query.order('created_at', ascending: false);
+      return (response as List).mapToModel(BookingModel.fromJson);
+    } on PostgrestException catch (e) {
+      throw ServiceException(
+        'Failed to load room bookings.',
+        code: e.code,
+        cause: e,
+      );
+    } catch (e) {
+      throw ServiceException('Failed to load room bookings.', cause: e);
+    }
+  }
+
+  Future<BookingModel?> getLatestApprovedBookingForRoom(int roomId) async {
+    try {
+      final response = await _client
+          .from(SupabaseConstants.bookingTable)
+          .select('*, users!booking_user_id_fkey(*)')
+          .eq('room_id', roomId)
+          .eq('status', BookingStatus.approved.name)
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      if (response == null) return null;
+      return BookingModel.fromJson(response);
+    } on PostgrestException catch (e) {
+      throw ServiceException(
+        'Failed to load room tenant booking.',
+        code: e.code,
+        cause: e,
+      );
+    } catch (e) {
+      throw ServiceException('Failed to load room tenant booking.', cause: e);
     }
   }
 
   Future<BookingModel> updateBookingStatus({
     required int bookingId,
     required BookingStatus status,
-    int? roomId,
   }) async {
     try {
+      // Room status transitions are handled by DB trigger `handle_booking_status_change`.
       final response = await _client
           .from(SupabaseConstants.bookingTable)
           .update({'status': status.name})
           .eq('booking_id', bookingId)
-          .select(
-            '*, users!booking_user_id_fkey(*), room!booking_room_id_fkey(*, house!room_house_id_fkey(*))',
-          )
+          .select(_selectWithRelations)
           .single();
 
-      // NOTE: Room status transitions (occupied/available) are handled by the
-      // DB trigger `handle_booking_status_change`. No redundant client-side
-      // update needed here to avoid double-write race conditions.
-
       return BookingModel.fromJson(response);
+    } on PostgrestException catch (e) {
+      throw ServiceException(
+        'Failed to update booking status.',
+        code: e.code,
+        cause: e,
+      );
     } catch (e) {
       throw ServiceException('Failed to update booking status.', cause: e);
     }
   }
 
-  /// Check whether a tenant booking is eligible for cancellation.
-  /// Rules:
-  /// 1. Cannot cancel during the 1st month of tenancy.
-  /// 2. Cannot cancel if near end of the month (7 to 14 days before month-end).
+  /// Checks whether a tenant booking is eligible for cancellation:
+  /// 1. Cannot cancel during the first 30 days of tenancy.
+  /// 2. Cannot cancel 7 to 14 days before month-end.
   ({bool allowed, String? reason}) checkCancellationEligibility(
     BookingModel booking,
   ) {
     final now = DateTime.now();
-    final tenancyStart = booking.requestDate;
+    final today = DateTime(now.year, now.month, now.day);
+    final tenancyStart = DateTime(
+      booking.requestDate.year,
+      booking.requestDate.month,
+      booking.requestDate.day,
+    );
 
-    // Rule 1: 1st month check
-    final daysSinceStart = now.difference(tenancyStart).inDays;
+    final daysSinceStart = today.difference(tenancyStart).inDays;
     if (daysSinceStart < 30) {
       return (
         allowed: false,
         reason:
-            'Cancellation is not permitted during your 1st month of tenancy. Your tenancy commenced on ${Formatters.formatDate(tenancyStart)}.',
+            'Cancellation is not permitted during your 1st month of tenancy. Your tenancy commenced on ${Formatters.formatDate(booking.requestDate)}.',
       );
     }
 
-    // Rule 2: Near end of the month (7-14 days before month-end)
-    final lastDayOfMonth = DateTime(now.year, now.month + 1, 0).day;
-    final daysRemainingInMonth = lastDayOfMonth - now.day;
+    final lastDayOfMonth = DateTime(today.year, today.month + 1, 0).day;
+    final daysRemainingInMonth = lastDayOfMonth - today.day;
     if (daysRemainingInMonth >= 7 && daysRemainingInMonth <= 14) {
       return (
         allowed: false,
@@ -138,10 +214,9 @@ class BookingService {
       );
     }
 
-    return await updateBookingStatus(
+    return updateBookingStatus(
       bookingId: booking.bookingId,
       status: BookingStatus.cancelled,
-      roomId: booking.roomId,
     );
   }
 
@@ -151,9 +226,6 @@ class BookingService {
         .stream(primaryKey: ['booking_id'])
         .eq('user_id', userId)
         .order('created_at', ascending: false)
-        .asyncMap((event) async {
-          // Re-fetch with relational data for full model mapping
-          return await getBookingsByUser(userId);
-        });
+        .asyncMap((_) => getBookingsByUser(userId));
   }
 }

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/constants/supabase_constants.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/list_controls.dart';
+import '../../../models/booking_model.dart';
 import '../../../models/house_model.dart';
 import '../../../models/room_model.dart';
 import '../../../models/user_model.dart';
@@ -32,7 +33,15 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
   HouseModel? _selectedHouse;
   bool _isLoading = true;
   String _searchQuery = '';
+  String _houseFilter = 'All';
+  String _houseSortId = 'name_asc';
+  int _housePage = 1;
+  int _housePageSize = 10;
+
   String _selectedStatusFilter = 'All';
+  String _roomSortId = 'room_asc';
+  int _roomPage = 1;
+  int _roomPageSize = 10;
 
   @override
   void initState() {
@@ -64,22 +73,19 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
       }
       _houseRooms = roomMap;
 
-      // Fetch active bookings for all rooms to get tenant names
       if (allRooms.isNotEmpty) {
         try {
           final roomIds = allRooms.map((r) => r.roomId).toList();
-          final bookingsRes = await supabase
-              .from(SupabaseConstants.bookingTable)
-              .select('room_id, users!booking_user_id_fkey(name)')
-              .inFilter('room_id', roomIds)
-              .eq('status', 'approved');
+          final bookings = await sl.booking.getBookingsByRoomIds(
+            roomIds,
+            status: BookingStatus.approved,
+          );
 
           _roomTenants.clear();
-          for (final b in bookingsRes as List) {
-            final rId = b['room_id'] as int?;
-            final userObj = b['users'] as Map<String, dynamic>?;
-            if (rId != null && userObj != null && userObj['name'] != null) {
-              _roomTenants[rId] = userObj['name'].toString();
+          for (final b in bookings) {
+            final tenantName = b.user?.name;
+            if (tenantName != null && tenantName.isNotEmpty) {
+              _roomTenants[b.roomId] = tenantName;
             }
           }
         } catch (_) {}
@@ -226,6 +232,73 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
     }
   }
 
+  Future<void> _openEditRoomScreen(RoomModel room) async {
+    final updated = await Navigator.push<RoomModel>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RoomFormScreen(
+          room: room,
+          houseId: room.houseId,
+          ownerId: widget.currentUser.userId,
+        ),
+      ),
+    );
+
+    if (updated != null && mounted) {
+      _loadData();
+    }
+  }
+
+  Future<void> _deleteRoom(RoomModel room) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Room'),
+        content: Text(
+          'Are you sure you want to delete Room ${room.roomNumber}? This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.destructiveColor,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        await _roomService.deleteRoom(room.roomId);
+        await _loadData();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Room deleted successfully.'),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete room: $e'),
+              backgroundColor: AppTheme.destructiveColor,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -241,154 +314,210 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
   }
 
   Widget _buildHouseDirectoryView() {
+    final sortOptions = [
+      KosMateSortOption<HouseModel>(
+        id: 'name_asc',
+        label: 'Name (A–Z)',
+        comparator: (a, b) =>
+            a.houseName.toLowerCase().compareTo(b.houseName.toLowerCase()),
+      ),
+      KosMateSortOption<HouseModel>(
+        id: 'name_desc',
+        label: 'Name (Z–A)',
+        comparator: (a, b) =>
+            b.houseName.toLowerCase().compareTo(a.houseName.toLowerCase()),
+      ),
+      KosMateSortOption<HouseModel>(
+        id: 'rooms_desc',
+        label: 'Most Rooms',
+        comparator: (a, b) => (_houseRooms[b.houseId]?.length ?? 0).compareTo(
+          _houseRooms[a.houseId]?.length ?? 0,
+        ),
+      ),
+      KosMateSortOption<HouseModel>(
+        id: 'avail_desc',
+        label: 'Most Available',
+        comparator: (a, b) {
+          final aAvail = (_houseRooms[a.houseId] ?? [])
+              .where((r) => r.status == RoomStatus.available)
+              .length;
+          final bAvail = (_houseRooms[b.houseId] ?? [])
+              .where((r) => r.status == RoomStatus.available)
+              .length;
+          return bAvail.compareTo(aAvail);
+        },
+      ),
+      KosMateSortOption<HouseModel>(
+        id: 'newest',
+        label: 'Newest',
+        comparator: (a, b) => b.houseId.compareTo(a.houseId),
+      ),
+    ];
+
     final filteredHouses = _houses.where((h) {
+      final rooms = _houseRooms[h.houseId] ?? [];
+      final avail = rooms.where((r) => r.status == RoomStatus.available).length;
+      if (_houseFilter == 'Has Available' && avail == 0) return false;
+      if (_houseFilter == 'Full' && avail > 0) return false;
+
       if (_searchQuery.isEmpty) return true;
       final q = _searchQuery.toLowerCase();
       return h.houseName.toLowerCase().contains(q) ||
           h.houseAddress.toLowerCase().contains(q);
     }).toList();
 
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Boarding Houses',
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.foregroundColor,
+    final selectedSort = sortOptions.firstWhere(
+      (s) => s.id == _houseSortId,
+      orElse: () => sortOptions.first,
+    );
+    filteredHouses.sort(selectedSort.comparator);
+
+    final paged = paginateList(filteredHouses, _housePage, _housePageSize);
+
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20.0,
+              vertical: 16.0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Boarding Houses',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.foregroundColor,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Select a house to manage its rooms',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 13,
+                              color: AppTheme.textMuted,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Select a house to manage its rooms',
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 13,
-                      color: AppTheme.textMuted,
+                    const SizedBox(width: 12),
+                    KosMateHeaderActionButton(
+                      icon: Icons.add,
+                      label: 'Add House',
+                      onPressed: _openAddHouseScreen,
                     ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                KosMateSearchField(
+                  controller: _searchController,
+                  hintText: 'Search houses by name or address...',
+                  onChanged: (val) => setState(() {
+                    _searchQuery = val;
+                    _housePage = 1;
+                  }),
+                ),
+                const SizedBox(height: 10),
+
+                KosMateFilterSortBar<HouseModel>(
+                  filterOptions: const ['All', 'Has Available', 'Full'],
+                  selectedFilter: _houseFilter,
+                  onFilterChanged: (val) => setState(() {
+                    _houseFilter = val;
+                    _housePage = 1;
+                  }),
+                  sortOptions: sortOptions,
+                  selectedSortId: _houseSortId,
+                  onSortChanged: (val) => setState(() {
+                    _houseSortId = val;
+                    _housePage = 1;
+                  }),
+                  totalCount: filteredHouses.length,
+                  itemLabel: filteredHouses.length == 1 ? 'house' : 'houses',
+                ),
+                const SizedBox(height: 14),
+
+                if (_houses.isEmpty)
+                  _buildEmptyHousesState()
+                else if (filteredHouses.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: Text(
+                        'No boarding houses match your search or filter.',
+                        style: TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  )
+                else ...[
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: paged.pageItems.length,
+                    itemBuilder: (context, idx) {
+                      final house = paged.pageItems[idx];
+                      final rooms = _houseRooms[house.houseId] ?? [];
+                      final totalCount = rooms.length;
+                      final availableCount = rooms
+                          .where((r) => r.status == RoomStatus.available)
+                          .length;
+                      final occupiedCount = rooms
+                          .where((r) => r.status == RoomStatus.occupied)
+                          .length;
+
+                      return _buildHouseCard(
+                        house: house,
+                        totalCount: totalCount,
+                        availableCount: availableCount,
+                        occupiedCount: occupiedCount,
+                      );
+                    },
                   ),
                 ],
-              ),
-              ElevatedButton.icon(
-                onPressed: _openAddHouseScreen,
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Add House'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accentColor,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: 'Search houses by name or address...',
-              prefixIcon: const Icon(
-                Icons.search,
-                color: AppTheme.textMuted,
-                size: 20,
-              ),
-              suffixIcon: _searchQuery.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(
-                        Icons.clear,
-                        size: 18,
-                        color: AppTheme.destructiveColor,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _searchController.clear();
-                          _searchQuery = '';
-                        });
-                      },
-                    )
-                  : null,
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 12,
-                horizontal: 16,
-              ),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppTheme.borderMedium),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppTheme.borderMedium),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: AppTheme.accentColor,
-                  width: 1.5,
-                ),
-              ),
+              ],
             ),
-            onChanged: (val) => setState(() => _searchQuery = val),
           ),
-          const SizedBox(height: 18),
-
-          if (_houses.isEmpty)
-            _buildEmptyHousesState()
-          else if (filteredHouses.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 40),
-              child: Center(
-                child: Text(
-                  'No boarding houses match your search.',
-                  style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
-                ),
-              ),
-            )
-          else
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: filteredHouses.length,
-              itemBuilder: (context, idx) {
-                final house = filteredHouses[idx];
-                final rooms = _houseRooms[house.houseId] ?? [];
-                final totalCount = rooms.length;
-                final availableCount = rooms
-                    .where((r) => r.status == RoomStatus.available)
-                    .length;
-                final occupiedCount = rooms
-                    .where((r) => r.status == RoomStatus.occupied)
-                    .length;
-
-                return _buildHouseCard(
-                  house: house,
-                  totalCount: totalCount,
-                  availableCount: availableCount,
-                  occupiedCount: occupiedCount,
-                );
-              },
+        ),
+        if (_houses.isNotEmpty && filteredHouses.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+            child: KosMatePaginationBar(
+              currentPage: paged.safePage,
+              totalPages: paged.totalPages,
+              totalItems: filteredHouses.length,
+              startIndex: paged.startIndex,
+              endIndex: paged.endIndex,
+              pageSize: _housePageSize,
+              onPageChanged: (p) => setState(() => _housePage = p),
+              onPageSizeChanged: (s) => setState(() {
+                _housePageSize = s;
+                _housePage = 1;
+              }),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 
@@ -421,6 +550,7 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
               _searchQuery = '';
               _searchController.clear();
               _selectedStatusFilter = 'All';
+              _roomPage = 1;
             });
           },
           borderRadius: BorderRadius.circular(14),
@@ -553,20 +683,20 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                       ),
                       const SizedBox(height: 10),
 
-                      Row(
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
                         children: [
                           _buildPillBadge(
                             label: '$totalCount Rooms',
                             bgColor: AppTheme.surfaceLight,
                             textColor: AppTheme.primaryColor,
                           ),
-                          const SizedBox(width: 6),
                           _buildPillBadge(
                             label: '$availableCount Available',
                             bgColor: AppTheme.successLight,
                             textColor: AppTheme.successColor,
                           ),
-                          const SizedBox(width: 6),
                           _buildPillBadge(
                             label: '$occupiedCount Occupied',
                             bgColor: AppTheme.primaryLight,
@@ -646,6 +776,30 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
     final house = _selectedHouse!;
     final rooms = _houseRooms[house.houseId] ?? [];
 
+    final roomSortOptions = [
+      KosMateSortOption<RoomModel>(
+        id: 'room_asc',
+        label: 'Room # (A–Z)',
+        comparator: (a, b) =>
+            a.roomNumber.toLowerCase().compareTo(b.roomNumber.toLowerCase()),
+      ),
+      KosMateSortOption<RoomModel>(
+        id: 'price_asc',
+        label: 'Price: Low to High',
+        comparator: (a, b) => a.price.compareTo(b.price),
+      ),
+      KosMateSortOption<RoomModel>(
+        id: 'price_desc',
+        label: 'Price: High to Low',
+        comparator: (a, b) => b.price.compareTo(a.price),
+      ),
+      KosMateSortOption<RoomModel>(
+        id: 'status',
+        label: 'Status',
+        comparator: (a, b) => a.status.name.compareTo(b.status.name),
+      ),
+    ];
+
     final filteredRooms = rooms.where((r) {
       if (_selectedStatusFilter != 'All') {
         if (_selectedStatusFilter == 'Available' &&
@@ -673,6 +827,14 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
       return true;
     }).toList();
 
+    final selectedSort = roomSortOptions.firstWhere(
+      (s) => s.id == _roomSortId,
+      orElse: () => roomSortOptions.first,
+    );
+    filteredRooms.sort(selectedSort.comparator);
+
+    final paged = paginateList(filteredRooms, _roomPage, _roomPageSize);
+
     final totalCount = rooms.length;
     final availableCount = rooms
         .where((r) => r.status == RoomStatus.available)
@@ -681,261 +843,240 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
         .where((r) => r.status == RoomStatus.occupied)
         .length;
 
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              IconButton(
-                onPressed: () {
-                  setState(() {
-                    _selectedHouse = null;
-                    _searchQuery = '';
-                    _searchController.clear();
-                  });
-                },
-                icon: const Icon(
-                  Icons.arrow_back,
-                  color: AppTheme.foregroundColor,
-                ),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20.0,
+              vertical: 14.0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Text(
-                      house.houseName,
-                      style: const TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
+                    IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _selectedHouse = null;
+                          _searchQuery = '';
+                          _searchController.clear();
+                          _housePage = 1;
+                        });
+                      },
+                      icon: const Icon(
+                        Icons.arrow_back,
                         color: AppTheme.foregroundColor,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                     ),
-                    Text(
-                      house.houseAddress,
-                      style: const TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 12,
-                        color: AppTheme.textMuted,
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            house.houseName,
+                            style: const TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.foregroundColor,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            house.houseAddress,
+                            style: const TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 12,
+                              color: AppTheme.textMuted,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(width: 8),
+                    KosMateHeaderActionButton(
+                      icon: Icons.add,
+                      label: 'Add Room',
+                      onPressed: () => _openAddRoomScreen(house.houseId),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton.icon(
-                onPressed: () => _openAddRoomScreen(house.houseId),
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Add Room'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accentColor,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
+                const SizedBox(height: 14),
 
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceLight,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatPill('Total', '$totalCount', AppTheme.primaryColor),
-                Container(width: 1, height: 20, color: AppTheme.borderMedium),
-                _buildStatPill(
-                  'Available',
-                  '$availableCount',
-                  AppTheme.successColor,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceLight,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildStatPill(
+                        'Total',
+                        '$totalCount',
+                        AppTheme.primaryColor,
+                      ),
+                      Container(
+                        width: 1,
+                        height: 20,
+                        color: AppTheme.borderMedium,
+                      ),
+                      _buildStatPill(
+                        'Available',
+                        '$availableCount',
+                        AppTheme.successColor,
+                      ),
+                      Container(
+                        width: 1,
+                        height: 20,
+                        color: AppTheme.borderMedium,
+                      ),
+                      _buildStatPill(
+                        'Occupied',
+                        '$occupiedCount',
+                        AppTheme.accentColor,
+                      ),
+                    ],
+                  ),
                 ),
-                Container(width: 1, height: 20, color: AppTheme.borderMedium),
-                _buildStatPill(
-                  'Occupied',
-                  '$occupiedCount',
-                  AppTheme.accentColor,
+                const SizedBox(height: 14),
+
+                KosMateSearchField(
+                  controller: _searchController,
+                  hintText: 'Search room number, type, or tenant...',
+                  onChanged: (val) => setState(() {
+                    _searchQuery = val;
+                    _roomPage = 1;
+                  }),
                 ),
+                const SizedBox(height: 10),
+
+                KosMateFilterSortBar<RoomModel>(
+                  filterOptions: const [
+                    'All',
+                    'Available',
+                    'Occupied',
+                    'Maintenance',
+                  ],
+                  selectedFilter: _selectedStatusFilter,
+                  onFilterChanged: (status) => setState(() {
+                    _selectedStatusFilter = status;
+                    _roomPage = 1;
+                  }),
+                  sortOptions: roomSortOptions,
+                  selectedSortId: _roomSortId,
+                  onSortChanged: (val) => setState(() {
+                    _roomSortId = val;
+                    _roomPage = 1;
+                  }),
+                  totalCount: filteredRooms.length,
+                  itemLabel: filteredRooms.length == 1 ? 'room' : 'rooms',
+                ),
+                const SizedBox(height: 14),
+
+                if (rooms.isEmpty)
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40.0),
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.sensor_door_outlined,
+                            size: 44,
+                            color: AppTheme.textMuted,
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'No rooms in this boarding house yet.',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.foregroundColor,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Add your first room to make it available for tenants.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textMuted,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: () => _openAddRoomScreen(house.houseId),
+                            icon: const Icon(Icons.add),
+                            label: const Text('Add First Room'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.accentColor,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else if (filteredRooms.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: Text(
+                        'No rooms match your filter.',
+                        style: TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  )
+                else ...[
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: paged.pageItems.length,
+                    itemBuilder: (context, idx) {
+                      final room = paged.pageItems[idx];
+                      final tenantName = _roomTenants[room.roomId];
+                      return _buildRoomTile(room: room, tenantName: tenantName);
+                    },
+                  ),
+                ],
               ],
             ),
           ),
-          const SizedBox(height: 14),
-
-          TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: 'Search room number, type, or tenant...',
-              prefixIcon: const Icon(
-                Icons.search,
-                color: AppTheme.textMuted,
-                size: 20,
-              ),
-              suffixIcon: _searchQuery.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(
-                        Icons.clear,
-                        size: 18,
-                        color: AppTheme.destructiveColor,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _searchController.clear();
-                          _searchQuery = '';
-                        });
-                      },
-                    )
-                  : null,
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 10,
-                horizontal: 14,
-              ),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppTheme.borderMedium),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppTheme.borderMedium),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: AppTheme.accentColor,
-                  width: 1.5,
-                ),
-              ),
-            ),
-            onChanged: (val) => setState(() => _searchQuery = val),
-          ),
-          const SizedBox(height: 10),
-
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: ['All', 'Available', 'Occupied', 'Maintenance'].map((
-                status,
-              ) {
-                final isSelected = _selectedStatusFilter == status;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 6.0),
-                  child: ChoiceChip(
-                    label: Text(status),
-                    selected: isSelected,
-                    showCheckmark: false,
-                    checkmarkColor: AppTheme.accentColor,
-                    selectedColor: AppTheme.primaryLight,
-                    backgroundColor: Colors.white,
-                    side: BorderSide(
-                      color: isSelected
-                          ? AppTheme.accentColor
-                          : AppTheme.borderMedium,
-                    ),
-                    labelStyle: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 12,
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.normal,
-                      color: isSelected
-                          ? AppTheme.accentColor
-                          : AppTheme.textDark,
-                    ),
-                    onSelected: (_) {
-                      setState(() => _selectedStatusFilter = status);
-                    },
-                  ),
-                );
-              }).toList(),
+        ),
+        if (rooms.isNotEmpty && filteredRooms.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+            child: KosMatePaginationBar(
+              currentPage: paged.safePage,
+              totalPages: paged.totalPages,
+              totalItems: filteredRooms.length,
+              startIndex: paged.startIndex,
+              endIndex: paged.endIndex,
+              pageSize: _roomPageSize,
+              onPageChanged: (p) => setState(() => _roomPage = p),
+              onPageSizeChanged: (s) => setState(() {
+                _roomPageSize = s;
+                _roomPage = 1;
+              }),
             ),
           ),
-          const SizedBox(height: 14),
-
-          if (rooms.isEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 40.0),
-                child: Column(
-                  children: [
-                    const Icon(
-                      Icons.sensor_door_outlined,
-                      size: 44,
-                      color: AppTheme.textMuted,
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'No rooms in this boarding house yet.',
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.foregroundColor,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Add your first room to make it available for tenants.',
-                      style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: () => _openAddRoomScreen(house.houseId),
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add First Room'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.accentColor,
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else if (filteredRooms.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 40),
-              child: Center(
-                child: Text(
-                  'No rooms match your filter.',
-                  style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
-                ),
-              ),
-            )
-          else
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: filteredRooms.length,
-              itemBuilder: (context, idx) {
-                final room = filteredRooms[idx];
-                final tenantName = _roomTenants[room.roomId];
-                return _buildRoomTile(room: room, tenantName: tenantName);
-              },
-            ),
-        ],
-      ),
+      ],
     );
   }
 
@@ -1059,45 +1200,115 @@ class _OwnerRoomsTabState extends State<OwnerRoomsTab> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            '${Formatters.formatCurrency(room.price)} / mo',
-                            style: const TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.primaryColor,
+                          Flexible(
+                            child: Text(
+                              '${Formatters.formatCurrency(room.price)} / mo',
+                              style: const TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.primaryColor,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
                             ),
                           ),
                           if (tenantName != null)
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.person_outline,
-                                  size: 13,
-                                  color: AppTheme.textMuted,
-                                ),
-                                const SizedBox(width: 2),
-                                Text(
-                                  tenantName,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.textDark,
+                            Flexible(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.person_outline,
+                                    size: 13,
+                                    color: AppTheme.textMuted,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 2),
+                                  Flexible(
+                                    child: Text(
+                                      tenantName,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppTheme.textDark,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                         ],
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                const Icon(
-                  Icons.chevron_right,
-                  color: AppTheme.textSubtle,
-                  size: 20,
+                const SizedBox(width: 4),
+                PopupMenuButton<String>(
+                  icon: const Icon(
+                    Icons.more_vert,
+                    color: AppTheme.textMuted,
+                    size: 20,
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onSelected: (val) {
+                    if (val == 'details') {
+                      _openRoomDetails(room);
+                    } else if (val == 'edit') {
+                      _openEditRoomScreen(room);
+                    } else if (val == 'delete') {
+                      _deleteRoom(room);
+                    }
+                  },
+                  itemBuilder: (ctx) => const [
+                    PopupMenuItem(
+                      value: 'details',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.visibility_outlined,
+                            size: 18,
+                            color: AppTheme.accentColor,
+                          ),
+                          SizedBox(width: 8),
+                          Text('View Details'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.edit_outlined,
+                            size: 18,
+                            color: AppTheme.primaryColor,
+                          ),
+                          SizedBox(width: 8),
+                          Text('Edit Room'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.delete_outline,
+                            size: 18,
+                            color: AppTheme.destructiveColor,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Delete Room',
+                            style: TextStyle(color: AppTheme.destructiveColor),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -12,8 +12,9 @@ import '../../../models/user_model.dart';
 
 class AdminPaymentFormScreen extends StatefulWidget {
   final PaymentModel? payment;
+  final int? initialUserId;
 
-  const AdminPaymentFormScreen({super.key, this.payment});
+  const AdminPaymentFormScreen({super.key, this.payment, this.initialUserId});
 
   bool get isEditing => payment != null;
 
@@ -45,7 +46,7 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
     _amountController = TextEditingController(
       text: p != null ? p.amount.toStringAsFixed(0) : '',
     );
-    _selectedUserId = p?.userId;
+    _selectedUserId = p?.userId ?? widget.initialUserId;
     _selectedRoomId = p?.roomId;
     if (p != null) {
       _dueDate = p.dueDate;
@@ -63,13 +64,10 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
 
   Future<void> _loadPrerequisites() async {
     try {
-      final usersRes = await supabase
-          .from(SupabaseConstants.usersTable)
-          .select()
-          .order('name');
-      final users = (usersRes as List)
-          .map((j) => UserModel.fromJson(j as Map<String, dynamic>))
-          .toList();
+      final users = await sl.user.getAllUsers();
+      users.sort(
+        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+      );
 
       final rooms = await sl.room.getRooms();
 

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/constants/supabase_constants.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../models/house_model.dart';
 import '../../../models/user_model.dart';
+import '../complaints/admin_complaints_screen.dart';
 import '../houses/admin_house_form_screen.dart';
 import '../payments/admin_payments_screen.dart';
 import '../users/admin_user_detail_screen.dart';
@@ -39,14 +39,8 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
 
   Future<void> _loadAdminData() async {
     try {
-      final usersRes = await supabase
-          .from(SupabaseConstants.usersTable)
-          .select();
+      final usersList = await sl.user.getAllUsers();
       final housesRes = await sl.house.getAllHouses();
-
-      final usersList = (usersRes as List)
-          .map((j) => UserModel.fromJson(j as Map<String, dynamic>))
-          .toList();
 
       if (mounted) {
         setState(() {
@@ -66,6 +60,15 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const AdminPaymentsScreen()),
+    ).then((_) {
+      if (mounted) _loadAdminData();
+    });
+  }
+
+  void _openComplaintsScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AdminComplaintsScreen()),
     ).then((_) {
       if (mounted) _loadAdminData();
     });
@@ -230,17 +233,23 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
                   label: 'Users',
                   onTap: () => widget.onNavigateToTab(1),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 _buildQuickActionTile(
                   icon: Icons.apartment_outlined,
                   label: 'Houses',
                   onTap: () => widget.onNavigateToTab(2),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 _buildQuickActionTile(
                   icon: Icons.receipt_long_outlined,
                   label: 'Payments',
                   onTap: _openPaymentsScreen,
+                ),
+                const SizedBox(width: 8),
+                _buildQuickActionTile(
+                  icon: Icons.build_circle_outlined,
+                  label: 'Tickets',
+                  onTap: _openComplaintsScreen,
                 ),
               ],
             ),
@@ -270,8 +279,10 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
                   await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          AdminUserDetailScreen(user: _recentUsers.first),
+                      builder: (_) => AdminUserDetailScreen(
+                        user: _recentUsers.first,
+                        currentUser: widget.user,
+                      ),
                     ),
                   );
                   if (mounted) _loadAdminData();

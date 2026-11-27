@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../core/constants/supabase_constants.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
@@ -222,25 +221,21 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
           role: _selectedRole,
         );
 
-        // If avatar bytes picked during creation, query user and upload
         if (_selectedAvatarBytes != null) {
           try {
-            final userRes = await supabase
-                .from(SupabaseConstants.usersTable)
-                .select('user_id')
-                .eq('email', _emailController.text.trim())
-                .single();
-            final newId = userRes['user_id'] as int?;
-            if (newId != null) {
+            final createdUser = await _userService.getUserByEmail(
+              _emailController.text.trim(),
+            );
+            if (createdUser != null) {
               final uploadedUrl = await _storageService.uploadAvatar(
-                newId,
+                createdUser.userId,
                 _selectedAvatarBytes!,
                 extension: _selectedAvatarExtension,
               );
-              await supabase
-                  .from(SupabaseConstants.usersTable)
-                  .update({'avatar_url': uploadedUrl})
-                  .eq('user_id', newId);
+              await _userService.updateAvatarUrl(
+                userId: createdUser.userId,
+                avatarUrl: uploadedUrl,
+              );
             }
           } catch (_) {}
         }
@@ -484,7 +479,13 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
                     Icons.email_outlined,
                     color: AppTheme.textMuted,
                   ),
-                  suffixText: widget.isEditing ? '(Read-only)' : null,
+                  suffixIcon: widget.isEditing
+                      ? const Icon(
+                          Icons.lock_outline,
+                          color: AppTheme.textMuted,
+                          size: 18,
+                        )
+                      : null,
                   filled: true,
                   fillColor: widget.isEditing
                       ? AppTheme.surfaceLight

@@ -7,6 +7,8 @@ import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/kosmate_components.dart';
+import '../../../core/widgets/list_controls.dart';
+import '../../../core/widgets/payment_detail_sheet.dart';
 import '../../../models/booking_model.dart';
 import '../../../models/payment_model.dart';
 import '../../../models/user_model.dart';
@@ -23,15 +25,27 @@ class TenantPaymentsTab extends StatefulWidget {
 class _TenantPaymentsTabState extends State<TenantPaymentsTab> {
   final _paymentService = sl.payment;
   final _bookingService = sl.booking;
+  final _historySearchController = TextEditingController();
 
   bool _isLoading = true;
   List<PaymentModel> _payments = [];
   BookingModel? _activeBooking;
+  String _historySearchQuery = '';
+  String _historyStatusFilter = 'All';
+  String _historySortId = 'due_desc';
+  int _historyPage = 1;
+  int _historyPageSize = 10;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    _historySearchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -438,15 +452,20 @@ class _TenantPaymentsTabState extends State<TenantPaymentsTab> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        monthLabel,
-                        style: const TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.foregroundColor,
+                      Expanded(
+                        child: Text(
+                          monthLabel,
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.foregroundColor,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: 8),
                       KosMateStatusChip.fromPaymentStatus(activePayment.status),
                     ],
                   ),
@@ -587,86 +606,256 @@ class _TenantPaymentsTabState extends State<TenantPaymentsTab> {
                   style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
                 ),
               )
-            else
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: paymentHistory.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 10),
-                itemBuilder: (context, i) {
-                  final p = paymentHistory[i];
-                  final pMonth = Formatters.formatMonthYear(p.dueDate);
-                  final paidDateStr = p.paidDate != null
-                      ? 'Paid ${Formatters.formatShortDate(p.paidDate)}'
-                      : 'Due ${Formatters.formatShortDate(p.dueDate)}';
-
-                  return Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.borderLight),
+            else ...[
+              KosMateSearchField(
+                controller: _historySearchController,
+                hintText: 'Search by month, room, or amount...',
+                onChanged: (val) => setState(() {
+                  _historySearchQuery = val.trim();
+                  _historyPage = 1;
+                }),
+              ),
+              const SizedBox(height: 10),
+              Builder(
+                builder: (context) {
+                  final sortOptions = [
+                    KosMateSortOption<PaymentModel>(
+                      id: 'due_desc',
+                      label: 'Due Date (Newest)',
+                      comparator: (a, b) => b.dueDate.compareTo(a.dueDate),
                     ),
-                    child: Row(
-                      children: [
+                    KosMateSortOption<PaymentModel>(
+                      id: 'due_asc',
+                      label: 'Due Date (Oldest)',
+                      comparator: (a, b) => a.dueDate.compareTo(b.dueDate),
+                    ),
+                    KosMateSortOption<PaymentModel>(
+                      id: 'amount_desc',
+                      label: 'Amount: High to Low',
+                      comparator: (a, b) => b.amount.compareTo(a.amount),
+                    ),
+                    KosMateSortOption<PaymentModel>(
+                      id: 'amount_asc',
+                      label: 'Amount: Low to High',
+                      comparator: (a, b) => a.amount.compareTo(b.amount),
+                    ),
+                  ];
+
+                  final filteredHistory = paymentHistory.where((p) {
+                    if (_historyStatusFilter != 'All') {
+                      if (_historyStatusFilter == 'Pending' &&
+                          p.status != PaymentStatus.pending) {
+                        return false;
+                      }
+                      if (_historyStatusFilter == 'Paid' &&
+                          p.status != PaymentStatus.paid) {
+                        return false;
+                      }
+                      if (_historyStatusFilter == 'Overdue' &&
+                          p.status != PaymentStatus.overdue) {
+                        return false;
+                      }
+                      if (_historyStatusFilter == 'Cancelled' &&
+                          p.status != PaymentStatus.cancelled) {
+                        return false;
+                      }
+                    }
+
+                    if (_historySearchQuery.isNotEmpty) {
+                      final q = _historySearchQuery.toLowerCase();
+                      final m = Formatters.formatMonthYear(p.dueDate)
+                          .toLowerCase();
+                      final amt = p.amount.toString();
+                      final rm = p.room?.roomNumber.toLowerCase() ?? '';
+                      return m.contains(q) || amt.contains(q) || rm.contains(q);
+                    }
+                    return true;
+                  }).toList();
+
+                  final selectedSort = sortOptions.firstWhere(
+                    (s) => s.id == _historySortId,
+                    orElse: () => sortOptions.first,
+                  );
+                  filteredHistory.sort(selectedSort.comparator);
+
+                  final paged = paginateList(
+                    filteredHistory,
+                    _historyPage,
+                    _historyPageSize,
+                  );
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      KosMateFilterSortBar<PaymentModel>(
+                        filterOptions: const [
+                          'All',
+                          'Pending',
+                          'Paid',
+                          'Overdue',
+                          'Cancelled',
+                        ],
+                        selectedFilter: _historyStatusFilter,
+                        onFilterChanged: (val) => setState(() {
+                          _historyStatusFilter = val;
+                          _historyPage = 1;
+                        }),
+                        sortOptions: sortOptions,
+                        selectedSortId: _historySortId,
+                        onSortChanged: (val) => setState(() {
+                          _historySortId = val;
+                          _historyPage = 1;
+                        }),
+                        totalCount: filteredHistory.length,
+                        itemLabel: filteredHistory.length == 1
+                            ? 'invoice'
+                            : 'invoices',
+                      ),
+                      const SizedBox(height: 10),
+                      if (filteredHistory.isEmpty)
                         Container(
-                          width: 44,
-                          height: 44,
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: AppTheme.iconBadgeBackground,
-                            borderRadius: BorderRadius.circular(10),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppTheme.borderLight),
                           ),
-                          child: const Icon(
-                            Icons.receipt_long_outlined,
-                            color: AppTheme.accentColor,
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                pMonth,
-                                style: const TextStyle(
-                                  fontFamily: 'Roboto',
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.foregroundColor,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                paidDateStr,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppTheme.textMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            KosMateStatusChip.fromPaymentStatus(p.status),
-                            const SizedBox(height: 4),
-                            Text(
-                              Formatters.formatCurrency(p.amount),
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryColor,
-                              ),
+                          alignment: Alignment.center,
+                          child: const Text(
+                            'No invoices match your filter.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.textMuted,
                             ),
-                          ],
+                          ),
+                        )
+                      else ...[
+                        ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: paged.pageItems.length,
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: 10),
+                          itemBuilder: (context, i) {
+                            final p = paged.pageItems[i];
+                            final pMonth = Formatters.formatMonthYear(
+                              p.dueDate,
+                            );
+                            final paidDateStr = p.paidDate != null
+                                ? 'Paid ${Formatters.formatShortDate(p.paidDate)}'
+                                : 'Due ${Formatters.formatShortDate(p.dueDate)}';
+
+                            return InkWell(
+                              onTap: () => PaymentDetailSheet.show(
+                                context,
+                                p,
+                                onPayNow:
+                                    p.status != PaymentStatus.paid &&
+                                        p.status != PaymentStatus.cancelled
+                                    ? () => _startMidtransPayment(p)
+                                    : null,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppTheme.borderLight,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 44,
+                                      height: 44,
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.iconBadgeBackground,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: const Icon(
+                                        Icons.receipt_long_outlined,
+                                        color: AppTheme.accentColor,
+                                        size: 22,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            pMonth,
+                                            style: const TextStyle(
+                                              fontFamily: 'Roboto',
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppTheme.foregroundColor,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            paidDateStr,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: AppTheme.textMuted,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        KosMateStatusChip.fromPaymentStatus(
+                                          p.status,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          Formatters.formatCurrency(p.amount),
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppTheme.primaryColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        KosMatePaginationBar(
+                          currentPage: paged.safePage,
+                          totalPages: paged.totalPages,
+                          totalItems: filteredHistory.length,
+                          startIndex: paged.startIndex,
+                          endIndex: paged.endIndex,
+                          pageSize: _historyPageSize,
+                          onPageChanged: (p) =>
+                              setState(() => _historyPage = p),
+                          onPageSizeChanged: (s) => setState(() {
+                            _historyPageSize = s;
+                            _historyPage = 1;
+                          }),
                         ),
                       ],
-                    ),
+                    ],
                   );
                 },
               ),
+            ],
             const SizedBox(height: 24),
           ],
         ),
@@ -809,12 +998,18 @@ class _TenantPaymentsTabState extends State<TenantPaymentsTab> {
           label,
           style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
         ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.foregroundColor,
+        const SizedBox(width: 12),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.foregroundColor,
+            ),
           ),
         ),
       ],

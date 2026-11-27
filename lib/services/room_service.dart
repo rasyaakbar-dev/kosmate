@@ -2,19 +2,23 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/constants/supabase_constants.dart';
 import '../core/errors/app_exception.dart';
-import '../core/utils/supabase_helpers.dart';
+import '../core/utils/json_helpers.dart';
 import '../models/room_model.dart';
 
 class RoomService {
-  final SupabaseClient _client = supabase;
+  final SupabaseClient _client;
+
+  static const String _selectWithHouse =
+      '*, house!room_house_id_fkey(*, users!house_owner_id_fkey(*))';
+
+  RoomService([SupabaseClient? client])
+    : _client = client ?? Supabase.instance.client;
 
   Future<List<RoomModel>> getRooms({int? houseId, RoomStatus? status}) async {
     try {
       var query = _client
           .from(SupabaseConstants.roomTable)
-          .select(
-            '*, house!room_house_id_fkey(*, users!house_owner_id_fkey(*))',
-          );
+          .select(_selectWithHouse);
 
       if (houseId != null) {
         query = query.eq('house_id', houseId);
@@ -25,6 +29,8 @@ class RoomService {
 
       final response = await query.order('room_number', ascending: true);
       return (response as List).mapToModel(RoomModel.fromJson);
+    } on PostgrestException catch (e) {
+      throw ServiceException('Failed to load rooms.', code: e.code, cause: e);
     } catch (e) {
       throw ServiceException('Failed to load rooms.', cause: e);
     }
@@ -34,14 +40,18 @@ class RoomService {
     try {
       final response = await _client
           .from(SupabaseConstants.roomTable)
-          .select(
-            '*, house!room_house_id_fkey(*, users!house_owner_id_fkey(*))',
-          )
+          .select(_selectWithHouse)
           .eq('room_id', roomId)
           .maybeSingle();
 
       if (response == null) return null;
       return RoomModel.fromJson(response);
+    } on PostgrestException catch (e) {
+      throw ServiceException(
+        'Failed to load room details.',
+        code: e.code,
+        cause: e,
+      );
     } catch (e) {
       throw ServiceException('Failed to load room details.', cause: e);
     }
@@ -52,12 +62,12 @@ class RoomService {
       final response = await _client
           .from(SupabaseConstants.roomTable)
           .insert(room.toJson(includeId: false))
-          .select(
-            '*, house!room_house_id_fkey(*, users!house_owner_id_fkey(*))',
-          )
+          .select(_selectWithHouse)
           .single();
 
       return RoomModel.fromJson(response);
+    } on PostgrestException catch (e) {
+      throw ServiceException('Failed to create room.', code: e.code, cause: e);
     } catch (e) {
       throw ServiceException('Failed to create room.', cause: e);
     }
@@ -69,24 +79,29 @@ class RoomService {
           .from(SupabaseConstants.roomTable)
           .update(room.toJson(includeId: false))
           .eq('room_id', room.roomId)
-          .select(
-            '*, house!room_house_id_fkey(*, users!house_owner_id_fkey(*))',
-          )
+          .select(_selectWithHouse)
           .single();
 
       return RoomModel.fromJson(response);
+    } on PostgrestException catch (e) {
+      throw ServiceException('Failed to update room.', code: e.code, cause: e);
     } catch (e) {
       throw ServiceException('Failed to update room.', cause: e);
     }
   }
 
-  /// Quick status update for a room (e.g., mark as occupied or available)
   Future<void> updateRoomStatus(int roomId, RoomStatus status) async {
     try {
       await _client
           .from(SupabaseConstants.roomTable)
           .update({'status': status.name})
           .eq('room_id', roomId);
+    } on PostgrestException catch (e) {
+      throw ServiceException(
+        'Failed to update room status.',
+        code: e.code,
+        cause: e,
+      );
     } catch (e) {
       throw ServiceException('Failed to update room status.', cause: e);
     }
@@ -98,6 +113,8 @@ class RoomService {
           .from(SupabaseConstants.roomTable)
           .delete()
           .eq('room_id', roomId);
+    } on PostgrestException catch (e) {
+      throw ServiceException('Failed to delete room.', code: e.code, cause: e);
     } catch (e) {
       throw ServiceException('Failed to delete room.', cause: e);
     }

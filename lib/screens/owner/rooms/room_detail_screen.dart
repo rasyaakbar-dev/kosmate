@@ -13,6 +13,7 @@ import '../../../models/complaint_model.dart';
 import '../../../models/payment_model.dart';
 import '../../../models/room_model.dart';
 import '../../../models/user_model.dart';
+import '../../admin/rooms/admin_room_form_screen.dart';
 import 'room_form_screen.dart';
 
 class RoomDetailScreen extends StatefulWidget {
@@ -53,52 +54,30 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
         _room = updatedRoom;
       }
 
-      // Fetch active booking if room is occupied
       try {
-        final bookingRes = await supabase
-            .from(SupabaseConstants.bookingTable)
-            .select('*, users!booking_user_id_fkey(*)')
-            .eq('room_id', _room.roomId)
-            .eq('status', BookingStatus.approved.name)
-            .order('created_at', ascending: false)
-            .limit(1)
-            .maybeSingle();
-
-        if (bookingRes != null && mounted) {
-          _activeBooking = BookingModel.fromJson(bookingRes);
+        final activeBooking = await sl.booking.getLatestApprovedBookingForRoom(
+          _room.roomId,
+        );
+        if (activeBooking != null && mounted) {
+          _activeBooking = activeBooking;
         }
       } catch (_) {}
 
-      // Fetch latest payment invoice for this room
       try {
-        final paymentRes = await supabase
-            .from(SupabaseConstants.paymentTable)
-            .select('*, users!payment_user_id_fkey(*)')
-            .eq('room_id', _room.roomId)
-            .order('due_date', ascending: false)
-            .limit(1)
-            .maybeSingle();
-
-        if (paymentRes != null && mounted) {
-          _currentPayment = PaymentModel.fromJson(paymentRes);
+        final latestPayment = await sl.payment.getLatestPaymentForRoom(
+          _room.roomId,
+        );
+        if (latestPayment != null && mounted) {
+          _currentPayment = latestPayment;
         }
       } catch (_) {}
 
-      // Fetch complaints for this room
       try {
-        final complaintRes = await supabase
-            .from(SupabaseConstants.complaintTable)
-            .select(
-              '*, users!complaint_user_id_fkey(*), room!complaint_room_id_fkey(*)',
-            )
-            .eq('room_id', _room.roomId)
-            .order('created_at', ascending: false);
+        final roomComplaints = await sl.complaint.getComplaintsByRoom(
+          _room.roomId,
+        );
         if (mounted) {
-          _roomComplaints = (complaintRes as List)
-              .map(
-                (row) => ComplaintModel.fromJson(row as Map<String, dynamic>),
-              )
-              .toList();
+          _roomComplaints = roomComplaints;
         }
       } catch (_) {}
 
@@ -290,6 +269,18 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
   }
 
   Future<void> _editRoom() async {
+    if (widget.currentUser.role == UserRole.admin) {
+      final changed = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(builder: (_) => AdminRoomFormScreen(room: _room)),
+      );
+      if (changed == true && mounted) {
+        setState(() => _isLoading = true);
+        _loadRoomDetails();
+      }
+      return;
+    }
+
     final updated = await Navigator.push<RoomModel>(
       context,
       MaterialPageRoute(

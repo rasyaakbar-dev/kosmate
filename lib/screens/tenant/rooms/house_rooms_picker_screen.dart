@@ -4,6 +4,7 @@ import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
+import '../../../core/widgets/list_controls.dart';
 import '../../../core/widgets/owner_information_card.dart';
 import '../../../models/house_model.dart';
 import '../../../models/room_model.dart';
@@ -27,13 +28,25 @@ class _HouseRoomsPickerScreenState extends State<HouseRoomsPickerScreen> {
   final _roomService = sl.room;
   final _bookingService = sl.booking;
 
+  final _searchController = TextEditingController();
   late Future<List<RoomModel>> _roomsFuture;
   bool _isSubmitting = false;
+  String _searchQuery = '';
+  String _selectedTypeFilter = 'All';
+  String _sortId = 'price_asc';
+  int _page = 1;
+  int _pageSize = 10;
 
   @override
   void initState() {
     super.initState();
     _loadRooms();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _loadRooms() {
@@ -528,95 +541,202 @@ class _HouseRoomsPickerScreenState extends State<HouseRoomsPickerScreen> {
                     );
                   }
 
-                  return ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: rooms.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) {
-                      final r = rooms[index];
-                      return Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppTheme.borderLight),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
+                  final roomTypes = <String>{
+                    'All',
+                    ...rooms.map((r) => r.roomType).where((t) => t.isNotEmpty),
+                  }.toList();
+
+                  final sortOptions = [
+                    KosMateSortOption<RoomModel>(
+                      id: 'price_asc',
+                      label: 'Price: Low to High',
+                      comparator: (a, b) => a.price.compareTo(b.price),
+                    ),
+                    KosMateSortOption<RoomModel>(
+                      id: 'price_desc',
+                      label: 'Price: High to Low',
+                      comparator: (a, b) => b.price.compareTo(a.price),
+                    ),
+                    KosMateSortOption<RoomModel>(
+                      id: 'room_asc',
+                      label: 'Room # (A–Z)',
+                      comparator: (a, b) => a.roomNumber
+                          .toLowerCase()
+                          .compareTo(b.roomNumber.toLowerCase()),
+                    ),
+                  ];
+
+                  final filteredRooms = rooms.where((r) {
+                    if (_selectedTypeFilter != 'All' &&
+                        r.roomType != _selectedTypeFilter) {
+                      return false;
+                    }
+                    if (_searchQuery.isNotEmpty) {
+                      final q = _searchQuery.toLowerCase();
+                      return r.roomNumber.toLowerCase().contains(q) ||
+                          r.roomType.toLowerCase().contains(q) ||
+                          (r.facilities?.toLowerCase().contains(q) ?? false);
+                    }
+                    return true;
+                  }).toList();
+
+                  final selectedSort = sortOptions.firstWhere(
+                    (s) => s.id == _sortId,
+                    orElse: () => sortOptions.first,
+                  );
+                  filteredRooms.sort(selectedSort.comparator);
+
+                  final paged = paginateList(filteredRooms, _page, _pageSize);
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      KosMateSearchField(
+                        controller: _searchController,
+                        hintText: 'Search room number, type, or facilities...',
+                        onChanged: (val) => setState(() {
+                          _searchQuery = val.trim();
+                          _page = 1;
+                        }),
+                      ),
+                      const SizedBox(height: 10),
+                      KosMateFilterSortBar<RoomModel>(
+                        filterOptions: roomTypes,
+                        selectedFilter: roomTypes.contains(_selectedTypeFilter)
+                            ? _selectedTypeFilter
+                            : 'All',
+                        onFilterChanged: (val) => setState(() {
+                          _selectedTypeFilter = val;
+                          _page = 1;
+                        }),
+                        sortOptions: sortOptions,
+                        selectedSortId: _sortId,
+                        onSortChanged: (val) => setState(() {
+                          _sortId = val;
+                          _page = 1;
+                        }),
+                        totalCount: filteredRooms.length,
+                        itemLabel: filteredRooms.length == 1 ? 'room' : 'rooms',
+                      ),
+                      const SizedBox(height: 12),
+                      if (filteredRooms.isEmpty)
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          alignment: Alignment.center,
+                          child: const Text(
+                            'No rooms match your search or filter.',
+                            style: TextStyle(color: AppTheme.textMuted),
+                          ),
+                        )
+                      else ...[
+                        ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: paged.pageItems.length,
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            final r = paged.pageItems[index];
+                            return Container(
+                              padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: AppTheme.primaryLight,
-                                borderRadius: BorderRadius.circular(10),
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppTheme.borderLight),
                               ),
-                              child: const Icon(
-                                Icons.meeting_room_outlined,
-                                color: AppTheme.accentColor,
-                                size: 26,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Row(
                                 children: [
-                                  Text(
-                                    'Room ${r.roomNumber}',
-                                    style: const TextStyle(
-                                      fontFamily: 'Roboto',
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppTheme.foregroundColor,
+                                  Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primaryLight,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Icons.meeting_room_outlined,
+                                      color: AppTheme.accentColor,
+                                      size: 26,
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    r.roomType,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: AppTheme.textMuted,
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Room ${r.roomNumber}',
+                                          style: const TextStyle(
+                                            fontFamily: 'Roboto',
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppTheme.foregroundColor,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          r.roomType,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            color: AppTheme.textMuted,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          '${Formatters.formatCurrency(r.price)} / mo',
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppTheme.primaryColor,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${Formatters.formatCurrency(r.price)} / mo',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppTheme.primaryColor,
+                                  ElevatedButton(
+                                    onPressed: () =>
+                                        _showBookingRequestDialog(r),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppTheme.accentColor,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 10,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Book',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                            ElevatedButton(
-                              onPressed: () => _showBookingRequestDialog(r),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.accentColor,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 10,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: const Text(
-                                'Book',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
-                      );
-                    },
+                        KosMatePaginationBar(
+                          currentPage: paged.safePage,
+                          totalPages: paged.totalPages,
+                          totalItems: filteredRooms.length,
+                          startIndex: paged.startIndex,
+                          endIndex: paged.endIndex,
+                          pageSize: _pageSize,
+                          onPageChanged: (p) => setState(() => _page = p),
+                          onPageSizeChanged: (s) => setState(() {
+                            _pageSize = s;
+                            _page = 1;
+                          }),
+                        ),
+                      ],
+                    ],
                   );
                 },
               ),

@@ -90,4 +90,30 @@ class UserModel {
       createdAt: createdAt ?? this.createdAt,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is UserModel &&
+        other.userId == userId &&
+        other.authId == authId &&
+        other.name == name &&
+        other.email == email &&
+        other.phone == phone &&
+        other.role == role &&
+        other.avatarUrl == avatarUrl &&
+        other.createdAt == createdAt;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    userId,
+    authId,
+    name,
+    email,
+    phone,
+    role,
+    avatarUrl,
+    createdAt,
+  );
 }

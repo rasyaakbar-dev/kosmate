@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/supabase_constants.dart';
 import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/kosmate_logo.dart';
@@ -33,8 +32,7 @@ class _SplashScreenState extends State<SplashScreen> {
     // Check session & preload profile in parallel
     UserModel? user;
     try {
-      final session = supabase.auth.currentSession;
-      if (session != null) {
+      if (_authService.hasActiveSession) {
         user = await _authService.getCurrentUserProfile();
       }
     } catch (_) {

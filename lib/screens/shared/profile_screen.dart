@@ -92,7 +92,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           subtitle = 'Tenant';
           break;
         case UserRole.owner:
-          subtitle = 'Kos Owner';
+          subtitle = 'Owner';
           break;
         case UserRole.admin:
           subtitle = 'System Administrator';
@@ -157,7 +157,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 24),
 
-            // User Information Card (figma/Profile.png)
+            // User Information Card
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -179,11 +179,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildInfoRow(label: 'Username', value: username),
-                  const SizedBox(height: 14),
-                  _buildInfoRow(label: 'E-mail', value: _currentUser.email),
-                  const SizedBox(height: 14),
-                  _buildInfoRow(label: 'Phone', value: phone),
+                  _buildInfoRow(
+                    icon: Icons.person_outline_rounded,
+                    label: 'Username',
+                    value: username,
+                  ),
+                  const Divider(height: 22, color: AppTheme.surfaceLight),
+                  _buildInfoRow(
+                    icon: Icons.email_outlined,
+                    label: 'E-mail',
+                    value: _currentUser.email,
+                  ),
+                  const Divider(height: 22, color: AppTheme.surfaceLight),
+                  _buildInfoRow(
+                    icon: Icons.phone_outlined,
+                    label: 'Phone',
+                    value: phone,
+                  ),
+                  const Divider(height: 22, color: AppTheme.surfaceLight),
+                  _buildInfoRow(
+                    icon: Icons.admin_panel_settings_outlined,
+                    label: 'Role',
+                    value: _currentUser.role.displayName,
+                    isBadge: true,
+                  ),
                 ],
               ),
             ),
@@ -221,30 +240,70 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildInfoRow({required String label, required String value}) {
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    bool isBadge = false,
+  }) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 110,
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontFamily: 'Roboto',
-              fontSize: 14,
-              color: AppTheme.textMuted,
-            ),
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: AppTheme.iconBadgeBackground,
+            borderRadius: BorderRadius.circular(8),
           ),
+          child: Icon(icon, size: 18, color: AppTheme.accentColor),
         ),
+        const SizedBox(width: 12),
         Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontFamily: 'Roboto',
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.foregroundColor,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 12,
+                  color: AppTheme.textMuted,
+                ),
+              ),
+              const SizedBox(height: 2),
+              if (isBadge)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryLight,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                )
+              else
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.foregroundColor,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
+                ),
+            ],
           ),
         ),
       ],

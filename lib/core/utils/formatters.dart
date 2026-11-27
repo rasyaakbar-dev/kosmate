@@ -2,7 +2,8 @@ class Formatters {
   /// Formats numeric amount to Indonesian Rupiah representation: e.g. Rp 1.500.000
   static String formatCurrency(num amount) {
     final intVal = amount.round();
-    final str = intVal.toString();
+    final isNegative = intVal < 0;
+    final str = intVal.abs().toString();
     final buffer = StringBuffer();
     int count = 0;
 
@@ -15,7 +16,7 @@ class Formatters {
     }
 
     final formatted = buffer.toString().split('').reversed.join('');
-    return 'Rp $formatted';
+    return isNegative ? '-Rp $formatted' : 'Rp $formatted';
   }
 
   /// Formats DateTime to readable string: YYYY-MM-DD

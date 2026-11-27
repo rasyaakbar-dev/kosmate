@@ -1,12 +1,12 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../core/constants/supabase_constants.dart';
 import '../core/errors/app_exception.dart';
 
 class MidtransService {
   final SupabaseClient _client;
 
-  MidtransService([SupabaseClient? client]) : _client = client ?? supabase;
+  MidtransService([SupabaseClient? client])
+    : _client = client ?? Supabase.instance.client;
 
   Future<void> chargePayment(int paymentId) => _invoke('charge', paymentId);
 
