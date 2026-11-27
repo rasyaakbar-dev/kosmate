@@ -4,6 +4,7 @@ import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/kosmate_components.dart';
 import '../../../core/widgets/list_controls.dart';
+import '../../../core/widgets/zoomable_image.dart';
 import '../../../models/user_model.dart';
 import 'admin_user_detail_screen.dart';
 import 'admin_user_form_screen.dart';
@@ -295,32 +296,39 @@ class _UserManagementTabState extends State<UserManagementTab> {
                                       padding: const EdgeInsets.all(12),
                                       child: Row(
                                         children: [
-                                          CircleAvatar(
-                                            radius: 22,
-                                            backgroundColor: AppTheme
-                                                .primaryColor
-                                                .withValues(alpha: 0.12),
-                                            backgroundImage:
-                                                (u.avatarUrl != null &&
-                                                    u.avatarUrl!.isNotEmpty)
+                                          ZoomableImage(
+                                            imageProvider:
+                                                u.avatarUrl != null &&
+                                                    u.avatarUrl!.isNotEmpty
                                                 ? NetworkImage(u.avatarUrl!)
                                                 : null,
-                                            child:
-                                                (u.avatarUrl == null ||
-                                                    u.avatarUrl!.isEmpty)
-                                                ? Text(
-                                                    u.name.isNotEmpty
-                                                        ? u.name[0]
-                                                              .toUpperCase()
-                                                        : 'U',
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color:
-                                                          AppTheme.primaryColor,
-                                                    ),
-                                                  )
-                                                : null,
+                                            child: CircleAvatar(
+                                              radius: 22,
+                                              backgroundColor: AppTheme
+                                                  .primaryColor
+                                                  .withValues(alpha: 0.12),
+                                              backgroundImage:
+                                                  (u.avatarUrl != null &&
+                                                      u.avatarUrl!.isNotEmpty)
+                                                  ? NetworkImage(u.avatarUrl!)
+                                                  : null,
+                                              child:
+                                                  (u.avatarUrl == null ||
+                                                      u.avatarUrl!.isEmpty)
+                                                  ? Text(
+                                                      u.name.isNotEmpty
+                                                          ? u.name[0]
+                                                                .toUpperCase()
+                                                          : 'U',
+                                                      style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: AppTheme
+                                                            .primaryColor,
+                                                      ),
+                                                    )
+                                                  : null,
+                                            ),
                                           ),
                                           const SizedBox(width: 12),
                                           Expanded(

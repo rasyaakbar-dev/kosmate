@@ -5,6 +5,7 @@ import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/kosmate_components.dart';
+import '../../../core/widgets/zoomable_image.dart';
 import '../../../models/payment_model.dart';
 
 class MidtransPaymentSheet extends StatefulWidget {
@@ -268,34 +269,37 @@ class _MidtransPaymentSheetState extends State<MidtransPaymentSheet> {
                   ),
                   child: Column(
                     children: [
-                      Image.network(
-                        qrUrl,
-                        width: 210,
-                        height: 210,
-                        fit: BoxFit.contain,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return const SizedBox(
-                            width: 210,
-                            height: 210,
-                            child: Center(child: CircularProgressIndicator()),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return const SizedBox(
-                            width: 210,
-                            height: 210,
-                            child: Center(
-                              child: Text(
-                                'Failed to load QR code image.\nPlease check network.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: AppTheme.destructiveColor,
+                      ZoomableImage(
+                        imageProvider: NetworkImage(qrUrl),
+                        child: Image.network(
+                          qrUrl,
+                          width: 210,
+                          height: 210,
+                          fit: BoxFit.contain,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return const SizedBox(
+                              width: 210,
+                              height: 210,
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return const SizedBox(
+                              width: 210,
+                              height: 210,
+                              child: Center(
+                                child: Text(
+                                  'Failed to load QR code image.\nPlease check network.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: AppTheme.destructiveColor,
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       ),
                       const SizedBox(height: 10),
                       const Row(

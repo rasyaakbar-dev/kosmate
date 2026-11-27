@@ -43,9 +43,7 @@ class RoomFormScreen extends StatelessWidget {
         ],
         onCreateHouse: (ctx) => Navigator.push<HouseModel>(
           ctx,
-          MaterialPageRoute(
-            builder: (_) => HouseFormScreen(ownerId: ownerId),
-          ),
+          MaterialPageRoute(builder: (_) => HouseFormScreen(ownerId: ownerId)),
         ),
         onSaved: (saved) => Navigator.pop(context, saved),
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/zoomable_image.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/list_controls.dart';
 import '../../../models/booking_model.dart';
@@ -549,13 +550,16 @@ class _HouseRoomsManagerViewState extends State<HouseRoomsManagerView> {
                     child:
                         house.thumbnailUrl != null &&
                             house.thumbnailUrl!.isNotEmpty
-                        ? Image.network(
-                            house.thumbnailUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => const Icon(
-                              Icons.home_work_outlined,
-                              size: 32,
-                              color: AppTheme.textMuted,
+                        ? ZoomableImage(
+                            imageProvider: NetworkImage(house.thumbnailUrl!),
+                            child: Image.network(
+                              house.thumbnailUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => const Icon(
+                                Icons.home_work_outlined,
+                                size: 32,
+                                color: AppTheme.textMuted,
+                              ),
                             ),
                           )
                         : const Icon(
@@ -1125,12 +1129,15 @@ class _HouseRoomsManagerViewState extends State<HouseRoomsManagerView> {
                     height: 56,
                     color: AppTheme.surfaceLight,
                     child: hasPhoto
-                        ? Image.network(
-                            room.imageUrls.first,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => const Icon(
-                              Icons.meeting_room_outlined,
-                              color: AppTheme.accentColor,
+                        ? ZoomableImage(
+                            imageProvider: NetworkImage(room.imageUrls.first),
+                            child: Image.network(
+                              room.imageUrls.first,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => const Icon(
+                                Icons.meeting_room_outlined,
+                                color: AppTheme.accentColor,
+                              ),
                             ),
                           )
                         : const Icon(

@@ -7,6 +7,7 @@ import '../../../../core/di/service_locator.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/kosmate_components.dart';
+import '../../../../core/widgets/zoomable_image.dart';
 import '../../../../models/payment_model.dart';
 
 void showSubmitReceiptDialog(
@@ -74,13 +75,16 @@ void showSubmitReceiptDialog(
                 if (selectedImageBytes != null) ...[
                   Stack(
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.memory(
-                          selectedImageBytes!,
-                          height: 160,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
+                      ZoomableImage(
+                        imageProvider: MemoryImage(selectedImageBytes!),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.memory(
+                            selectedImageBytes!,
+                            height: 160,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                       Positioned(
@@ -200,9 +204,9 @@ void showSubmitReceiptDialog(
                       } catch (e) {
                         setDialogState(() => isSubmitting = false);
                         if (ctx.mounted) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(content: Text('Error: $e')),
-                          );
+                          ScaffoldMessenger.of(
+                            ctx,
+                          ).showSnackBar(SnackBar(content: Text('Error: $e')));
                         }
                       }
                     },

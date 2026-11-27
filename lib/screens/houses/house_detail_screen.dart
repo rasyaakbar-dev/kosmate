@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/kosmate_components.dart';
 import '../../core/widgets/room_facilities_selector.dart';
+import '../../core/widgets/zoomable_image.dart';
 import '../../models/house_model.dart';
 import '../../models/room_model.dart';
 import '../../models/user_model.dart';
@@ -381,11 +382,16 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
                         child:
                             _house.thumbnailUrl != null &&
                                 _house.thumbnailUrl!.trim().isNotEmpty
-                            ? Image.network(
-                                _house.thumbnailUrl!.trim(),
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) =>
-                                    _buildFallbackBanner(),
+                            ? ZoomableImage(
+                                imageProvider: NetworkImage(
+                                  _house.thumbnailUrl!.trim(),
+                                ),
+                                child: Image.network(
+                                  _house.thumbnailUrl!.trim(),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) =>
+                                      _buildFallbackBanner(),
+                                ),
                               )
                             : _buildFallbackBanner(),
                       ),

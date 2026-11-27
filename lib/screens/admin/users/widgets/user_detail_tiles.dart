@@ -487,10 +487,7 @@ class UserDetailComplaintTile extends StatelessWidget {
         AppTheme.warningLight,
         AppTheme.warningColor,
       ),
-      ComplaintStatus.pending => (
-        AppTheme.surfaceLight,
-        AppTheme.primaryColor,
-      ),
+      ComplaintStatus.pending => (AppTheme.surfaceLight, AppTheme.primaryColor),
       ComplaintStatus.rejected => (
         AppTheme.destructiveLight,
         AppTheme.destructiveColor,
@@ -608,11 +605,7 @@ class UserRoleBadge extends StatelessWidget {
         AppTheme.destructiveColor,
         'ADMIN',
       ),
-      UserRole.owner => (
-        AppTheme.warningLight,
-        AppTheme.warningColor,
-        'OWNER',
-      ),
+      UserRole.owner => (AppTheme.warningLight, AppTheme.warningColor, 'OWNER'),
       UserRole.tenant => (
         AppTheme.primaryLight,
         AppTheme.primaryColor,

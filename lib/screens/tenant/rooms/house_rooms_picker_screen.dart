@@ -8,6 +8,7 @@ import '../../../core/widgets/kosmate_components.dart';
 import '../../../core/widgets/list_controls.dart';
 import '../../../core/widgets/owner_information_card.dart';
 import '../../../core/widgets/room_facilities_card.dart';
+import '../../../core/widgets/zoomable_image.dart';
 import '../../../models/house_model.dart';
 import '../../../models/room_model.dart';
 import '../../../models/user_model.dart';
@@ -15,11 +16,13 @@ import '../../../models/user_model.dart';
 class HouseRoomsPickerScreen extends StatefulWidget {
   final HouseModel house;
   final UserModel user;
+  final int? initialRoomId;
 
   const HouseRoomsPickerScreen({
     super.key,
     required this.house,
     required this.user,
+    this.initialRoomId,
   });
 
   @override
@@ -33,6 +36,7 @@ class _HouseRoomsPickerScreenState extends State<HouseRoomsPickerScreen> {
   final _searchController = TextEditingController();
   late Future<List<RoomModel>> _roomsFuture;
   bool _isSubmitting = false;
+  bool _didOpenInitialRoom = false;
   String _searchQuery = '';
   String _selectedTypeFilter = 'All';
   String _sortId = 'price_asc';
@@ -111,19 +115,25 @@ class _HouseRoomsPickerScreenState extends State<HouseRoomsPickerScreen> {
                               )
                             : PageView.builder(
                                 itemCount: room.imageUrls.length,
-                                itemBuilder: (context, index) => Image.network(
-                                  room.imageUrls[index],
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) => Container(
-                                    color: AppTheme.primaryLight,
-                                    alignment: Alignment.center,
-                                    child: const Icon(
-                                      Icons.broken_image_outlined,
-                                      size: 48,
-                                      color: AppTheme.textSubtle,
+                                itemBuilder: (context, index) {
+                                  final imageUrl = room.imageUrls[index];
+                                  return ZoomableImage(
+                                    imageProvider: NetworkImage(imageUrl),
+                                    child: Image.network(
+                                      imageUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, _, _) => Container(
+                                        color: AppTheme.primaryLight,
+                                        alignment: Alignment.center,
+                                        child: const Icon(
+                                          Icons.broken_image_outlined,
+                                          size: 48,
+                                          color: AppTheme.textSubtle,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
+                                  );
+                                },
                               ),
                       ),
                     ),
@@ -565,12 +575,17 @@ class _HouseRoomsPickerScreenState extends State<HouseRoomsPickerScreen> {
                             child:
                                 widget.house.thumbnailUrl != null &&
                                     widget.house.thumbnailUrl!.trim().isNotEmpty
-                                ? Image.network(
-                                    widget.house.thumbnailUrl!.trim(),
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, _, _) => const Icon(
-                                      Icons.home_work_outlined,
-                                      color: AppTheme.textSubtle,
+                                ? ZoomableImage(
+                                    imageProvider: NetworkImage(
+                                      widget.house.thumbnailUrl!.trim(),
+                                    ),
+                                    child: Image.network(
+                                      widget.house.thumbnailUrl!.trim(),
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, _, _) => const Icon(
+                                        Icons.home_work_outlined,
+                                        color: AppTheme.textSubtle,
+                                      ),
                                     ),
                                   )
                                 : const Icon(
@@ -677,6 +692,22 @@ class _HouseRoomsPickerScreenState extends State<HouseRoomsPickerScreen> {
                         ],
                       ),
                     );
+                  }
+
+                  if (widget.initialRoomId != null && !_didOpenInitialRoom) {
+                    _didOpenInitialRoom = true;
+                    RoomModel? initialRoom;
+                    for (final room in rooms) {
+                      if (room.roomId == widget.initialRoomId) {
+                        initialRoom = room;
+                        break;
+                      }
+                    }
+                    if (initialRoom != null) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) _showRoomDetails(initialRoom!);
+                      });
+                    }
                   }
 
                   final roomTypes = <String>{

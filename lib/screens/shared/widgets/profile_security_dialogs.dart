@@ -79,9 +79,8 @@ void showChangePasswordDialog(BuildContext context) {
                           : Icons.visibility_off_outlined,
                       size: 20,
                     ),
-                    onPressed: () => setDialogState(
-                      () => obscureConfirm = !obscureConfirm,
-                    ),
+                    onPressed: () =>
+                        setDialogState(() => obscureConfirm = !obscureConfirm),
                   ),
                 ),
                 validator: (val) {

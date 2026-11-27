@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/kosmate_components.dart';
+import '../../core/widgets/zoomable_image.dart';
 import '../../models/user_model.dart';
 import 'auth_gate.dart';
 import 'edit_profile_screen.dart';
@@ -111,23 +112,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            CircleAvatar(
-              radius: 48,
-              backgroundColor: AppTheme.primaryLight,
-              backgroundImage:
+            ZoomableImage(
+              imageProvider:
                   _currentUser.avatarUrl != null &&
                       _currentUser.avatarUrl!.isNotEmpty
                   ? NetworkImage(_currentUser.avatarUrl!)
                   : null,
-              child:
-                  _currentUser.avatarUrl == null ||
-                      _currentUser.avatarUrl!.isEmpty
-                  ? const Icon(
-                      Icons.person_outline_rounded,
-                      size: 52,
-                      color: AppTheme.accentColor,
-                    )
-                  : null,
+              child: CircleAvatar(
+                radius: 48,
+                backgroundColor: AppTheme.primaryLight,
+                backgroundImage:
+                    _currentUser.avatarUrl != null &&
+                        _currentUser.avatarUrl!.isNotEmpty
+                    ? NetworkImage(_currentUser.avatarUrl!)
+                    : null,
+                child:
+                    _currentUser.avatarUrl == null ||
+                        _currentUser.avatarUrl!.isEmpty
+                    ? const Icon(
+                        Icons.person_outline_rounded,
+                        size: 52,
+                        color: AppTheme.accentColor,
+                      )
+                    : null,
+              ),
             ),
             const SizedBox(height: 16),
 

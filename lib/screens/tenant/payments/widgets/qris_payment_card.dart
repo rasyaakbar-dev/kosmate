@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/zoomable_image.dart';
 import '../../../../models/payment_model.dart';
 
 class QrisPaymentCard extends StatelessWidget {
@@ -40,12 +41,15 @@ class QrisPaymentCard extends StatelessWidget {
             child: Column(
               children: [
                 if (hasQrUrl)
-                  Image.network(
-                    payment.qrCodeUrl!.trim(),
-                    width: 180,
-                    height: 180,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, _, _) => _buildFallbackQr(),
+                  ZoomableImage(
+                    imageProvider: NetworkImage(payment.qrCodeUrl!.trim()),
+                    child: Image.network(
+                      payment.qrCodeUrl!.trim(),
+                      width: 180,
+                      height: 180,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) => _buildFallbackQr(),
+                    ),
                   )
                 else
                   _buildFallbackQr(),

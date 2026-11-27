@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/kosmate_components.dart';
+import '../../../core/widgets/zoomable_image.dart';
 import '../../../models/complaint_model.dart';
 
 class TenantAddComplaintSheet extends StatefulWidget {
@@ -226,13 +227,16 @@ class _TenantAddComplaintSheetState extends State<TenantAddComplaintSheet> {
               if (_attachmentBytes case final bytes?) ...[
                 Stack(
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.memory(
-                        bytes,
-                        height: 160,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
+                    ZoomableImage(
+                      imageProvider: MemoryImage(bytes),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.memory(
+                          bytes,
+                          height: 160,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                     Positioned(

@@ -8,6 +8,7 @@ import '../../../../core/widgets/complaint_response_sheet.dart';
 import '../../../../core/widgets/list_controls.dart';
 import '../../../../core/widgets/payment_detail_sheet.dart';
 import '../../../../core/widgets/private_storage_image.dart';
+import '../../../../core/widgets/zoomable_image.dart';
 import '../../../../models/booking_model.dart';
 import '../../../../models/complaint_model.dart';
 import '../../../../models/payment_model.dart';
@@ -101,6 +102,7 @@ class TenantInspectorSheetState extends State<TenantInspectorSheet> {
   @override
   Widget build(BuildContext context) {
     final tenant = widget.booking.user;
+    final avatarUrl = tenant?.avatarUrl?.trim();
     final room = widget.booking.room;
     final house = room?.house;
 
@@ -138,18 +140,28 @@ class TenantInspectorSheetState extends State<TenantInspectorSheet> {
                   children: [
                     Row(
                       children: [
-                        CircleAvatar(
-                          radius: 28,
-                          backgroundColor: AppTheme.primaryLight,
-                          child: Text(
-                            tenant?.name.isNotEmpty == true
-                                ? tenant!.name[0].toUpperCase()
-                                : 'T',
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryColor,
-                            ),
+                        ZoomableImage(
+                          imageProvider: avatarUrl?.isNotEmpty == true
+                              ? NetworkImage(avatarUrl!)
+                              : null,
+                          child: CircleAvatar(
+                            radius: 28,
+                            backgroundColor: AppTheme.primaryLight,
+                            backgroundImage: avatarUrl?.isNotEmpty == true
+                                ? NetworkImage(avatarUrl!)
+                                : null,
+                            child: avatarUrl?.isNotEmpty == true
+                                ? null
+                                : Text(
+                                    tenant?.name.isNotEmpty == true
+                                        ? tenant!.name[0].toUpperCase()
+                                        : 'T',
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(width: 14),

@@ -20,8 +20,7 @@ class OwnerRoomsTab extends StatelessWidget {
       title: 'Boarding Houses',
       subtitle: 'Select a house to manage its rooms',
       searchHint: 'Search houses by name or address...',
-      emptyHousesSubtitle:
-          'Create your first boarding house to start managing its rooms and tenants.',
+      emptyHousesSubtitle: 'Create your first boarding house to start managing its rooms and tenants.',
       emptyRoomsSubtitle:
           'Add your first room to make it available for tenants.',
       onAddHouse: (ctx) async {

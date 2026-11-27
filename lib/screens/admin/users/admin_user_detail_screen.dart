@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/complaint_response_sheet.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
 import '../../../core/widgets/payment_detail_sheet.dart';
+import '../../../core/widgets/zoomable_image.dart';
 import '../../../models/booking_model.dart';
 import '../../../models/complaint_model.dart';
 import '../../../models/house_model.dart';
@@ -195,22 +196,25 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
                         children: [
                           Row(
                             children: [
-                              CircleAvatar(
-                                radius: 32,
-                                backgroundColor: AppTheme.primaryLight,
-                                backgroundImage: avatarImage,
-                                child: avatarImage == null
-                                    ? Text(
-                                        _user.name.isNotEmpty
-                                            ? _user.name[0].toUpperCase()
-                                            : 'U',
-                                        style: const TextStyle(
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.primaryColor,
-                                        ),
-                                      )
-                                    : null,
+                              ZoomableImage(
+                                imageProvider: avatarImage,
+                                child: CircleAvatar(
+                                  radius: 32,
+                                  backgroundColor: AppTheme.primaryLight,
+                                  backgroundImage: avatarImage,
+                                  child: avatarImage == null
+                                      ? Text(
+                                          _user.name.isNotEmpty
+                                              ? _user.name[0].toUpperCase()
+                                              : 'U',
+                                          style: const TextStyle(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.primaryColor,
+                                          ),
+                                        )
+                                      : null,
+                                ),
                               ),
                               const SizedBox(width: 14),
                               Expanded(

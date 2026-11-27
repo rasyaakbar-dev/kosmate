@@ -4,6 +4,7 @@ import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/kosmate_components.dart';
+import '../../../core/widgets/zoomable_image.dart';
 import '../../../models/booking_model.dart';
 import '../../../models/complaint_model.dart';
 import '../../../models/payment_model.dart';
@@ -730,24 +731,30 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: AppTheme.warningLight,
-                backgroundImage:
+              ZoomableImage(
+                imageProvider:
                     tenant?.avatarUrl != null && tenant!.avatarUrl!.isNotEmpty
                     ? NetworkImage(tenant.avatarUrl!)
                     : null,
-                child: tenant?.avatarUrl == null || tenant!.avatarUrl!.isEmpty
-                    ? Text(
-                        tenant?.name.isNotEmpty == true
-                            ? tenant!.name[0].toUpperCase()
-                            : 'T',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.warningColor,
-                        ),
-                      )
-                    : null,
+                child: CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AppTheme.warningLight,
+                  backgroundImage:
+                      tenant?.avatarUrl != null && tenant!.avatarUrl!.isNotEmpty
+                      ? NetworkImage(tenant.avatarUrl!)
+                      : null,
+                  child: tenant?.avatarUrl == null || tenant!.avatarUrl!.isEmpty
+                      ? Text(
+                          tenant?.name.isNotEmpty == true
+                              ? tenant!.name[0].toUpperCase()
+                              : 'T',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.warningColor,
+                          ),
+                        )
+                      : null,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -971,6 +978,7 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
   }) {
     final tenant = booking.user;
     final tenantName = tenant?.name ?? 'Tenant';
+    final avatarUrl = tenant?.avatarUrl?.trim();
     final room = booking.room;
     final roomNumber = room?.roomNumber ?? 'Room ${booking.roomId}';
     final houseName = room?.house?.houseName ?? 'House';
@@ -999,17 +1007,29 @@ class _OwnerManagementHubTabState extends State<OwnerManagementHubTab> {
             padding: const EdgeInsets.all(14.0),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: AppTheme.primaryLight,
-                  child: Text(
-                    tenantName.isNotEmpty ? tenantName[0].toUpperCase() : 'T',
-                    style: const TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.primaryColor,
-                    ),
+                ZoomableImage(
+                  imageProvider: avatarUrl?.isNotEmpty == true
+                      ? NetworkImage(avatarUrl!)
+                      : null,
+                  child: CircleAvatar(
+                    radius: 24,
+                    backgroundColor: AppTheme.primaryLight,
+                    backgroundImage: avatarUrl?.isNotEmpty == true
+                        ? NetworkImage(avatarUrl!)
+                        : null,
+                    child: avatarUrl?.isNotEmpty == true
+                        ? null
+                        : Text(
+                            tenantName.isNotEmpty
+                                ? tenantName[0].toUpperCase()
+                                : 'T',
+                            style: const TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(width: 14),

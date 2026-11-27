@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../di/service_locator.dart';
+import 'zoomable_image.dart';
 
 class PrivateStorageImage extends StatefulWidget {
   final String bucketName;
@@ -57,13 +58,16 @@ class _PrivateStorageImageState extends State<PrivateStorageImage> {
             child: const Center(child: CircularProgressIndicator()),
           );
         }
-        return Image.network(
-          snapshot.data!,
-          height: widget.height,
-          width: double.infinity,
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) =>
-              Text('Unable to load private image: $error'),
+        return ZoomableImage(
+          imageProvider: NetworkImage(snapshot.data!),
+          child: Image.network(
+            snapshot.data!,
+            height: widget.height,
+            width: double.infinity,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) =>
+                Text('Unable to load private image: $error'),
+          ),
         );
       },
     );

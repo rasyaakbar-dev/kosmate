@@ -271,14 +271,14 @@ class _TenantPaymentsTabState extends State<TenantPaymentsTab> {
                   if (activePayment.status == PaymentStatus.pending) ...[
                     const Divider(height: 24),
                     QrisPaymentCard(
-                    payment: activePayment,
-                    onPayPressed: () => _startMidtransPayment(activePayment),
-                    onSubmitReceiptPressed: () => showSubmitReceiptDialog(
-                      context,
                       payment: activePayment,
-                      onSubmitted: _loadData,
+                      onPayPressed: () => _startMidtransPayment(activePayment),
+                      onSubmitReceiptPressed: () => showSubmitReceiptDialog(
+                        context,
+                        payment: activePayment,
+                        onSubmitted: _loadData,
+                      ),
                     ),
-                  ),
                   ],
                 ],
               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/zoomable_image.dart';
 import '../../../models/house_model.dart';
 import '../../../models/room_model.dart';
 
@@ -52,12 +53,17 @@ class HouseCard extends StatelessWidget {
                       child:
                           house.thumbnailUrl != null &&
                               house.thumbnailUrl!.trim().isNotEmpty
-                          ? Image.network(
-                              house.thumbnailUrl!.trim(),
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => const Icon(
-                                Icons.home_work_outlined,
-                                color: AppTheme.textSubtle,
+                          ? ZoomableImage(
+                              imageProvider: NetworkImage(
+                                house.thumbnailUrl!.trim(),
+                              ),
+                              child: Image.network(
+                                house.thumbnailUrl!.trim(),
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => const Icon(
+                                  Icons.home_work_outlined,
+                                  color: AppTheme.textSubtle,
+                                ),
                               ),
                             )
                           : const Icon(
