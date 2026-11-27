@@ -4,6 +4,7 @@ import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
+import '../../../core/widgets/kosmate_components.dart';
 import '../../../core/widgets/list_controls.dart';
 import '../../../core/widgets/owner_information_card.dart';
 import '../../../models/house_model.dart';
@@ -294,25 +295,10 @@ class _HouseRoomsPickerScreenState extends State<HouseRoomsPickerScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
+                      child: KosMateCancelButton(
                         onPressed: _isSubmitting
                             ? null
                             : () => Navigator.pop(ctx),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          side: const BorderSide(color: AppTheme.borderMedium),
-                        ),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            color: AppTheme.textMuted,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
                       ),
                     ),
                     const SizedBox(width: 12),

@@ -119,7 +119,7 @@ class _UserManagementTabState extends State<UserManagementTab> {
         messenger.showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: AppTheme.destructiveColor,
           ),
         );
       }

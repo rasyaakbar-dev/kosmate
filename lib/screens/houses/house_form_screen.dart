@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/kosmate_components.dart';
 import '../../models/house_model.dart';
 
 class HouseFormScreen extends StatefulWidget {
@@ -76,7 +77,7 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to pick image: $e'),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: AppTheme.destructiveColor,
           ),
         );
       }
@@ -215,7 +216,7 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text('Failed to save house: $e'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppTheme.destructiveColor,
         ),
       );
     } finally {
@@ -357,33 +358,18 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        side: const BorderSide(color: AppTheme.borderMedium),
-                      ),
+                    child: KosMateCancelButton(
                       onPressed: _isLoading
                           ? null
                           : () => Navigator.pop(context),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textMuted,
-                        ),
-                      ),
                     ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: ElevatedButton(
+                    child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.accentColor,
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -391,26 +377,24 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
                         elevation: 0,
                       ),
                       onPressed: _isLoading ? null : _handleSave,
-                      child: _isLoading
+                      icon: _isLoading
                           ? const SizedBox(
-                              width: 20,
-                              height: 20,
+                              width: 18,
+                              height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 color: Colors.white,
                               ),
                             )
-                          : Text(
-                              widget.isEditing
-                                  ? 'Save Changes'
-                                  : 'Create House',
-                              style: const TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
+                          : const Icon(Icons.save_outlined, size: 18),
+                      label: Text(
+                        widget.isEditing ? 'Save Changes' : 'Create House',
+                        style: const TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ),
                 ],

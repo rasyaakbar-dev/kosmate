@@ -4,7 +4,6 @@ import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/kosmate_components.dart';
 import '../../models/user_model.dart';
-// import '../debug/midtrans_debug_screen.dart';
 import 'auth_gate.dart';
 import 'edit_profile_screen.dart';
 
@@ -82,7 +81,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine subtitle according to role & room/properties
     String subtitle;
     if (widget.subtitleInfo != null && widget.subtitleInfo!.isNotEmpty) {
       subtitle = widget.subtitleInfo!;
@@ -113,7 +111,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Circular Avatar
             CircleAvatar(
               radius: 48,
               backgroundColor: AppTheme.primaryLight,
@@ -134,7 +131,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 16),
 
-            // User Name
             Text(
               _currentUser.name,
               style: const TextStyle(
@@ -146,7 +142,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 4),
 
-            // Role Subtitle
             Text(
               subtitle,
               style: const TextStyle(
@@ -157,7 +152,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 24),
 
-            // User Information Card
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -208,26 +202,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Actions
             KosMateButton.outlined(
               label: 'Edit profile',
               icon: Icons.edit_outlined,
               onPressed: _openEditProfileScreen,
             ),
-            // const SizedBox(height: 12),
-            // KosMateButton.outlined(
-            //   label: 'Midtrans Sandbox Debugger',
-            //   icon: Icons.developer_mode_rounded,
-            //   onPressed: () {
-            //     Navigator.push(
-            //       context,
-            //       MaterialPageRoute(
-            //         builder: (_) =>
-            //             MidtransDebugScreen(currentUser: _currentUser),
-            //       ),
-            //     );
-            //   },
-            // ),
             const SizedBox(height: 12),
             KosMateButton.destructive(
               label: 'Logout',

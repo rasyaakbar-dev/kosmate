@@ -5,8 +5,10 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/kosmate_components.dart';
 import '../../models/user_model.dart';
 import '../auth/login_screen.dart';
+import 'widgets/profile_security_dialogs.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final UserModel user;
@@ -67,7 +69,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to pick image: $e'),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: AppTheme.destructiveColor,
           ),
         );
       }
@@ -209,7 +211,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(errorMessage),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppTheme.destructiveColor,
           duration: const Duration(seconds: 5),
         ),
       );
@@ -219,222 +221,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   void _showChangePasswordDialog() {
-    final newPassCtrl = TextEditingController();
-    final confirmPassCtrl = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-    bool obscureNew = true;
-    bool obscureConfirm = true;
-    bool isSaving = false;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Row(
-            children: [
-              Icon(Icons.lock_outline_rounded, color: AppTheme.accentColor),
-              SizedBox(width: 10),
-              Text(
-                'Change Password',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-              ),
-            ],
-          ),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: newPassCtrl,
-                  obscureText: obscureNew,
-                  decoration: InputDecoration(
-                    labelText: 'New Password',
-                    prefixIcon: const Icon(
-                      Icons.vpn_key_outlined,
-                      color: AppTheme.textMuted,
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        obscureNew
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                        size: 20,
-                      ),
-                      onPressed: () =>
-                          setDialogState(() => obscureNew = !obscureNew),
-                    ),
-                  ),
-                  validator: (val) {
-                    if (val == null || val.trim().isEmpty) {
-                      return 'Please enter new password';
-                    }
-                    if (val.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: confirmPassCtrl,
-                  obscureText: obscureConfirm,
-                  decoration: InputDecoration(
-                    labelText: 'Confirm New Password',
-                    prefixIcon: const Icon(
-                      Icons.lock_clock_outlined,
-                      color: AppTheme.textMuted,
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        obscureConfirm
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                        size: 20,
-                      ),
-                      onPressed: () => setDialogState(
-                        () => obscureConfirm = !obscureConfirm,
-                      ),
-                    ),
-                  ),
-                  validator: (val) {
-                    if (val == null || val.trim().isEmpty) {
-                      return 'Please confirm your password';
-                    }
-                    if (val != newPassCtrl.text) {
-                      return 'Passwords do not match';
-                    }
-                    return null;
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: isSaving ? null : () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              onPressed: isSaving
-                  ? null
-                  : () async {
-                      if (!formKey.currentState!.validate()) return;
-                      final messenger = ScaffoldMessenger.of(context);
-                      final navigator = Navigator.of(ctx);
-                      setDialogState(() => isSaving = true);
-                      try {
-                        await _authService.updatePassword(
-                          newPassCtrl.text.trim(),
-                        );
-                        navigator.pop();
-                        messenger.showSnackBar(
-                          const SnackBar(
-                            content: Text('Password changed successfully!'),
-                            backgroundColor: AppTheme.successColor,
-                          ),
-                        );
-                      } catch (e) {
-                        setDialogState(() => isSaving = false);
-                        messenger.showSnackBar(
-                          SnackBar(
-                            content: Text('Failed to update password: $e'),
-                            backgroundColor: Colors.redAccent,
-                          ),
-                        );
-                      }
-                    },
-              child: isSaving
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Text('Update Password'),
-            ),
-          ],
-        ),
-      ),
-    );
+    showChangePasswordDialog(context);
   }
 
   void _showDeleteAccountDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: AppTheme.destructiveColor),
-            SizedBox(width: 10),
-            Text(
-              'Delete Account',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.destructiveColor,
+    showDeleteAccountDialog(
+      context,
+      onConfirmed: () async {
+        setState(() => _isLoading = true);
+        try {
+          await _authService.deleteAccount(widget.user.userId);
+          if (mounted) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+              (route) => false,
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            setState(() => _isLoading = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to delete account: $e'),
+                backgroundColor: AppTheme.destructiveColor,
               ),
-            ),
-          ],
-        ),
-        content: const Text(
-          'Are you sure you want to permanently delete your account?\n\nThis action cannot be undone. All your profile data, personal history, and active sessions will be removed.',
-          style: TextStyle(fontSize: 14, color: AppTheme.textMuted),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.destructiveColor,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              setState(() => _isLoading = true);
-              try {
-                await _authService.deleteAccount(widget.user.userId);
-                if (mounted) {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    (route) => false,
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  setState(() => _isLoading = false);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to delete account: $e'),
-                      backgroundColor: Colors.redAccent,
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text('Delete Permanently'),
-          ),
-        ],
-      ),
+            );
+          }
+        }
+      },
     );
   }
 
@@ -744,37 +559,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.destructiveColor,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        side: const BorderSide(
-                          color: AppTheme.destructiveColor,
-                          width: 1.5,
-                        ),
-                      ),
+                    child: KosMateCancelButton(
                       onPressed: _isLoading
                           ? null
                           : () => Navigator.pop(context),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.destructiveColor,
-                        ),
-                      ),
                     ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: ElevatedButton(
+                    child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.accentColor,
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -782,24 +578,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         elevation: 0,
                       ),
                       onPressed: _isLoading ? null : _handleSave,
-                      child: _isLoading
+                      icon: _isLoading
                           ? const SizedBox(
-                              width: 20,
-                              height: 20,
+                              width: 18,
+                              height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 color: Colors.white,
                               ),
                             )
-                          : const Text(
-                              'Save Changes',
-                              style: TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
+                          : const Icon(Icons.save_outlined, size: 18),
+                      label: const Text(
+                        'Save Changes',
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ),
                 ],

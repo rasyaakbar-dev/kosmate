@@ -7,10 +7,10 @@ import '../../../core/widgets/kosmate_components.dart';
 import '../../../core/widgets/private_storage_image.dart';
 import '../../../models/complaint_model.dart';
 
-class TenantComplaintDetailDialog extends StatelessWidget {
+class TenantComplaintDetailSheet extends StatelessWidget {
   final ComplaintModel complaint;
 
-  const TenantComplaintDetailDialog({super.key, required this.complaint});
+  const TenantComplaintDetailSheet({super.key, required this.complaint});
 
   static Future<void> show(BuildContext context, ComplaintModel complaint) {
     return showModalBottomSheet(
@@ -20,7 +20,7 @@ class TenantComplaintDetailDialog extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => TenantComplaintDetailDialog(complaint: complaint),
+      builder: (ctx) => TenantComplaintDetailSheet(complaint: complaint),
     );
   }
 
@@ -59,7 +59,6 @@ class TenantComplaintDetailDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Banner tile
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -116,7 +115,6 @@ class TenantComplaintDetailDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Complaint Information Card
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -154,7 +152,6 @@ class TenantComplaintDetailDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Description Card
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),

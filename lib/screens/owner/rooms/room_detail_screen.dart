@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/constants/supabase_constants.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/complaint_response_sheet.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
 import '../../../core/widgets/kosmate_components.dart';
-import '../../../core/widgets/private_storage_image.dart';
 import '../../../core/widgets/room_facilities_card.dart';
 import '../../../models/booking_model.dart';
 import '../../../models/complaint_model.dart';
@@ -32,7 +31,6 @@ class RoomDetailScreen extends StatefulWidget {
 
 class _RoomDetailScreenState extends State<RoomDetailScreen> {
   final _roomService = sl.room;
-  final _complaintService = sl.complaint;
   late RoomModel _room;
   bool _isLoading = true;
 
@@ -92,131 +90,13 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
   }
 
   void _showComplaintResponseDialog(ComplaintModel complaint) {
-    final responseCtrl = TextEditingController(text: complaint.response ?? '');
-    final attachmentPath = complaint.attachmentPath;
-    ComplaintStatus selectedStatus = complaint.status == ComplaintStatus.pending
-        ? ComplaintStatus.inProgress
-        : complaint.status;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(complaint.title),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Tenant: ${complaint.user?.name ?? "Tenant"}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textDark,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Description:\n${complaint.description}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.textMuted,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                if (attachmentPath != null && attachmentPath.isNotEmpty) ...[
-                  PrivateStorageImage(
-                    bucketName: SupabaseConstants.complaintAttachmentsBucket,
-                    path: attachmentPath,
-                    height: 180,
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                DropdownButtonFormField<ComplaintStatus>(
-                  isExpanded: true,
-                  initialValue: selectedStatus,
-                  decoration: const InputDecoration(labelText: 'Status'),
-                  items: const [
-                    DropdownMenuItem(
-                      value: ComplaintStatus.inProgress,
-                      child: Text(
-                        'In Progress',
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ),
-                    DropdownMenuItem(
-                      value: ComplaintStatus.resolved,
-                      child: Text(
-                        'Resolved',
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ),
-                    DropdownMenuItem(
-                      value: ComplaintStatus.rejected,
-                      child: Text(
-                        'Rejected',
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) {
-                      setDialogState(() => selectedStatus = val);
-                    }
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: responseCtrl,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Response / Action taken',
-                    hintText: 'e.g., Plumber has completed the repairs.',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentColor,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () async {
-                final messenger = ScaffoldMessenger.of(context);
-                try {
-                  await _complaintService.respondToComplaint(
-                    complaintId: complaint.complaintId,
-                    responseText: responseCtrl.text.trim(),
-                    status: selectedStatus,
-                  );
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  setState(() => _isLoading = true);
-                  _loadRoomDetails();
-                  messenger.showSnackBar(
-                    const SnackBar(
-                      content: Text('Complaint updated successfully!'),
-                      backgroundColor: AppTheme.successColor,
-                    ),
-                  );
-                } catch (e) {
-                  messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
-                }
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        ),
-      ),
+    ComplaintResponseSheet.show(
+      context,
+      complaint,
+      onUpdated: () {
+        setState(() => _isLoading = true);
+        _loadRoomDetails();
+      },
     );
   }
 
@@ -565,7 +445,6 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Maintenance & Complaints section
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(18),
@@ -667,7 +546,6 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
                     const SizedBox(height: 36),
 
-                    // Action Buttons: Delete and Edit room
                     Row(
                       children: [
                         Expanded(

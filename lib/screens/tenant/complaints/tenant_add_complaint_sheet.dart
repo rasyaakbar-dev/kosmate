@@ -5,14 +5,15 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/kosmate_components.dart';
 import '../../../models/complaint_model.dart';
 
-class TenantAddComplaintDialog extends StatefulWidget {
+class TenantAddComplaintSheet extends StatefulWidget {
   final int userId;
   final int roomId;
   final VoidCallback onSubmitted;
 
-  const TenantAddComplaintDialog({
+  const TenantAddComplaintSheet({
     super.key,
     required this.userId,
     required this.roomId,
@@ -32,7 +33,7 @@ class TenantAddComplaintDialog extends StatefulWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => TenantAddComplaintDialog(
+      builder: (ctx) => TenantAddComplaintSheet(
         userId: userId,
         roomId: roomId,
         onSubmitted: onSubmitted,
@@ -41,11 +42,11 @@ class TenantAddComplaintDialog extends StatefulWidget {
   }
 
   @override
-  State<TenantAddComplaintDialog> createState() =>
-      _TenantAddComplaintDialogState();
+  State<TenantAddComplaintSheet> createState() =>
+      _TenantAddComplaintSheetState();
 }
 
-class _TenantAddComplaintDialogState extends State<TenantAddComplaintDialog> {
+class _TenantAddComplaintSheetState extends State<TenantAddComplaintSheet> {
   final _complaintService = sl.complaint;
   final _formKey = GlobalKey<FormState>();
 
@@ -322,24 +323,10 @@ class _TenantAddComplaintDialogState extends State<TenantAddComplaintDialog> {
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
+                    child: KosMateCancelButton(
                       onPressed: _isSubmitting
                           ? null
                           : () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        side: const BorderSide(color: AppTheme.borderMedium),
-                      ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          color: AppTheme.textMuted,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
                     ),
                   ),
                   const SizedBox(width: 12),

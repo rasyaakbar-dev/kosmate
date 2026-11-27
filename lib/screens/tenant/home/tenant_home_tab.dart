@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/kosmate_components.dart';
 import '../../../models/booking_model.dart';
 import '../../../models/complaint_model.dart';
 import '../../../models/payment_model.dart';
@@ -167,9 +168,9 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
             ),
           ),
           actions: [
-            TextButton(
+            KosMateCancelButton(
+              isOutlined: false,
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -200,7 +201,10 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
           ],
         ),
       ),
-    );
+    ).whenComplete(() {
+      titleController.dispose();
+      descController.dispose();
+    });
   }
 
   @override

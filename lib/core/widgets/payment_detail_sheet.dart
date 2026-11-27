@@ -8,7 +8,7 @@ import 'kosmate_components.dart';
 import 'private_storage_image.dart';
 
 /// Shared bottom sheet displaying full payment/invoice details, mirroring
-/// [TenantComplaintDetailDialog], with optional role-specific actions.
+/// [TenantComplaintDetailSheet], with optional role-specific actions.
 class PaymentDetailSheet extends StatelessWidget {
   final PaymentModel payment;
   final VoidCallback? onPayNow;

@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
+import '../../../core/widgets/kosmate_components.dart';
 import '../../../models/house_model.dart';
 import '../../../models/user_model.dart';
 
@@ -257,9 +258,9 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
           'Are you sure you want to delete "${widget.house!.houseName}"? All rooms inside will be permanently deleted.',
         ),
         actions: [
-          TextButton(
+          KosMateCancelButton(
+            isOutlined: false,
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -375,7 +376,6 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Owner Dropdown
                     const Text(
                       'Owner *',
                       style: TextStyle(
@@ -580,29 +580,10 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton(
+                          child: KosMateCancelButton(
                             onPressed: _isSaving
                                 ? null
                                 : () => Navigator.pop(context),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              side: const BorderSide(
-                                color: AppTheme.primaryColor,
-                                width: 1.5,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: const Text(
-                              'Cancel',
-                              style: TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
                           ),
                         ),
                         const SizedBox(width: 14),

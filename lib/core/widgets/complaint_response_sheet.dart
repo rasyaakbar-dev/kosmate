@@ -9,7 +9,7 @@ import 'kosmate_components.dart';
 import 'private_storage_image.dart';
 
 /// Bottom sheet for Admin / Owner to inspect a complaint in full (matching
-/// [TenantComplaintDetailDialog]) and respond / update its status.
+/// [TenantComplaintDetailSheet]) and respond / update its status.
 class ComplaintResponseSheet extends StatefulWidget {
   final ComplaintModel complaint;
   final VoidCallback? onUpdated;
@@ -135,7 +135,6 @@ class _ComplaintResponseSheetState extends State<ComplaintResponseSheet> {
             ),
             const SizedBox(height: 16),
 
-            // Banner tile
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -195,7 +194,6 @@ class _ComplaintResponseSheetState extends State<ComplaintResponseSheet> {
             ),
             const SizedBox(height: 16),
 
-            // Info card
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -304,30 +302,15 @@ class _ComplaintResponseSheetState extends State<ComplaintResponseSheet> {
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
+                  child: KosMateCancelButton(
                     onPressed: _isSaving ? null : () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text('Cancel'),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: ElevatedButton(
+                  child: ElevatedButton.icon(
                     onPressed: _isSaving ? null : _save,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.accentColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: _isSaving
+                    icon: _isSaving
                         ? const SizedBox(
                             width: 18,
                             height: 18,
@@ -336,7 +319,16 @@ class _ComplaintResponseSheetState extends State<ComplaintResponseSheet> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text('Save Response'),
+                        : const Icon(Icons.save_outlined, size: 18),
+                    label: Text(_isSaving ? 'Saving...' : 'Save Response'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.accentColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
                   ),
                 ),
               ],

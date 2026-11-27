@@ -73,7 +73,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text('Registration failed: ${e.toString()}'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppTheme.destructiveColor,
         ),
       );
     } finally {

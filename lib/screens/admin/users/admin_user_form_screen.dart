@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
+import '../../../core/widgets/kosmate_components.dart';
 import '../../../models/user_model.dart';
 
 class AdminUserFormScreen extends StatefulWidget {
@@ -171,7 +172,6 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
       if (widget.isEditing) {
         String? finalAvatarUrl = _currentAvatarUrl;
 
-        // If new photo was selected, upload to storage
         if (_selectedAvatarBytes != null) {
           finalAvatarUrl = await _storageService.uploadAvatar(
             widget.user!.userId,
@@ -272,9 +272,9 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
           'Are you sure you want to permanently delete user "${widget.user!.name}" (${widget.user!.email})?\n\nThis will remove all associated user data.',
         ),
         actions: [
-          TextButton(
+          KosMateCancelButton(
+            isOutlined: false,
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -621,29 +621,10 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
+                    child: KosMateCancelButton(
                       onPressed: _isLoading
                           ? null
                           : () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(
-                          color: AppTheme.primaryColor,
-                          width: 1.5,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
                     ),
                   ),
                   const SizedBox(width: 14),

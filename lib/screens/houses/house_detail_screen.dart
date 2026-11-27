@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/widgets/kosmate_components.dart';
 import '../../core/widgets/room_facilities_selector.dart';
 import '../../models/house_model.dart';
 import '../../models/room_model.dart';
@@ -153,7 +154,7 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
         messenger.showSnackBar(
           SnackBar(
             content: Text('Failed to delete house: $e'),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: AppTheme.destructiveColor,
           ),
         );
       }
@@ -240,9 +241,9 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
             ),
           ),
           actions: [
-            TextButton(
+            KosMateCancelButton(
+              isOutlined: false,
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -299,7 +300,11 @@ class _HouseDetailScreenState extends State<HouseDetailScreen> {
           ],
         ),
       ),
-    );
+    ).whenComplete(() {
+      numberCtrl.dispose();
+      typeCtrl.dispose();
+      priceCtrl.dispose();
+    });
   }
 
   @override

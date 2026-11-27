@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/di/service_locator.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/kosmate_app_bar.dart';
+import '../../core/widgets/kosmate_components.dart';
 import '../../models/user_model.dart';
 import '../admin/admin_main_screen.dart';
 import '../owner/owner_main_screen.dart';
@@ -69,7 +70,6 @@ class _LoginScreenState extends State<LoginScreen> {
       final user = await _authService.getCurrentUserProfile();
       if (!mounted) return;
 
-      // Handle Remember Me persistence
       try {
         final prefs = await SharedPreferences.getInstance();
         if (_rememberMe) {
@@ -117,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text('Login failed: ${e.toString()}'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppTheme.destructiveColor,
         ),
       );
     } finally {
@@ -250,9 +250,9 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
           actions: [
-            TextButton(
+            KosMateCancelButton(
+              isOutlined: false,
               onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -287,7 +287,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         messenger.showSnackBar(
                           SnackBar(
                             content: Text('Failed: $e'),
-                            backgroundColor: Colors.redAccent,
+                            backgroundColor: AppTheme.destructiveColor,
                           ),
                         );
                       }
@@ -306,7 +306,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
       ),
-    );
+    ).whenComplete(emailCtrl.dispose);
   }
 
   @override

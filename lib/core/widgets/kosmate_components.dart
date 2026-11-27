@@ -512,3 +512,48 @@ class KosMateButton extends StatelessWidget {
     );
   }
 }
+
+class KosMateCancelButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final String label;
+  final bool isOutlined;
+  final IconData icon;
+
+  const KosMateCancelButton({
+    super.key,
+    required this.onPressed,
+    this.label = 'Cancel',
+    this.isOutlined = true,
+    this.icon = Icons.close,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isOutlined) {
+      return TextButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 18),
+        label: Text(label),
+        style: TextButton.styleFrom(foregroundColor: AppTheme.destructiveColor),
+      );
+    }
+
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18, color: AppTheme.destructiveColor),
+      label: Text(
+        label,
+        style: const TextStyle(
+          color: AppTheme.destructiveColor,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppTheme.destructiveColor,
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        side: const BorderSide(color: AppTheme.destructiveColor),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+}

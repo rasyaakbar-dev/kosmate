@@ -5,6 +5,7 @@ import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/kosmate_app_bar.dart';
+import '../../../core/widgets/kosmate_components.dart';
 import '../../../core/widgets/private_storage_image.dart';
 import '../../../models/payment_model.dart';
 import '../../../models/room_model.dart';
@@ -169,9 +170,9 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
           'Are you sure you want to delete this payment record? This action cannot be undone.',
         ),
         actions: [
-          TextButton(
+          KosMateCancelButton(
+            isOutlined: false,
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -514,29 +515,10 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton(
+                          child: KosMateCancelButton(
                             onPressed: _isSaving
                                 ? null
                                 : () => Navigator.pop(context),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              side: const BorderSide(
-                                color: AppTheme.primaryColor,
-                                width: 1.5,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: const Text(
-                              'Cancel',
-                              style: TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
                           ),
                         ),
                         const SizedBox(width: 14),
