@@ -29,29 +29,6 @@ class AuthService {
         password: password,
         data: {'name': name.trim(), 'phone': phone.trim(), 'role': role.name},
       );
-
-      // Ensure profile row exists if DB trigger did not create it.
-      final authUser = response.user;
-      if (authUser != null) {
-        try {
-          final existing = await _client
-              .from(SupabaseConstants.usersTable)
-              .select('user_id')
-              .eq('auth_id', authUser.id)
-              .maybeSingle();
-
-          if (existing == null) {
-            await _client.from(SupabaseConstants.usersTable).insert({
-              'auth_id': authUser.id,
-              'name': name.trim(),
-              'email': email.trim(),
-              'phone': phone.trim(),
-              'role': role.name,
-            });
-          }
-        } catch (_) {}
-      }
-
       return response;
     } on AuthException catch (e) {
       throw AuthAppException(e.message, code: e.statusCode, cause: e);

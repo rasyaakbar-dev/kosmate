@@ -9,10 +9,19 @@ import '../../../models/complaint_model.dart';
 
 class TenantComplaintDetailSheet extends StatelessWidget {
   final ComplaintModel complaint;
+  final Future<bool> Function(ComplaintModel complaint) onDelete;
 
-  const TenantComplaintDetailSheet({super.key, required this.complaint});
+  const TenantComplaintDetailSheet({
+    super.key,
+    required this.complaint,
+    required this.onDelete,
+  });
 
-  static Future<void> show(BuildContext context, ComplaintModel complaint) {
+  static Future<void> show(
+    BuildContext context,
+    ComplaintModel complaint, {
+    required Future<bool> Function(ComplaintModel complaint) onDelete,
+  }) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -20,7 +29,8 @@ class TenantComplaintDetailSheet extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => TenantComplaintDetailSheet(complaint: complaint),
+      builder: (ctx) =>
+          TenantComplaintDetailSheet(complaint: complaint, onDelete: onDelete),
     );
   }
 
@@ -266,6 +276,22 @@ class TenantComplaintDetailSheet extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
+            if (complaint.canBeDeletedByTenant) ...[
+              SizedBox(
+                width: double.infinity,
+                child: KosMateButton.destructive(
+                  label: 'Delete complaint',
+                  icon: Icons.delete_outline,
+                  onPressed: () async {
+                    final deleted = await onDelete(complaint);
+                    if (deleted && context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(

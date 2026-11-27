@@ -133,6 +133,9 @@ class ComplaintModel {
     this.room,
   });
 
+  bool get canBeDeletedByTenant =>
+      status == ComplaintStatus.pending || status == ComplaintStatus.rejected;
+
   factory ComplaintModel.fromJson(Map<String, dynamic> json) {
     return ComplaintModel(
       complaintId: parseIntField(json['complaint_id']),

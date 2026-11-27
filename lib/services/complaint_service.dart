@@ -211,6 +211,55 @@ class ComplaintService {
     }
   }
 
+  Future<void> deleteComplaint(ComplaintModel complaint) async {
+    if (!complaint.canBeDeletedByTenant) {
+      throw const ValidationException(
+        'Only pending or rejected complaints can be deleted.',
+      );
+    }
+
+    try {
+      final deleted = await _client
+          .from(SupabaseConstants.complaintTable)
+          .delete()
+          .eq('complaint_id', complaint.complaintId)
+          .eq('user_id', complaint.userId)
+          .inFilter('status', ['pending', 'rejected'])
+          .select('complaint_id');
+
+      if (deleted.isEmpty) {
+        throw const ValidationException(
+          'This complaint can no longer be deleted because its status changed.',
+        );
+      }
+
+      final attachmentPath = complaint.attachmentPath;
+      if (attachmentPath != null && attachmentPath.isNotEmpty) {
+        try {
+          await _client.storage
+              .from(SupabaseConstants.complaintAttachmentsBucket)
+              .remove([attachmentPath]);
+        } catch (e) {
+          throw ServiceException(
+            'Complaint was deleted, but its attachment could not be removed.',
+            code: 'attachment_cleanup_failed',
+            cause: e,
+          );
+        }
+      }
+    } on AppException {
+      rethrow;
+    } on PostgrestException catch (e) {
+      throw ServiceException(
+        'Failed to delete complaint.',
+        code: e.code,
+        cause: e,
+      );
+    } catch (e) {
+      throw ServiceException('Failed to delete complaint.', cause: e);
+    }
+  }
+
   Stream<List<ComplaintModel>> streamComplaintsByUser(int userId) {
     return _client
         .from(SupabaseConstants.complaintTable)

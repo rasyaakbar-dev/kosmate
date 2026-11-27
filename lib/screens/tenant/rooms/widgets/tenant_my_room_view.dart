@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/di/service_locator.dart';
+import '../../../../core/errors/app_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/kosmate_components.dart';
@@ -33,6 +35,7 @@ class TenantMyRoomView extends StatefulWidget {
 }
 
 class _TenantMyRoomViewState extends State<TenantMyRoomView> {
+  final _complaintService = sl.complaint;
   final _complaintSearchController = TextEditingController();
   String _complaintFilter = 'All';
   String _complaintSearchQuery = '';
@@ -44,6 +47,58 @@ class _TenantMyRoomViewState extends State<TenantMyRoomView> {
   void dispose() {
     _complaintSearchController.dispose();
     super.dispose();
+  }
+
+  Future<bool> _deleteComplaint(ComplaintModel complaint) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete complaint?'),
+        content: Text(
+          'Delete "${complaint.title}"? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Keep complaint'),
+          ),
+          KosMateButton.destructive(
+            label: 'Delete',
+            onPressed: () => Navigator.pop(ctx, true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return false;
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await _complaintService.deleteComplaint(complaint);
+      await widget.onRefresh();
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Complaint deleted.'),
+          backgroundColor: AppTheme.successColor,
+        ),
+      );
+      return true;
+    } catch (e) {
+      final complaintWasDeleted =
+          e is ServiceException && e.code == 'attachment_cleanup_failed';
+      if (complaintWasDeleted) await widget.onRefresh();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            complaintWasDeleted
+                ? e.toString()
+                : 'Failed to delete complaint: $e',
+          ),
+          backgroundColor: AppTheme.destructiveColor,
+        ),
+      );
+      return complaintWasDeleted;
+    }
   }
 
   @override
@@ -367,7 +422,11 @@ class _TenantMyRoomViewState extends State<TenantMyRoomView> {
                       border: Border.all(color: AppTheme.borderLight),
                     ),
                     child: InkWell(
-                      onTap: () => TenantComplaintDetailSheet.show(context, c),
+                      onTap: () => TenantComplaintDetailSheet.show(
+                        context,
+                        c,
+                        onDelete: _deleteComplaint,
+                      ),
                       child: Row(
                         children: [
                           Container(

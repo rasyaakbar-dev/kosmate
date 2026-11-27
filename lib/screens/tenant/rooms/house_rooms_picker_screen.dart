@@ -7,6 +7,7 @@ import '../../../core/widgets/kosmate_app_bar.dart';
 import '../../../core/widgets/kosmate_components.dart';
 import '../../../core/widgets/list_controls.dart';
 import '../../../core/widgets/owner_information_card.dart';
+import '../../../core/widgets/room_facilities_card.dart';
 import '../../../models/house_model.dart';
 import '../../../models/room_model.dart';
 import '../../../models/user_model.dart';
@@ -57,6 +58,157 @@ class _HouseRoomsPickerScreenState extends State<HouseRoomsPickerScreen> {
         status: RoomStatus.available,
       );
     });
+  }
+
+  void _showRoomDetails(RoomModel room) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.9,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 12, bottom: 8),
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.borderMedium,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: SizedBox(
+                        height: 210,
+                        width: double.infinity,
+                        child: room.imageUrls.isEmpty
+                            ? Container(
+                                color: AppTheme.primaryLight,
+                                alignment: Alignment.center,
+                                child: const Icon(
+                                  Icons.meeting_room_outlined,
+                                  size: 56,
+                                  color: AppTheme.accentColor,
+                                ),
+                              )
+                            : PageView.builder(
+                                itemCount: room.imageUrls.length,
+                                itemBuilder: (context, index) => Image.network(
+                                  room.imageUrls[index],
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) => Container(
+                                    color: AppTheme.primaryLight,
+                                    alignment: Alignment.center,
+                                    child: const Icon(
+                                      Icons.broken_image_outlined,
+                                      size: 48,
+                                      color: AppTheme.textSubtle,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      'Room ${room.roomNumber}',
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.foregroundColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      room.roomType,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryLight,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Monthly rent',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.textMuted,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${Formatters.formatCurrency(room.price)} / month',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.accentColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Facilities',
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.foregroundColor,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    RoomFacilitiesCard(facilities: room.facilities),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: KosMateButton.primary(
+                  label: 'Book this room',
+                  icon: Icons.event_available_outlined,
+                  onPressed: () {
+                    Navigator.pop(sheetContext);
+                    _showBookingRequestDialog(room);
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showBookingRequestDialog(RoomModel room) {
@@ -624,86 +776,100 @@ class _HouseRoomsPickerScreenState extends State<HouseRoomsPickerScreen> {
                           itemBuilder: (context, index) {
                             final r = paged.pageItems[index];
                             return Container(
-                              padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(color: AppTheme.borderLight),
                               ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 48,
-                                    height: 48,
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.primaryLight,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: const Icon(
-                                      Icons.meeting_room_outlined,
-                                      color: AppTheme.accentColor,
-                                      size: 26,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 14),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(12),
+                                  onTap: () => _showRoomDetails(r),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(14),
+                                    child: Row(
                                       children: [
-                                        Text(
-                                          'Room ${r.roomNumber}',
-                                          style: const TextStyle(
-                                            fontFamily: 'Roboto',
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppTheme.foregroundColor,
+                                        Container(
+                                          width: 48,
+                                          height: 48,
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.primaryLight,
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.meeting_room_outlined,
+                                            color: AppTheme.accentColor,
+                                            size: 26,
                                           ),
                                         ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          r.roomType,
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            color: AppTheme.textMuted,
+                                        const SizedBox(width: 14),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Room ${r.roomNumber}',
+                                                style: const TextStyle(
+                                                  fontFamily: 'Roboto',
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w700,
+                                                  color:
+                                                      AppTheme.foregroundColor,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                r.roomType,
+                                                style: const TextStyle(
+                                                  fontSize: 13,
+                                                  color: AppTheme.textMuted,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                '${Formatters.formatCurrency(r.price)} / mo',
+                                                style: const TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppTheme.primaryColor,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          '${Formatters.formatCurrency(r.price)} / mo',
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppTheme.primaryColor,
+                                        ElevatedButton(
+                                          onPressed: () =>
+                                              _showBookingRequestDialog(r),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                AppTheme.accentColor,
+                                            foregroundColor: Colors.white,
+                                            elevation: 0,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 10,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            'Book',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 13,
+                                            ),
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  ElevatedButton(
-                                    onPressed: () =>
-                                        _showBookingRequestDialog(r),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppTheme.accentColor,
-                                      foregroundColor: Colors.white,
-                                      elevation: 0,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 10,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'Book',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             );
                           },
