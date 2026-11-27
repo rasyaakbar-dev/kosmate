@@ -79,7 +79,7 @@ class AppTheme {
         onSurface: textDark,
         outline: borderLight,
       ),
-      scaffoldBackgroundColor: backgroundColor,
+      scaffoldBackgroundColor: scaffoldBackground,
       textTheme: const TextTheme(
         headlineLarge: headingLarge,
         headlineMedium: headingLarge,
@@ -108,13 +108,14 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
+          backgroundColor: accentColor,
           foregroundColor: backgroundColor,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
+          minimumSize: const Size(0, 48),
           textStyle: const TextStyle(
             fontFamily: 'Roboto',
             fontWeight: FontWeight.w600,
@@ -125,12 +126,13 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: primaryColor,
+          foregroundColor: accentColor,
           side: const BorderSide(color: borderMedium),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
+          minimumSize: const Size(0, 48),
           textStyle: const TextStyle(
             fontFamily: 'Roboto',
             fontWeight: FontWeight.w500,
@@ -143,19 +145,19 @@ class AppTheme {
         fillColor: backgroundColor,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
-          vertical: 14,
+          vertical: 12,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: borderLight),
+          borderSide: const BorderSide(color: borderMedium),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: borderLight),
+          borderSide: const BorderSide(color: borderMedium),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: primaryColor, width: 2),
+          borderSide: const BorderSide(color: accentColor, width: 1.5),
         ),
         labelStyle: const TextStyle(
           fontFamily: 'Roboto',
@@ -167,6 +169,7 @@ class AppTheme {
           fontSize: 14,
           color: textSubtle,
         ),
+        prefixIconColor: textMuted,
       ),
     );
   }

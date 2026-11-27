@@ -154,7 +154,7 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openPaymentForm(),
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: AppTheme.accentColor,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('New Invoice'),

@@ -331,28 +331,11 @@ class _TenantAddComplaintSheetState extends State<TenantAddComplaintSheet> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ElevatedButton.icon(
-                      icon: _isSubmitting
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.send_rounded, size: 18),
-                      label: Text(_isSubmitting ? 'Submitting...' : 'Submit'),
-                      onPressed: _isSubmitting ? null : _handleSubmit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.accentColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
+                    child: KosMateButton.primary(
+                      label: _isSubmitting ? 'Submitting...' : 'Submit',
+                      icon: Icons.send_rounded,
+                      onPressed: _handleSubmit,
+                      isLoading: _isSubmitting,
                     ),
                   ),
                 ],

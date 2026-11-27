@@ -538,7 +538,7 @@ class _HouseRoomsManagerViewState extends State<HouseRoomsManagerView> {
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
@@ -861,6 +861,7 @@ class _HouseRoomsManagerViewState extends State<HouseRoomsManagerView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     IconButton(
                       onPressed: () {
@@ -875,8 +876,7 @@ class _HouseRoomsManagerViewState extends State<HouseRoomsManagerView> {
                         Icons.arrow_back,
                         color: AppTheme.foregroundColor,
                       ),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                      tooltip: 'Back to houses',
                     ),
                     const SizedBox(width: 8),
                     Expanded(

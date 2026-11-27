@@ -112,7 +112,7 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
             ListTile(
               leading: const Icon(
                 Icons.photo_camera_outlined,
-                color: AppTheme.primaryColor,
+                color: AppTheme.accentColor,
               ),
               title: const Text('Take a photo'),
               onTap: () {
@@ -123,7 +123,7 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
             ListTile(
               leading: const Icon(
                 Icons.photo_library_outlined,
-                color: AppTheme.primaryColor,
+                color: AppTheme.accentColor,
               ),
               title: const Text('Choose from gallery'),
               onTap: () {
@@ -302,6 +302,7 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.scaffoldBackground,
       appBar: KosMateAppBar(
         title: widget.isEditing ? 'Edit House' : 'Add House',
         showBackButton: true,
@@ -346,26 +347,9 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
                     const SizedBox(height: 6),
                     TextFormField(
                       controller: _nameController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         hintText: 'e.g. Kost Melati',
-                        prefixIcon: const Icon(
-                          Icons.apartment_outlined,
-                          color: AppTheme.textMuted,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppTheme.borderMedium,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppTheme.borderMedium,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
+                        prefixIcon: Icon(Icons.apartment_outlined),
                       ),
                       validator: (val) {
                         if (val == null || val.trim().isEmpty) {
@@ -388,25 +372,8 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
                     DropdownButtonFormField<int>(
                       value: _selectedOwnerId,
                       isExpanded: true,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(
-                          Icons.person_outline,
-                          color: AppTheme.textMuted,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppTheme.borderMedium,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppTheme.borderMedium,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
+                      decoration: const InputDecoration(
+                        prefixIcon: Icon(Icons.person_outline),
                       ),
                       items: _owners.map((o) {
                         return DropdownMenuItem<int>(
@@ -435,29 +402,9 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
                     TextFormField(
                       controller: _addressController,
                       maxLines: 2,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         hintText: 'Enter boarding house address',
-                        prefixIcon: const Padding(
-                          padding: EdgeInsets.only(bottom: 24),
-                          child: Icon(
-                            Icons.location_on_outlined,
-                            color: AppTheme.textMuted,
-                          ),
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppTheme.borderMedium,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppTheme.borderMedium,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
+                        prefixIcon: Icon(Icons.location_on_outlined),
                       ),
                       validator: (val) {
                         if (val == null || val.trim().isEmpty) {
@@ -480,35 +427,15 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
                     TextFormField(
                       controller: _descriptionController,
                       maxLines: 3,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         hintText: 'Write a short description',
-                        prefixIcon: const Padding(
-                          padding: EdgeInsets.only(bottom: 40),
-                          child: Icon(
-                            Icons.notes_outlined,
-                            color: AppTheme.textMuted,
-                          ),
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppTheme.borderMedium,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppTheme.borderMedium,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
+                        prefixIcon: Icon(Icons.notes_outlined),
                       ),
                     ),
                     const SizedBox(height: 16),
 
                     const Text(
-                      'House Photo (Optional)',
+                      'House photo (optional)',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -588,36 +515,13 @@ class _AdminHouseFormScreenState extends State<AdminHouseFormScreen> {
                         ),
                         const SizedBox(width: 14),
                         Expanded(
-                          child: ElevatedButton(
-                            onPressed: _isSaving ? null : _handleSave,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryColor,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: _isSaving
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Text(
-                                    widget.isEditing
-                                        ? 'Save Changes'
-                                        : 'Save House',
-                                    style: const TextStyle(
-                                      fontFamily: 'Roboto',
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
+                          child: KosMateButton.primary(
+                            label: widget.isEditing
+                                ? 'Save Changes'
+                                : 'Save House',
+                            icon: Icons.save_outlined,
+                            onPressed: _handleSave,
+                            isLoading: _isSaving,
                           ),
                         ),
                       ],

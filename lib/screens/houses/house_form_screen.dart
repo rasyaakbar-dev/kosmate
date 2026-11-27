@@ -366,35 +366,11 @@ class _HouseFormScreenState extends State<HouseFormScreen> {
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.accentColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        elevation: 0,
-                      ),
-                      onPressed: _isLoading ? null : _handleSave,
-                      icon: _isLoading
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.save_outlined, size: 18),
-                      label: Text(
-                        widget.isEditing ? 'Save Changes' : 'Create House',
-                        style: const TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                    child: KosMateButton.primary(
+                      label: widget.isEditing ? 'Save Changes' : 'Create House',
+                      icon: Icons.save_outlined,
+                      onPressed: _handleSave,
+                      isLoading: _isLoading,
                     ),
                   ),
                 ],

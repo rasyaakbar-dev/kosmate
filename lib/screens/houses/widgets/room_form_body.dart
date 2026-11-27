@@ -588,34 +588,11 @@ class _RoomFormBodyState extends State<RoomFormBody> {
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _isSaving ? null : _saveRoom,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.accentColor,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      icon: _isSaving
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Icon(Icons.save_outlined, size: 18),
-                      label: Text(
-                        widget.isEditing ? 'Update room' : 'Save room',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                    child: KosMateButton.primary(
+                      label: widget.isEditing ? 'Update room' : 'Save room',
+                      icon: Icons.save_outlined,
+                      onPressed: _saveRoom,
+                      isLoading: _isSaving,
                     ),
                   ),
                 ],
@@ -660,9 +637,7 @@ class _RoomFormBodyState extends State<RoomFormBody> {
       decoration: BoxDecoration(
         color: AppTheme.warningLight,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppTheme.borderColor.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

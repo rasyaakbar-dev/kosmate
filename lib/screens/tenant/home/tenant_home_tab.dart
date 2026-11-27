@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
-import '../../../core/widgets/kosmate_components.dart';
 import '../../../models/booking_model.dart';
 import '../../../models/complaint_model.dart';
 import '../../../models/payment_model.dart';
 import '../../../models/user_model.dart';
+import '../complaints/tenant_add_complaint_sheet.dart';
 
 class TenantHomeTab extends StatefulWidget {
   final UserModel user;
@@ -71,7 +71,7 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
     }
   }
 
-  void _showNewComplaintDialog() {
+  void _showNewComplaintSheet() {
     if (_activeBooking == null) {
       showDialog(
         context: context,
@@ -91,120 +91,12 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
       return;
     }
 
-    final titleController = TextEditingController();
-    final descController = TextEditingController();
-    ComplaintCategory selectedCategory = ComplaintCategory.maintenance;
-    ComplaintPriority selectedPriority = ComplaintPriority.medium;
-
-    final roomId = _activeBooking!.roomId;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(
-            'Submit Complaint (Room ${_activeBooking?.room?.roomNumber ?? roomId})',
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                DropdownButtonFormField<ComplaintCategory>(
-                  isExpanded: true,
-                  initialValue: selectedCategory,
-                  decoration: const InputDecoration(labelText: 'Category'),
-                  items: ComplaintCategory.values.map((c) {
-                    return DropdownMenuItem(
-                      value: c,
-                      child: Text(
-                        c.displayName,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    if (val != null) {
-                      setDialogState(() => selectedCategory = val);
-                    }
-                  },
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<ComplaintPriority>(
-                  isExpanded: true,
-                  initialValue: selectedPriority,
-                  decoration: const InputDecoration(labelText: 'Priority'),
-                  items: ComplaintPriority.values.map((p) {
-                    return DropdownMenuItem(
-                      value: p,
-                      child: Text(
-                        p.displayName,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    if (val != null) {
-                      setDialogState(() => selectedPriority = val);
-                    }
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(
-                    labelText: 'Title',
-                    hintText: 'e.g. Water leak',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: descController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(labelText: 'Description'),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            KosMateCancelButton(
-              isOutlined: false,
-              onPressed: () => Navigator.pop(ctx),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (titleController.text.trim().isEmpty) return;
-                final messenger = ScaffoldMessenger.of(context);
-                try {
-                  await _complaintService.createComplaint(
-                    userId: widget.user.userId,
-                    roomId: roomId,
-                    category: selectedCategory,
-                    title: titleController.text,
-                    description: descController.text,
-                    priority: selectedPriority,
-                  );
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  _loadDashboardData();
-                  messenger.showSnackBar(
-                    const SnackBar(
-                      content: Text('Complaint submitted successfully!'),
-                    ),
-                  );
-                } catch (e) {
-                  messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
-                }
-              },
-              child: const Text('Submit'),
-            ),
-          ],
-        ),
-      ),
-    ).whenComplete(() {
-      titleController.dispose();
-      descController.dispose();
-    });
+    TenantAddComplaintSheet.show(
+      context,
+      userId: widget.user.userId,
+      roomId: _activeBooking!.roomId,
+      onSubmitted: _loadDashboardData,
+    );
   }
 
   @override
@@ -412,7 +304,7 @@ class _TenantHomeTabState extends State<TenantHomeTab> {
                 _buildActionTile(
                   icon: Icons.feedback_outlined,
                   label: 'Complaint',
-                  onTap: _showNewComplaintDialog,
+                  onTap: _showNewComplaintSheet,
                 ),
               ],
             ),

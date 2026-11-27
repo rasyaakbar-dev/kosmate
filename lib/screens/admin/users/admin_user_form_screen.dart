@@ -323,6 +323,7 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
     }
 
     return Scaffold(
+      backgroundColor: AppTheme.scaffoldBackground,
       appBar: KosMateAppBar(
         title: widget.isEditing ? 'Edit User' : 'Add User',
         showBackButton: true,
@@ -407,7 +408,7 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
               const SizedBox(height: 20),
 
               const Text(
-                'User Information',
+                'User information',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 18,
@@ -423,7 +424,7 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
               const SizedBox(height: 18),
 
               const Text(
-                'Full Name *',
+                'Full name *',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -433,22 +434,9 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
               const SizedBox(height: 6),
               TextFormField(
                 controller: _nameController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'e.g. John Doe',
-                  prefixIcon: const Icon(
-                    Icons.person_outline,
-                    color: AppTheme.textMuted,
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppTheme.borderMedium),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppTheme.borderMedium),
-                  ),
+                  prefixIcon: Icon(Icons.person_outline),
                 ),
                 validator: (val) {
                   if (val == null || val.trim().isEmpty) {
@@ -461,7 +449,7 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
               const SizedBox(height: 16),
 
               const Text(
-                'Email Address *',
+                'Email address *',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -475,10 +463,7 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
                   hintText: 'user@example.com',
-                  prefixIcon: const Icon(
-                    Icons.email_outlined,
-                    color: AppTheme.textMuted,
-                  ),
+                  prefixIcon: const Icon(Icons.email_outlined),
                   suffixIcon: widget.isEditing
                       ? const Icon(
                           Icons.lock_outline,
@@ -487,17 +472,7 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
                         )
                       : null,
                   filled: true,
-                  fillColor: widget.isEditing
-                      ? AppTheme.surfaceLight
-                      : Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppTheme.borderMedium),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppTheme.borderMedium),
-                  ),
+                  fillColor: widget.isEditing ? AppTheme.surfaceLight : null,
                 ),
                 validator: (val) {
                   if (val == null || val.trim().isEmpty) {
@@ -512,7 +487,7 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
               const SizedBox(height: 16),
 
               const Text(
-                'Phone Number',
+                'Phone number',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -523,29 +498,16 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
               TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'e.g. 081234567890',
-                  prefixIcon: const Icon(
-                    Icons.phone_outlined,
-                    color: AppTheme.textMuted,
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppTheme.borderMedium),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppTheme.borderMedium),
-                  ),
+                  prefixIcon: Icon(Icons.phone_outlined),
                 ),
               ),
               const SizedBox(height: 16),
 
               if (!widget.isEditing) ...[
                 const Text(
-                  'Initial Password *',
+                  'Initial password *',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -558,10 +520,7 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     hintText: 'Min. 6 characters',
-                    prefixIcon: const Icon(
-                      Icons.lock_outline,
-                      color: AppTheme.textMuted,
-                    ),
+                    prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
@@ -572,20 +531,6 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
                       ),
                       onPressed: () =>
                           setState(() => _obscurePassword = !_obscurePassword),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
-                        color: AppTheme.borderMedium,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
-                        color: AppTheme.borderMedium,
-                      ),
                     ),
                   ),
                   validator: (val) {
@@ -599,7 +544,7 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
               ],
 
               const Text(
-                'Account Role *',
+                'Account role *',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -607,12 +552,12 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
                 children: [
                   _buildRoleChip('Tenant', UserRole.tenant),
-                  const SizedBox(width: 8),
                   _buildRoleChip('Owner', UserRole.owner),
-                  const SizedBox(width: 8),
                   _buildRoleChip('Admin', UserRole.admin),
                 ],
               ),
@@ -629,34 +574,11 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _handleSave,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : Text(
-                              widget.isEditing ? 'Save Changes' : 'Create User',
-                              style: const TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                    child: KosMateButton.primary(
+                      label: widget.isEditing ? 'Save Changes' : 'Create User',
+                      icon: Icons.save_outlined,
+                      onPressed: _handleSave,
+                      isLoading: _isLoading,
                     ),
                   ),
                 ],
@@ -698,26 +620,24 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
 
   Widget _buildRoleChip(String label, UserRole role) {
     final isSelected = _selectedRole == role;
-    return Expanded(
-      child: ChoiceChip(
-        label: Center(child: Text(label)),
-        selected: isSelected,
-        showCheckmark: false,
-        checkmarkColor: AppTheme.accentColor,
-        selectedColor: AppTheme.primaryLight,
-        backgroundColor: Colors.white,
-        side: BorderSide(
-          color: isSelected ? AppTheme.accentColor : AppTheme.borderMedium,
-          width: isSelected ? 1.5 : 1.0,
-        ),
-        labelStyle: TextStyle(
-          fontFamily: 'Roboto',
-          fontSize: 13,
-          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-          color: isSelected ? AppTheme.accentColor : AppTheme.textDark,
-        ),
-        onSelected: (_) => setState(() => _selectedRole = role),
+    return ChoiceChip(
+      label: Center(child: Text(label)),
+      selected: isSelected,
+      showCheckmark: false,
+      checkmarkColor: AppTheme.accentColor,
+      selectedColor: AppTheme.primaryLight,
+      backgroundColor: Colors.white,
+      side: BorderSide(
+        color: isSelected ? AppTheme.accentColor : AppTheme.borderMedium,
+        width: isSelected ? 1.5 : 1.0,
       ),
+      labelStyle: TextStyle(
+        fontFamily: 'Roboto',
+        fontSize: 13,
+        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+        color: isSelected ? AppTheme.accentColor : AppTheme.textDark,
+      ),
+      onSelected: (_) => setState(() => _selectedRole = role),
     );
   }
 }

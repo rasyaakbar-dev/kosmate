@@ -277,7 +277,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         messenger.showSnackBar(
                           const SnackBar(
                             content: Text(
-                              'Password reset link sent! Please check your email inbox.',
+                              'If an account exists for this email, a password reset link will be sent. Check your inbox and spam folder.',
                             ),
                             backgroundColor: AppTheme.successColor,
                           ),

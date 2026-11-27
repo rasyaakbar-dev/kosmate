@@ -109,11 +109,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: AppTheme.borderMedium, width: 1.5),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 46,
-                height: 48,
+          child: TextFormField(
+            controller: controller,
+            obscureText: obscureText,
+            keyboardType: keyboardType,
+            textAlignVertical: TextAlignVertical.center,
+            validator: validator,
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
+              prefixIcon: Container(
+                alignment: Alignment.center,
                 decoration: const BoxDecoration(
                   border: Border(
                     right: BorderSide(color: AppTheme.borderLight, width: 1.5),
@@ -121,27 +130,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 child: Icon(prefixIcon, color: AppTheme.textSubtle, size: 22),
               ),
-              Expanded(
-                child: TextFormField(
-                  controller: controller,
-                  obscureText: obscureText,
-                  keyboardType: keyboardType,
-                  validator: validator,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    filled: false,
-                    suffixIcon: suffixIcon,
-                  ),
-                ),
+              prefixIconConstraints: const BoxConstraints.tightFor(
+                width: 46,
+                height: 48,
               ),
-            ],
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              filled: false,
+              suffixIcon: suffixIcon,
+              suffixIconConstraints: const BoxConstraints.tightFor(
+                width: 48,
+                height: 48,
+              ),
+            ),
           ),
         ),
       ],

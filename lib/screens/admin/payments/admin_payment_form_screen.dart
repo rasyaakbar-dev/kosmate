@@ -523,36 +523,13 @@ class _AdminPaymentFormScreenState extends State<AdminPaymentFormScreen> {
                         ),
                         const SizedBox(width: 14),
                         Expanded(
-                          child: ElevatedButton(
-                            onPressed: _isSaving ? null : _handleSave,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryColor,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: _isSaving
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Text(
-                                    widget.isEditing
-                                        ? 'Save Changes'
-                                        : 'Create Payment',
-                                    style: const TextStyle(
-                                      fontFamily: 'Roboto',
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
+                          child: KosMateButton.primary(
+                            label: widget.isEditing
+                                ? 'Save Changes'
+                                : 'Create Payment',
+                            icon: Icons.save_outlined,
+                            onPressed: _handleSave,
+                            isLoading: _isSaving,
                           ),
                         ),
                       ],
